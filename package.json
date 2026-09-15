@@ -1,0 +1,61 @@
+{
+  "name": "adelaide-sphere",
+  "version": "1.0.0",
+  "description": "Melbourne Sphere \u2014 Melbourne business directory and blog",
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --filter api start:dev",
+    "dev:admin": "pnpm --filter admin dev",
+    "build": "pnpm -r run build",
+    "build:web": "pnpm --filter web build",
+    "build:api": "pnpm --filter api build",
+    "build:admin": "pnpm --filter admin build",
+    "lint": "pnpm -r run lint",
+    "lint:admin": "pnpm --filter admin lint",
+    "typecheck": "pnpm -r run typecheck",
+    "typecheck:admin": "pnpm --filter admin typecheck",
+    "test": "pnpm --filter @adelaide-sphere/database test && pnpm --filter api test && pnpm --filter admin test && pnpm --filter web test && pnpm --filter @adelaide-sphere/domain test && pnpm --filter @adelaide-sphere/mail test && pnpm --filter worker test",
+    "test:admin": "pnpm --filter admin test",
+    "test:e2e": "pnpm --filter api test:e2e",
+    "test:integration": "pnpm db:test:integration && pnpm --filter api test:integration",
+    "db:build": "pnpm --filter @adelaide-sphere/database build",
+    "db:generate": "pnpm --filter @adelaide-sphere/database generate",
+    "db:validate": "pnpm --filter @adelaide-sphere/database validate",
+    "db:migrations:check": "pnpm --filter @adelaide-sphere/database migrations:check",
+    "db:migrate:dev": "pnpm --filter @adelaide-sphere/database migrate:dev",
+    "db:migrate:status": "pnpm --filter @adelaide-sphere/database migrate:status",
+    "db:migrate:deploy": "pnpm --filter @adelaide-sphere/database migrate:deploy",
+    "db:introspect": "pnpm --filter @adelaide-sphere/database introspect",
+    "db:test:integration": "pnpm --filter @adelaide-sphere/database test:integration",
+    "contracts:generate": "pnpm domain:build && pnpm mail:build && pnpm --filter api openapi:generate && pnpm --filter @adelaide-sphere/contracts generate",
+    "contracts:check": "pnpm domain:build && pnpm mail:build && OPENAPI_OUT=/tmp/adelaide-sphere-openapi-check.json pnpm --filter api openapi:generate >/dev/null && cmp -s /tmp/adelaide-sphere-openapi-check.json packages/contracts/openapi/api.json && pnpm --filter @adelaide-sphere/contracts check",
+    "check": "pnpm db:build && pnpm domain:build && pnpm mail:build && pnpm db:migrations:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:e2e && pnpm build && pnpm budget && pnpm contracts:check",
+    "infra:validate": "docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env config --quiet",
+    "infra:up": "docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env up -d --wait",
+    "infra:down": "docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env down",
+    "infra:status": "docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env ps",
+    "infra:logs": "docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env logs --tail=100 -f",
+    "dev:worker": "pnpm --filter worker start:dev",
+    "build:worker": "pnpm --filter worker build",
+    "domain:build": "pnpm --filter @adelaide-sphere/domain build",
+    "mail:build": "pnpm --filter @adelaide-sphere/mail build",
+    "budget": "pnpm --filter admin budget",
+    "test:browser": "node scripts/test-browser.mjs",
+    "verify:release": "pnpm check && pnpm test:integration && pnpm test:browser"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.3.4",
+      "onFail": "download"
+    }
+  },
+  "type": "module",
+  "private": true,
+  "packageManager": "pnpm@12.3.4",
+  "engines": {
+    "node": ">=24.19.0"
+  }
+}

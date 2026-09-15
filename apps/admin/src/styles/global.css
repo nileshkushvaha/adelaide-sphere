@@ -1,0 +1,1352 @@
+/* Base document */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ms-surface, #f4f7fb);
+  color: var(--ms-text, #0f172a);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Visible keyboard focus everywhere (NFR 011): an amber ring (>= 3:1 on navy,
+   white and the dark surfaces) with a halo in the page colour so it stays
+   visible on any fill. The colours are theme variables (src/config/theme.ts);
+   the fallbacks are the light theme's. */
+:focus-visible {
+  outline: 3px solid var(--ms-focus, #b45309);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px var(--ms-focus-gap, #ffffff);
+}
+
+/* Ant Design's Select, DatePicker, InputNumber and affix inputs put a small
+   transparent <input> inside a larger styled box. Ringing that inner input
+   drew the outline around a element the reader cannot see, clipped by the
+   box around it — the broken half-rings on either end of a select. The ring
+   belongs on the control the reader is actually looking at.
+   `:has(:focus-visible)` keeps it to keyboard focus, so clicking a select does
+   not light it up. */
+.ant-select .ant-select-selection-search-input:focus-visible,
+.ant-picker input:focus-visible,
+.ant-input-number-input:focus-visible,
+.ant-input-affix-wrapper > input.ant-input:focus-visible,
+.ant-checkbox-input:focus-visible,
+.ant-radio-input:focus-visible,
+.ant-switch:focus-visible,
+.ant-slider-handle:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Ant sets `outline: none` on these boxes from its own stylesheet, so the ring
+   is drawn with a box-shadow instead: the amber ring, then a white halo outside
+   it so it stays visible on both the white cards and the navy rail. */
+.ant-select:not(.ant-select-disabled):has(:focus-visible) .ant-select-selector,
+.ant-picker:not(.ant-picker-disabled):has(:focus-visible),
+.ant-input-number:not(.ant-input-number-disabled):has(:focus-visible),
+.ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):has(> input:focus-visible),
+.ant-checkbox-wrapper:has(:focus-visible) .ant-checkbox-inner,
+.ant-radio-wrapper:has(:focus-visible) .ant-radio-inner,
+.ant-switch:has(:focus-visible),
+.ant-slider-handle:has(:focus-visible) {
+  /* `!important` deliberately: Ant Design injects its component styles into the
+     document at runtime, after this stylesheet, and sets its own focus shadow on
+     the same element. The focus ring is an accessibility guarantee (WCAG 2.4.11),
+     not a preference, so it wins. */
+  box-shadow:
+    0 0 0 3px var(--ms-focus, #b45309),
+    0 0 0 6px var(--ms-focus-gap, #ffffff) !important;
+  border-color: var(--ms-focus, #b45309) !important;
+}
+
+/* A ring drawn outside a control inside a scrolling table would be clipped;
+   keep it tight there instead of hidden. */
+.ant-table-content :focus-visible,
+.ant-table-body :focus-visible {
+  outline-offset: 1px;
+  box-shadow: none;
+}
+
+/* Skip link: hidden until focused, then pinned top-left above the header. */
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -100px;
+  z-index: 2000;
+  padding: 8px 12px;
+  background: #ffffff;
+  color: #012169;
+  font-weight: 600;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+/* Main region receives programmatic focus from the skip link; no ring needed there. */
+#main-content:focus {
+  outline: none;
+}
+
+/* Respect reduced-motion preferences for any residual CSS motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- Rich text editor and sanitised previews -------------------------------
+   One typographic treatment shared by the editor surface and the preview, so
+   what an editor writes is what they see (SRS BLOG 001). */
+.ms-editor-body,
+.ms-prose {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ms-text, #0f172a);
+}
+
+.ms-editor-body > *:first-child,
+.ms-prose > *:first-child {
+  margin-top: 0;
+}
+
+.ms-editor-body h2,
+.ms-prose h2 {
+  font-size: 22px;
+  line-height: 1.3;
+  margin: 28px 0 10px;
+  font-weight: 650;
+}
+
+.ms-editor-body h3,
+.ms-prose h3 {
+  font-size: 18px;
+  margin: 22px 0 8px;
+  font-weight: 650;
+}
+
+.ms-editor-body h4,
+.ms-prose h4 {
+  font-size: 16px;
+  margin: 18px 0 6px;
+  font-weight: 650;
+}
+
+.ms-editor-body p,
+.ms-prose p {
+  margin: 0 0 14px;
+}
+
+.ms-editor-body ul,
+.ms-editor-body ol,
+.ms-prose ul,
+.ms-prose ol {
+  margin: 0 0 14px;
+  padding-inline-start: 24px;
+}
+
+.ms-editor-body blockquote,
+.ms-prose blockquote {
+  margin: 18px 0;
+  padding: 4px 16px;
+  border-inline-start: 4px solid var(--ms-primary, #0b3aa4);
+  background: var(--ms-surface-muted, #f8fafc);
+  color: var(--ms-text-muted, #334155);
+}
+
+.ms-editor-body pre,
+.ms-prose pre {
+  background: #012169;
+  color: #e6eef8;
+  padding: 14px 16px;
+  border-radius: 10px;
+  overflow-x: auto;
+}
+
+.ms-editor-body code,
+.ms-prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
+
+.ms-editor-body img,
+.ms-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.ms-editor-body table,
+.ms-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 18px 0;
+}
+
+.ms-editor-body th,
+.ms-editor-body td,
+.ms-prose th,
+.ms-prose td {
+  border: 1px solid var(--ms-border, #e2e8f0);
+  padding: 8px 10px;
+  text-align: start;
+}
+
+.ms-editor-body th,
+.ms-prose th {
+  background: var(--ms-surface-muted, #f8fafc);
+  font-weight: 600;
+}
+
+/* Placeholder-free empty state still needs a caret target. */
+.ms-editor-body:focus {
+  outline: none;
+}
+
+.ms-editor-body hr,
+.ms-prose hr {
+  border: 0;
+  border-top: 1px solid var(--ms-border, #e2e8f0);
+  margin: 24px 0;
+}
+
+/* Visually hidden text that assistive technology still reads (WCAG 1.3.1). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Application chrome ----------------------------------------------------
+   The shell is deliberately quiet: one cool ground, one dark navigation rail and
+   white content cards. Depth comes from a single soft shadow and 14px radii, not
+   from borders on everything. Every rule here is a system rule — no screen gets
+   its own chrome. */
+
+.ms-app {
+  min-height: 100vh;
+  /* Three soft glows over a cool gradient — sky top-left, indigo top-right, teal
+     bottom-right. Each theme sets its own strengths (src/config/theme.ts). */
+  background:
+    radial-gradient(900px 520px at 0% 0%, var(--ms-glow-sky, transparent), transparent 62%),
+    radial-gradient(800px 560px at 100% 0%, var(--ms-glow-indigo, transparent), transparent 60%),
+    radial-gradient(1000px 700px at 100% 100%, var(--ms-glow-teal, transparent), transparent 60%),
+    linear-gradient(180deg, var(--ms-layout-top, #f6f9fd) 0%, var(--ms-layout-bottom, #edf2f9) 100%);
+  background-attachment: fixed;
+}
+
+/* Navigation rail: a navy that deepens toward the foot, so the eye starts at the
+   brand and settles on the account block. */
+.ms-sider,
+.ms-drawer-nav {
+  background: linear-gradient(180deg, var(--ms-sider-top, #012169) 0%, var(--ms-sider-mid, #011c5c) 62%, var(--ms-sider-bottom, #00164a) 100%);
+}
+
+.ms-sider {
+  border-inline-end: 1px solid var(--ms-sider-edge, rgba(255, 255, 255, 0.06));
+}
+
+/* antd wraps a Sider's children in its own element, so the column has to be
+   declared there for the account block to sit at the foot of the rail. */
+.ms-sider > .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Group headings read as labels, not as items: smaller, spaced, and quiet. */
+.ms-sider .ant-menu-item-group-title,
+.ms-drawer-nav .ant-menu-item-group-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding-inline: 24px;
+  padding-block: 18px 6px;
+}
+
+.ms-sider .ant-menu-item-group:first-child .ant-menu-item-group-title,
+.ms-drawer-nav .ant-menu-item-group:first-child .ant-menu-item-group-title {
+  padding-block-start: 8px;
+}
+
+/* The selected item carries a left accent bar; hover only lifts the surface, so
+   the two states are never confused with one another. */
+.ms-sider .ant-menu-item,
+.ms-drawer-nav .ant-menu-item {
+  position: relative;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.ms-sider .ant-menu-item-selected::before,
+.ms-drawer-nav .ant-menu-item-selected::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: -12px;
+  top: 50%;
+  translate: 0 -50%;
+  width: 3px;
+  height: 22px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, #8fb0ff, #ff5a72);
+}
+
+/* The selected item is a sky-to-teal pill, the brand gradient at low strength;
+   white text on it stays above 12:1. `!important` because Ant sets the fill
+   from a token at run time. */
+.ms-sider .ant-menu-dark .ant-menu-item-selected,
+.ms-drawer-nav .ant-menu-dark .ant-menu-item-selected {
+  font-weight: 550;
+  background: linear-gradient(90deg, rgba(143, 176, 255, 0.24) 0%, rgba(228, 0, 43, 0.14) 100%) !important;
+}
+
+.ms-sider .ant-menu-item .anticon,
+.ms-drawer-nav .ant-menu-item .anticon {
+  color: #a9bbdd;
+  transition: color 0.18s ease;
+}
+
+.ms-sider .ant-menu-item-selected .anticon,
+.ms-sider .ant-menu-item:hover .anticon,
+.ms-drawer-nav .ant-menu-item-selected .anticon,
+.ms-drawer-nav .ant-menu-item:hover .anticon {
+  color: #ffffff;
+}
+
+/* A quiet scrollbar: the rail is long, and a default one cuts it in half. */
+.ms-sider-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.ms-sider-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ms-sider-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+}
+
+.ms-sider-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Account block pinned to the foot of the rail. */
+.ms-sider-account {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Top bar: white and frosted, so the brand lives in the rail and the eye goes to
+   the page rather than to a second band of navy. */
+.ms-topbar {
+  background: var(--ms-header-bg, rgba(255, 255, 255, 0.86));
+  backdrop-filter: saturate(180%) blur(12px);
+  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--ms-border, #e2e8f0);
+}
+
+/* ---- Content surfaces ---------------------------------------------------- */
+
+/* One card treatment everywhere: hairline border, one soft shadow, and a lift on
+   hover only where the whole card is a link. */
+.ms-app .ant-card {
+  border-color: var(--ms-border-soft, #e7edf5);
+  /* A barely-there top-to-bottom gradient: flat fills read as unfinished on the
+     dark theme, and this is the same rule in both. */
+  background: linear-gradient(180deg, var(--ms-card-top, #ffffff) 0%, var(--ms-card-bottom, #fbfcfe) 100%);
+}
+
+/* On the dark theme a card is lifted by an inner highlight along its top edge
+   and a deeper shadow, not by a lighter fill that would lower text contrast. */
+[data-theme='dark'] .ms-app .ant-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 10px 28px -14px rgba(0, 0, 0, 0.6);
+}
+
+/* Tables inside a card show the card's gradient rather than a second flat fill. */
+.ms-app .ant-card .ant-table-wrapper .ant-table {
+  background: transparent;
+}
+
+.ms-card-link .ant-card {
+  transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+
+.ms-card-link:hover .ant-card {
+  border-color: var(--ms-border-strong, #cbd5e1);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04), 0 8px 20px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+/* Column headings: small caps weight rather than shouting uppercase, and a
+   single hairline under the head so rows start cleanly. */
+.ms-app .ant-table-thead > tr > th {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid var(--ms-border-soft, #e7edf5) !important;
+}
+
+.ms-app .ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--ms-border-soft, #f1f5f9);
+}
+
+.ms-app .ant-table-tbody > tr:last-child > td {
+  border-bottom: 0;
+}
+
+/* A table that fills a card body should not paint a second rounded corner. */
+.ms-table-card .ant-card-body {
+  padding: 0;
+}
+
+.ms-table-card .ant-table-wrapper .ant-table {
+  border-radius: 0;
+}
+
+.ms-table-card .ant-table-wrapper .ant-table-thead > tr > th:first-child {
+  border-start-start-radius: 0 !important;
+}
+
+.ms-table-card .ant-table-wrapper .ant-table-thead > tr > th:last-child {
+  border-start-end-radius: 0 !important;
+}
+
+/* The toolbar above a table and the summary below it are part of the same card,
+   separated by hairlines rather than by gaps. */
+.ms-table-toolbar {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--ms-border-soft, #eef2f7);
+}
+
+/* A load failure belongs to the table, so it sits inside the card — but not
+   flush against its edges. */
+.ms-table-card > .ant-card-body > .ant-alert {
+  margin: 14px 16px 0 !important;
+}
+
+.ms-table-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--ms-border-soft, #eef2f7);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* A table's own pagination is the card's footer: it gets the hairline and the
+   padding rather than floating in whitespace. */
+.ms-table-card .ant-table-pagination.ant-pagination {
+  margin: 0 !important;
+  padding: 12px 16px;
+  border-top: 1px solid var(--ms-border-soft, #eef2f7);
+}
+
+/* Sticky save bar: frosted, so the form under it stays readable while it scrolls. */
+.ms-sticky-actions {
+  background: var(--ms-sticky-bg, rgba(255, 255, 255, 0.92));
+  backdrop-filter: saturate(180%) blur(10px);
+  -webkit-backdrop-filter: saturate(180%) blur(10px);
+  border: 1px solid var(--ms-border, #e2e8f0);
+  box-shadow: 0 -1px 2px rgba(15, 23, 42, 0.03), 0 8px 24px rgba(15, 23, 42, 0.1);
+}
+
+/* A phone has neither the height to spare nor room for two lines of buttons:
+   the bar keeps the same information in one compact row, and the actions
+   stretch so they are still comfortable to tap. */
+@media (max-width: 575px) {
+  .ms-sticky-actions {
+    bottom: 8px;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .ms-sticky-actions > .ant-space {
+    width: 100%;
+  }
+  .ms-sticky-actions > .ant-space > .ant-space-item {
+    flex: 1;
+  }
+  .ms-sticky-actions .ant-btn {
+    width: 100%;
+  }
+}
+
+/* Focusing a field must never park it under the save bar. */
+.ms-sticky-actions ~ *,
+form .ant-form-item {
+  scroll-margin-bottom: 96px;
+}
+
+/* Status pills carry a dot so state survives greyscale printing and colour
+   vision differences (WCAG 1.4.1: colour is never the only signal). */
+.ms-status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  margin-inline-end: 6px;
+  vertical-align: 1px;
+  background: currentColor;
+}
+
+/* Key/value blocks in a page header: counts an operator reads before acting. */
+.ms-metric-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+/* Ant's default empty-table text is rgba(0,0,0,0.25), which fails contrast on
+   a white card. The table is telling the reader something; it has to be
+   readable (WCAG 1.4.3). */
+.ant-table-placeholder .ant-empty-description,
+.ant-table-placeholder .ant-table-expanded-row-fixed,
+.ant-table-placeholder .ant-table-cell {
+  color: var(--ms-text-muted, #475569);
+}
+
+/* A wide table scrolls inside its own card. Without this the card grows to the
+   table's width and the whole page scrolls sideways, which is the one thing a
+   layout must never do (SRS NFR 011). */
+.ms-scroll-table,
+.ms-table-card {
+  max-width: 100%;
+}
+.ms-scroll-table .ant-table-content,
+.ms-scroll-table .ant-table-body {
+  overflow-x: auto;
+}
+
+/* Rows that carry a state worth scanning for — a moderation queue, an enquiry
+   that failed to send, a job that will not run — get a soft tint and a coloured
+   left edge. Only on screens where the reader is triaging: colour that appears
+   everywhere stops meaning anything. The tint is faint enough that body text
+   keeps well over 4.5:1, and the tag still carries the word, so the colour is
+   never the only signal (WCAG 1.4.1). */
+.ms-row-critical > td:first-child,
+.ms-row-attention > td:first-child,
+.ms-row-progress > td:first-child,
+.ms-row-positive > td:first-child {
+  position: relative;
+}
+.ms-row-critical > td:first-child::before,
+.ms-row-attention > td:first-child::before,
+.ms-row-progress > td:first-child::before,
+.ms-row-positive > td:first-child::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 3px;
+}
+
+.ms-row-critical > td { background: var(--ms-row-critical, #fef2f2); }
+.ms-row-critical > td:first-child::before { background: var(--ms-danger, #b91c1c); }
+.ms-row-attention > td { background: var(--ms-row-attention, #fffbeb); }
+.ms-row-attention > td:first-child::before { background: var(--ms-warning, #b45309); }
+.ms-row-progress > td { background: var(--ms-row-progress, #f3f6fc); }
+.ms-row-progress > td:first-child::before { background: var(--ms-primary, #0b3aa4); }
+.ms-row-positive > td { background: var(--ms-row-positive, #f0fdf4); }
+.ms-row-positive > td:first-child::before { background: var(--ms-success, #15803d); }
+
+/* Hover must still read as hover on a tinted row. */
+.ant-table-tbody > tr.ms-row-critical:hover > td { background: var(--ms-row-critical-hover, #fee2e2); }
+.ant-table-tbody > tr.ms-row-attention:hover > td { background: var(--ms-row-attention-hover, #fef3c7); }
+.ant-table-tbody > tr.ms-row-progress:hover > td { background: var(--ms-row-progress-hover, #e5ebf8); }
+.ant-table-tbody > tr.ms-row-positive:hover > td { background: var(--ms-row-positive-hover, #dcfce7); }
+
+/* Record editor layout (RecordEditorPage). One column — the form, then the
+   side column beneath it — until there is room for both side by side. */
+.ms-editor-grid {
+  display: grid;
+  gap: 20px;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/*
+ * Fields inside an editor sit in two columns, rather than one column of very
+ * wide inputs.
+ *
+ * The page uses its full width — on a 1440 px screen a single 760 px column left
+ * half the screen empty — but a text input the width of the whole screen is
+ * harder to use, not easier: the eye has to travel back across it, and short
+ * values look lost in it.
+ *
+ * Two, and not "as many as fit". `auto-fit` gave three columns on a wide screen,
+ * and a third column is where a form stops reading as a form: the eye zig-zags,
+ * a field lands a long way from the one it belongs with, and a group heading
+ * ends up beside a field instead of above its group. Two columns is also what
+ * every editor was designed and checked against.
+ */
+.ms-form-grid {
+  display: grid;
+  gap: 0 24px;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 768px) {
+  .ms-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Anything that is written rather than filled in takes the whole row: a
+   paragraph, an address, a rich-text body, a repeating group, a picture. */
+.ms-form-grid > .ant-form-item:has(textarea),
+.ms-form-grid > .ant-form-item:has(.ms-permalink),
+.ms-form-grid > .ant-form-item:has(.ms-editor-surface),
+.ms-form-grid > .ant-form-item:has(.ms-media-field),
+.ms-form-grid > .ant-form-item:has(.ant-upload),
+.ms-form-grid > .ant-form-item:has(.ant-form-list),
+.ms-form-grid > .ms-span-all,
+.ms-form-grid > .ms-form-section,
+.ms-form-grid > .ant-divider,
+.ms-form-grid > h2,
+.ms-form-grid > h3 {
+  grid-column: 1 / -1;
+}
+
+/*
+ * A named group of fields inside one form — "Search appearance" and the like.
+ * It takes the whole row and carries a rule above it, so it reads as the start
+ * of a group rather than as another field: as an ordinary grid cell it landed
+ * beside an input and looked like its label.
+ */
+.ms-form-section {
+  margin: 4px 0 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--ms-border, #e2e8f0);
+}
+.ms-form-section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.ms-form-section h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.ms-form-section p {
+  margin: 4px 0 0;
+  max-width: 62ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ms-text-muted, #475569);
+}
+.ms-editor-grid--aside {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 992px) {
+  .ms-editor-grid--aside {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+}
+
+/* Ant Design's preset tag colours put mid-tone text on a pale ground — green is
+   #389e0d on #f6ffed, 3.4:1 — which fails WCAG 1.4.3 at tag size. Status tags
+   use StatusTag, which has its own checked palette; this keeps any preset tag
+   that remains readable by darkening the text only, so the hue still reads. */
+:root:not([data-theme='dark']) .ant-tag.ant-tag-green, :root:not([data-theme='dark']) .ant-tag.ant-tag-success { color: #166534; }
+:root:not([data-theme='dark']) .ant-tag.ant-tag-lime { color: #3f6212; }
+:root:not([data-theme='dark']) .ant-tag.ant-tag-red, :root:not([data-theme='dark']) .ant-tag.ant-tag-error, :root:not([data-theme='dark']) .ant-tag.ant-tag-volcano { color: #991b1b; }
+:root:not([data-theme='dark']) .ant-tag.ant-tag-gold, :root:not([data-theme='dark']) .ant-tag.ant-tag-orange, :root:not([data-theme='dark']) .ant-tag.ant-tag-yellow, :root:not([data-theme='dark']) .ant-tag.ant-tag-warning { color: #92400e; }
+:root:not([data-theme='dark']) .ant-tag.ant-tag-blue, :root:not([data-theme='dark']) .ant-tag.ant-tag-processing, :root:not([data-theme='dark']) .ant-tag.ant-tag-geekblue, :root:not([data-theme='dark']) .ant-tag.ant-tag-cyan { color: #075985; }
+:root:not([data-theme='dark']) .ant-tag.ant-tag-purple, :root:not([data-theme='dark']) .ant-tag.ant-tag-magenta, :root:not([data-theme='dark']) .ant-tag.ant-tag-pink { color: #6b21a8; }
+
+/* On the dark theme Ant's dark algorithm puts these tags on a deep fill; the
+   text is lightened instead, to the same >= 6.5:1. */
+[data-theme='dark'] .ant-tag.ant-tag-green, [data-theme='dark'] .ant-tag.ant-tag-success { color: #86efac; }
+[data-theme='dark'] .ant-tag.ant-tag-lime { color: #bef264; }
+[data-theme='dark'] .ant-tag.ant-tag-red, [data-theme='dark'] .ant-tag.ant-tag-error, [data-theme='dark'] .ant-tag.ant-tag-volcano { color: #fca5a5; }
+[data-theme='dark'] .ant-tag.ant-tag-gold, [data-theme='dark'] .ant-tag.ant-tag-orange, [data-theme='dark'] .ant-tag.ant-tag-yellow, [data-theme='dark'] .ant-tag.ant-tag-warning { color: #fcd34d; }
+[data-theme='dark'] .ant-tag.ant-tag-blue, [data-theme='dark'] .ant-tag.ant-tag-processing, [data-theme='dark'] .ant-tag.ant-tag-geekblue, [data-theme='dark'] .ant-tag.ant-tag-cyan { color: #b5cbff; }
+[data-theme='dark'] .ant-tag.ant-tag-purple, [data-theme='dark'] .ant-tag.ant-tag-magenta, [data-theme='dark'] .ant-tag.ant-tag-pink { color: #d8b4fe; }
+
+/* A row of short fields that wraps on a narrow screen (link rows, hero
+   phrases, opening-hours exceptions). Each field keeps its preferred width
+   where there is room and is capped at the row's width where there is not —
+   which a Space cannot do, because its items size to their content. */
+.ms-field-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 12px;
+}
+.ms-field-row > .ant-form-item {
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* One day of a weekly opening-hours schedule (HoursEditor). */
+.ms-hours-day {
+  display: grid;
+  grid-template-columns: 110px 170px minmax(0, 1fr);
+  gap: 0 12px;
+  align-items: start;
+  margin-bottom: 4px;
+}
+@media (max-width: 575px) {
+  .ms-hours-day {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .ms-hours-day > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---- Brand gradient ------------------------------------------------------
+   One gradient for every primary action, in both themes and on the sign-in
+   screens: #012169 → #0B3AA4 → #C8102E, each at least 5.3:1 against the white
+   label. Destructive and ghost buttons keep their own colours. The specificity
+   is deliberate: Ant injects its button rules at run time. */
+.ant-btn.ant-btn-primary:not(.ant-btn-dangerous):not(.ant-btn-background-ghost):not(:disabled):not(.ant-btn-disabled) {
+  border-color: transparent;
+  background: linear-gradient(135deg, #012169 0%, #0b3aa4 50%, #c8102e 100%);
+  box-shadow: 0 8px 20px -10px rgba(11, 58, 164, 0.75);
+  transition: filter 160ms ease, box-shadow 160ms ease;
+}
+.ant-btn.ant-btn-primary:not(.ant-btn-dangerous):not(.ant-btn-background-ghost):not(:disabled):not(.ant-btn-disabled):hover {
+  background: linear-gradient(135deg, #012169 0%, #0b3aa4 50%, #c8102e 100%);
+  filter: brightness(1.07);
+  box-shadow: 0 12px 24px -10px rgba(11, 58, 164, 0.85);
+}
+.ant-btn.ant-btn-primary:not(.ant-btn-dangerous):not(.ant-btn-background-ghost):not(:disabled):not(.ant-btn-disabled):active {
+  filter: brightness(0.95);
+}
+
+/* Page titles: navy → sky in the light theme, white → pale sky in the dark.
+   Where text clipping is unsupported the title is simply the solid text colour. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .ms-page-title.ant-typography {
+    background: linear-gradient(92deg, var(--ms-title-from, #012169) 0%, var(--ms-title-to, #0b3aa4) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+/* The icon tile on a dashboard figure: the brand gradient, softly. */
+.ms-stat-icon {
+  background: linear-gradient(135deg, rgba(11, 58, 164, 0.14) 0%, rgba(200, 16, 46, 0.12) 100%);
+  color: var(--ms-primary, #0b3aa4);
+}
+
+/* A link inside a sentence is underlined, so it is not told apart from the
+   words around it by colour alone (WCAG 1.4.1). On the dark theme the sky link
+   colour sits too close to the body text's lightness for colour to be enough. */
+.ant-alert-description a,
+.ant-alert-message a,
+.ant-typography p a,
+p.ant-typography a,
+.ant-form-item-extra a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* A record editor's side column follows the reader down a long form, so the
+   publishing state and its actions stay in reach. Only where there is height to
+   spare: on a short window it scrolls with the page like everything else. */
+@media (min-width: 992px) and (min-height: 700px) {
+  .ms-editor-sidebar:not(.ms-editor-sidebar--xl) {
+    position: sticky;
+    top: calc(var(--ms-topbar-height, 60px) + 16px);
+  }
+}
+/* Editors whose second column only appears at xl. Below that the panel is
+   stacked and full width, where sticking would park it over the form. */
+@media (min-width: 1200px) and (min-height: 700px) {
+  .ms-editor-sidebar--xl {
+    position: sticky;
+    top: calc(var(--ms-topbar-height, 60px) + 16px);
+  }
+}
+
+/* The hero preview shows a desktop and a phone frame side by side; on a narrow
+   admin window the two stack rather than squeezing the desktop frame. */
+@media (max-width: 991px) {
+  .ms-hero-preview { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+/* Chart roles (dashboard). The three series colours are the validated
+   categorical slots 1-3 (all-pairs CVD and normal-vision checks pass on the
+   card surface in both themes); the status colours are reserved for state and
+   always ship with an icon and a label. Light slot 3 is under 3:1 on white, so
+   every chart that uses it also has direct labels or a table view. */
+:root {
+  --ms-series-1: #2a78d6;
+  --ms-series-2: #eb6834;
+  --ms-series-3: #1baf7a;
+  --ms-chart-grid: #eef2f7;
+  --ms-chart-axis: #cbd5e1;
+  --ms-chart-track: #f1f5f9;
+  --ms-status-good: #0ca30c;
+  --ms-status-warning: #fab219;
+  --ms-status-serious: #ec835a;
+  --ms-status-critical: #d03b3b;
+  --ms-status-neutral: #94a3b8;
+}
+:root[data-theme='dark'] {
+  --ms-series-1: #3987e5;
+  --ms-series-2: #d95926;
+  --ms-series-3: #199e70;
+  --ms-chart-grid: #1b2a40;
+  --ms-chart-axis: #34465f;
+  --ms-chart-track: #15223a;
+  --ms-status-neutral: #64748b;
+}
+
+.ms-bar-row .ms-bar,
+.ms-segment {
+  transition: filter 0.15s ease;
+}
+.ms-bar-row:hover .ms-bar,
+.ms-bar-row:focus-visible .ms-bar,
+.ms-segment:hover {
+  filter: brightness(1.12);
+}
+
+/* Dashboard colour. Decorative gradients on surfaces whose text stays white
+   (hero) or on the ordinary card ink (tiles); no figure depends on a colour. */
+.ms-dash-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  margin-bottom: 24px;
+  padding: 24px 28px 22px;
+  border-radius: 18px;
+  color: #ffffff;
+  background:
+    radial-gradient(520px 260px at 92% 0%, rgba(143, 176, 255, 0.34), transparent 70%),
+    radial-gradient(460px 240px at 0% 100%, rgba(228, 0, 43, 0.28), transparent 70%),
+    radial-gradient(360px 200px at 55% 120%, rgba(167, 139, 250, 0.28), transparent 70%),
+    linear-gradient(125deg, #012169 0%, #0b3aa4 52%, #c8102e 100%);
+  box-shadow: 0 18px 40px -26px rgba(11, 58, 164, 0.75);
+}
+.ms-dash-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-size: 18px 18px;
+  mask-image: linear-gradient(90deg, transparent 20%, #000 100%);
+}
+.ms-dash-hero__eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c9d7fb;
+}
+.ms-dash-hero__title {
+  margin: 6px 0 4px;
+  font-size: 24px;
+  font-weight: 660;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+.ms-dash-hero__lead {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.82);
+}
+.ms-dash-hero__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+  margin: 18px 0 0;
+}
+.ms-dash-hero__stat {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+}
+.ms-dash-hero__stat dt {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+}
+.ms-dash-hero__stat dd {
+  margin: 2px 0 0;
+  font-size: 24px;
+  font-weight: 660;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.ms-accent-sky { --ms-kpi-from: #0b3aa4; --ms-kpi-to: #8fb0ff; --ms-kpi-glow: rgba(143, 176, 255, 0.2); }
+.ms-accent-violet { --ms-kpi-from: #6d28d9; --ms-kpi-to: #a78bfa; --ms-kpi-glow: rgba(167, 139, 250, 0.2); }
+.ms-accent-teal { --ms-kpi-from: #0f766e; --ms-kpi-to: #2dd4bf; --ms-kpi-glow: rgba(45, 212, 191, 0.2); }
+.ms-accent-amber { --ms-kpi-from: #b45309; --ms-kpi-to: #fbbf24; --ms-kpi-glow: rgba(251, 191, 36, 0.22); }
+.ms-accent-rose { --ms-kpi-from: #be123c; --ms-kpi-to: #fb7185; --ms-kpi-glow: rgba(251, 113, 133, 0.2); }
+.ms-accent-indigo { --ms-kpi-from: #4338ca; --ms-kpi-to: #818cf8; --ms-kpi-glow: rgba(129, 140, 248, 0.2); }
+
+.ms-kpi-tile.ant-card {
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(220px 140px at 100% 0%, var(--ms-kpi-glow, transparent), transparent 70%), var(--ms-surface-raised, #ffffff);
+}
+.ms-kpi-tile.ant-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--ms-kpi-from, #0b3aa4), var(--ms-kpi-to, #8fb0ff));
+}
+.ms-kpi-icon {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--ms-kpi-from, #0b3aa4), var(--ms-kpi-to, #8fb0ff));
+  box-shadow: 0 8px 16px -10px var(--ms-kpi-from, #0b3aa4);
+}
+
+/* Two short fields that belong together (an SEO title and its keywords) share
+   a row where there is room, inside a form laid out by hand; stacked below. */
+.ms-form-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 20px;
+}
+@media (min-width: 768px) {
+  .ms-form-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/*
+ * Pointer cursor for native controls. Ant Design sets it on its own buttons,
+ * switches and selects; plain <button> elements (the focal-point picker, the
+ * table expand toggle), <summary> and labelled checkboxes otherwise show the
+ * browser's default arrow. Disabled controls show that they are not available.
+ */
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']),
+summary,
+label[for],
+input:is([type='checkbox'], [type='radio'], [type='file']):not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+/* ---- Navigation menu editor (Website → Menus, SRS 1.9 MENU 002) ------------
+   WordPress-style item cards: a quiet bordered row with a drag handle, and a
+   body that opens below it. Indentation carries the nesting, so the cards stay
+   the same width at every level of the tree. */
+.ms-menu-select-bar {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--ms-border, #e2e8f0);
+  background: var(--ms-sticky-bg, rgba(255, 255, 255, 0.92));
+}
+.ms-menu-card {
+  border: 1px solid var(--ms-border, #e2e8f0);
+  border-radius: 10px;
+  background: var(--ms-sticky-bg, #ffffff);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.ms-menu-card--error {
+  border-color: var(--ms-status-critical, #d03b3b);
+}
+.ms-menu-card--overlay {
+  box-shadow: 0 12px 28px -12px rgba(15, 23, 42, 0.35);
+  cursor: grabbing;
+}
+.ms-menu-handle,
+.ms-menu-toggle {
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.ms-menu-handle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 36px;
+  cursor: grab;
+  touch-action: none;
+  color: var(--ms-status-neutral, #94a3b8);
+}
+.ms-menu-handle:hover {
+  background: var(--ms-chart-track, #f1f5f9);
+  color: inherit;
+}
+.ms-menu-toggle {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+}
+.ms-menu-toggle:hover {
+  background: var(--ms-chart-track, #f1f5f9);
+}
+.ms-menu-card-body {
+  padding: 12px 14px 12px;
+  border-top: 1px solid var(--ms-border-soft, #eef2f7);
+}
+.ms-menu-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 16px;
+}
+.ms-menu-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ms-border-soft, #eef2f7);
+}
+/* Below a tablet the indentation would squeeze the cards to nothing; the step
+   shrinks so three levels still fit a phone. */
+@media (max-width: 575px) {
+  .ms-menu-tree > li {
+    margin-left: calc(var(--ms-menu-depth, 0) * 14px) !important;
+  }
+}
+
+/* ---- Article editor (WordPress-style) ----------------------------------------
+   Wide screens: the writing column beside the Publish and Details boxes, with
+   images below them. Narrower screens stack Publish and Details *above* the
+   writing so the buttons and the required choices are never scrolled out of
+   reach, and the images follow the writing. */
+.ms-post-editor {
+  display: grid;
+  gap: 0 24px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'top' 'main' 'rest';
+  align-items: start;
+}
+.ms-post-editor__main { grid-area: main; min-width: 0; }
+.ms-post-editor__top { grid-area: top; min-width: 0; }
+.ms-post-editor__rest { grid-area: rest; min-width: 0; }
+@media (min-width: 1200px) {
+  .ms-post-editor {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    grid-template-areas: 'main top' 'main rest';
+    grid-template-rows: auto 1fr;
+  }
+}
+.ms-post-title .ant-input {
+  font-size: 26px;
+  font-weight: 640;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  padding-inline: 0;
+}
+.ms-post-editor .ms-media-field { width: 100%; }
+
+/* Version history comparison (article editor). Colour is never the only
+   signal: removed text is struck through and added text underlined, and each
+   carries a screen-reader label. */
+.ms-diff-added {
+  background: rgba(22, 163, 74, 0.16);
+  text-decoration: underline;
+  text-decoration-color: rgba(22, 163, 74, 0.7);
+  border-radius: 3px;
+}
+.ms-diff-removed {
+  background: rgba(220, 38, 38, 0.12);
+  text-decoration: line-through;
+  border-radius: 3px;
+}
+.ms-revisions { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 768px) {
+  .ms-revisions { grid-template-columns: 260px minmax(0, 1fr); align-items: start; }
+}
+.ms-revisions__item {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+.ms-revisions__item[aria-pressed='true'] { background: var(--ms-chart-track, #f1f5f9); }
+.ms-revisions__item:focus-visible { outline: 3px solid var(--ms-focus, #b45309); outline-offset: -3px; }
+.ms-revisions__meta { font-size: 12.5px; opacity: 0.75; }
+
+/* Article editor blocks: figures, embeds, business cards and tables. */
+.ms-editor-body figure.ms-figure { margin: 16px 0; }
+.ms-editor-body figure.ms-figure img { max-width: 100%; height: auto; border-radius: 8px; display: block; }
+.ms-editor-body figure.ms-figure:not(.ms-figure--wide) img { max-width: 520px; }
+.ms-editor-body figure.ms-figure figcaption { margin-top: 6px; font-size: 13px; opacity: 0.75; }
+.ms-editor-body div.ms-embed {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--ms-border, #cbd5e1);
+  border-radius: 8px;
+  background: var(--ms-chart-track, #f1f5f9);
+  font-weight: 600;
+}
+.ms-editor-body .ProseMirror-selectednode { outline: 3px solid var(--ms-focus, #b45309); outline-offset: 2px; }
+.ms-editor-body table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+.ms-editor-body :is(td, th) { border: 1px solid var(--ms-border, #cbd5e1); padding: 6px 8px; vertical-align: top; }
+.ms-editor-body th { background: var(--ms-chart-track, #f1f5f9); }
+
+/* ---- Activity log timeline (change log 1.14) ------------------------------
+   Area tints are decoration only: the area is always written beside them. */
+.ms-activity-switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ms-text-muted); }
+.ms-activity-switch label { cursor: pointer; }
+.ms-activity-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; }
+.ms-activity-chip {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 12px 4px 4px;
+  border: 1px solid var(--ms-border); border-radius: 999px; background: var(--ms-surface-raised);
+  color: var(--ms-text); font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.ms-activity-chip:hover { border-color: var(--ms-primary-border); background: var(--ms-surface-hover); }
+.ms-activity-chip.is-selected { border-color: var(--ms-primary); background: var(--ms-primary-soft); color: var(--ms-primary-active); box-shadow: inset 0 0 0 1px var(--ms-primary); }
+.ms-activity-chip:focus-visible,
+.ms-activity-row__toggle:focus-visible { outline: 2px solid var(--ms-focus); outline-offset: 2px; }
+.ms-activity-chip__icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 999px; font-size: 14px; }
+.ms-activity-chip__count {
+  min-width: 22px; padding: 0 7px; border-radius: 999px; background: var(--ms-surface-muted); color: var(--ms-text-muted);
+  font-size: 12px; line-height: 20px; text-align: center; font-variant-numeric: tabular-nums;
+}
+.ms-activity-chip.is-selected .ms-activity-chip__count { background: var(--ms-surface-raised); color: var(--ms-primary); }
+
+.ms-activity-card {
+  border: 1px solid var(--ms-border); border-radius: 16px; overflow: clip;
+  background: linear-gradient(180deg, var(--ms-card-top), var(--ms-card-bottom));
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+.ms-activity-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--ms-border-soft); }
+.ms-activity-search { flex: 1 1 240px; min-width: 0; max-width: 340px; }
+.ms-activity-filters-active { padding: 12px 20px 0; }
+.ms-activity-summary { margin: 0; padding: 12px 20px 2px; font-size: 12.5px; color: var(--ms-text-subtle); }
+.ms-activity-skeleton { padding: 16px 20px; }
+.ms-activity-skeleton .ant-skeleton + .ant-skeleton { margin-top: 18px; }
+.ms-activity-feed { padding-bottom: 4px; }
+.ms-activity-day {
+  position: sticky; top: 64px; z-index: 2; margin: 0; padding: 12px 20px 8px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ms-text-subtle);
+  background: var(--ms-sticky-bg); backdrop-filter: blur(8px); border-bottom: 1px solid var(--ms-border-soft);
+}
+.ms-activity-list,
+.ms-activity-members { list-style: none; margin: 0; padding: 0; }
+.ms-activity-row { border-bottom: 1px solid var(--ms-border-soft); }
+.ms-activity-list > .ms-activity-row:last-child,
+.ms-activity-members > .ms-activity-row:last-child { border-bottom: 0; }
+.ms-activity-row__main { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 4px 14px; padding: 14px 20px; transition: background-color 0.15s ease; }
+.ms-activity-row--full:hover > .ms-activity-row__main { background: var(--ms-surface-hover); }
+.ms-activity-row.is-failure > .ms-activity-row__main { background: var(--ms-row-critical); box-shadow: inset 3px 0 0 var(--ms-danger); }
+.ms-activity-icon { display: grid; place-items: center; width: 32px; height: 32px; margin-top: 1px; border-radius: 10px; font-size: 15px; }
+.ms-activity-row__body { min-width: 0; }
+.ms-activity-row__sentence { margin: 0; color: var(--ms-text); line-height: 1.55; overflow-wrap: anywhere; }
+.ms-activity-row__actor { font-weight: 500; }
+.ms-activity-row__target { font-weight: 600; color: inherit; }
+a.ms-activity-row__target { color: var(--ms-link); text-decoration: underline; text-decoration-color: var(--ms-primary-border); text-underline-offset: 3px; }
+a.ms-activity-row__target:hover { text-decoration-color: currentColor; }
+.ms-activity-row__meta { margin: 2px 0 0; font-size: 12.5px; color: var(--ms-text-subtle); overflow-wrap: anywhere; }
+.ms-activity-row__side { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.ms-activity-row__time { font-size: 13px; color: var(--ms-text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ms-activity-row__toggle .anticon { transition: transform 0.2s ease; }
+.ms-activity-row__toggle.is-open .anticon { transform: rotate(180deg); }
+.ms-activity-row__detail { margin: 0 20px 14px 66px; padding: 12px 14px; border: 1px solid var(--ms-border-soft); border-radius: 12px; background: var(--ms-surface-muted); }
+.ms-activity-row--member > .ms-activity-row__main { grid-template-columns: minmax(0, 1fr) auto; padding: 10px 4px; }
+.ms-activity-row--member .ms-activity-row__detail { margin: 0 4px 10px; background: var(--ms-surface-raised); }
+.ms-activity-row--compact > .ms-activity-row__main { padding: 10px 0; }
+.ms-activity-members__state,
+.ms-activity-members__more { padding: 10px 4px; }
+.ms-activity-detail { display: grid; grid-template-columns: minmax(140px, max-content) 1fr; gap: 4px 16px; margin: 0; font-size: 13.5px; }
+.ms-activity-detail dt { color: var(--ms-text-subtle); }
+.ms-activity-detail dd { margin: 0; overflow-wrap: anywhere; }
+.ms-activity-pagination { display: flex; justify-content: flex-end; padding: 12px 20px 16px; border-top: 1px solid var(--ms-border-soft); }
+.ms-activity-drawer { display: grid; gap: 12px; }
+.ms-activity-drawer .ant-select { width: 100% !important; }
+@media (prefers-reduced-motion: reduce) {
+  .ms-activity-row__toggle .anticon,
+  .ms-activity-row__main,
+  .ms-activity-chip { transition: none; }
+}
+@media (max-width: 767px) {
+  .ms-activity-toolbar { padding: 12px 16px; }
+  .ms-activity-search { max-width: none; }
+  .ms-activity-day { top: 56px; padding: 10px 16px 8px; }
+  .ms-activity-row__main { grid-template-columns: auto minmax(0, 1fr); padding: 12px 16px; }
+  .ms-activity-row__side { grid-column: 2; justify-content: flex-start; }
+  .ms-activity-row--member > .ms-activity-row__main { grid-template-columns: minmax(0, 1fr); }
+  .ms-activity-row--member .ms-activity-row__side { grid-column: 1; }
+  .ms-activity-row__detail { margin: 0 16px 12px; }
+  .ms-activity-detail { grid-template-columns: 1fr; }
+  .ms-activity-detail dt { margin-top: 6px; }
+  .ms-activity-summary,
+  .ms-activity-filters-active { padding-inline: 16px; }
+  .ms-activity-pagination { justify-content: center; padding-inline: 16px; }
+}
+.ms-activity-icon--all { color: #0b3aa4; background: #e5ebf8; }
+.ms-activity-icon--authentication { color: #b45309; background: #fef3c7; }
+.ms-activity-icon--access_control { color: #6d28d9; background: #ede9fe; }
+.ms-activity-icon--content { color: #0b3aa4; background: #e5ebf8; }
+.ms-activity-icon--moderation { color: #be123c; background: #ffe4e6; }
+.ms-activity-icon--communication { color: #0f766e; background: #ccfbf1; }
+.ms-activity-icon--configuration { color: #4338ca; background: #e0e7ff; }
+.ms-activity-icon--system,
+.ms-activity-icon--unknown { color: #334155; background: #e2e8f0; }
+[data-theme='dark'] .ms-activity-icon--all,
+[data-theme='dark'] .ms-activity-icon--content { color: #b5cbff; background: rgba(181, 203, 255, 0.14); }
+[data-theme='dark'] .ms-activity-icon--authentication { color: #fcd34d; background: rgba(252, 211, 77, 0.14); }
+[data-theme='dark'] .ms-activity-icon--access_control { color: #c4b5fd; background: rgba(196, 181, 253, 0.14); }
+[data-theme='dark'] .ms-activity-icon--moderation { color: #fda4af; background: rgba(253, 164, 175, 0.14); }
+[data-theme='dark'] .ms-activity-icon--communication { color: #5eead4; background: rgba(94, 234, 212, 0.14); }
+[data-theme='dark'] .ms-activity-icon--configuration { color: #a5b4fc; background: rgba(165, 180, 252, 0.14); }
+[data-theme='dark'] .ms-activity-icon--system,
+[data-theme='dark'] .ms-activity-icon--unknown { color: #cbd5e1; background: rgba(203, 213, 225, 0.12); }
+
+/* Activity: an expanded group and its members (change log 1.14, second pass).
+   The group states what its events share once; each member is one line. */
+.ms-activity-row__group { margin: 0 20px 16px 66px; padding: 4px 0 0 16px; border-left: 2px solid var(--ms-primary-border); }
+.ms-activity-group__summary { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 0 0 8px; padding: 10px 14px; border-radius: 10px; background: var(--ms-surface-muted); font-size: 13px; }
+.ms-activity-group__summary > div { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.ms-activity-group__summary dt { color: var(--ms-text-subtle); }
+.ms-activity-group__summary dt::after { content: ':'; }
+.ms-activity-group__summary dd { margin: 0; color: var(--ms-text); font-weight: 500; overflow-wrap: anywhere; }
+.ms-activity-group__more { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 10px 0 2px; }
+.ms-activity-group__count { font-size: 12.5px; color: var(--ms-text-subtle); }
+.ms-activity-member { border-bottom: 1px solid var(--ms-border-soft); }
+.ms-activity-member:last-child { border-bottom: 0; }
+.ms-activity-member__line { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto auto; align-items: center; gap: 12px; min-height: 44px; padding: 6px 4px; }
+.ms-activity-member.is-failure > .ms-activity-member__line { background: var(--ms-row-critical); box-shadow: inset 3px 0 0 var(--ms-danger); padding-left: 10px; }
+.ms-activity-member__time { font-size: 13px; color: var(--ms-text-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ms-activity-member__name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-width: 0; font-weight: 500; color: var(--ms-text); overflow-wrap: anywhere; }
+.ms-activity-member__name a { color: var(--ms-link); text-decoration: underline; text-decoration-color: var(--ms-primary-border); text-underline-offset: 3px; }
+.ms-activity-member__name a:hover { text-decoration-color: currentColor; }
+.ms-activity-member__own { font-size: 12.5px; font-weight: 400; color: var(--ms-text-subtle); }
+.ms-activity-member__spacer { width: 24px; }
+.ms-activity-member__detail { margin: 0 0 10px 88px; padding: 10px 12px; border-radius: 10px; background: var(--ms-surface-muted); }
+.ms-activity-code { padding: 1px 6px; border-radius: 6px; background: var(--ms-surface-muted); border: 1px solid var(--ms-border-soft); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; font-weight: 400; color: var(--ms-text-muted); overflow-wrap: anywhere; }
+.ms-activity-group__summary .ms-activity-code,
+.ms-activity-member__detail .ms-activity-code { background: var(--ms-surface-raised); }
+.ms-activity-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: 12px 24px; margin: 0; }
+.ms-activity-facts__item { min-width: 0; }
+.ms-activity-facts dt { margin-bottom: 2px; font-size: 12px; color: var(--ms-text-subtle); }
+.ms-activity-facts dd { margin: 0; font-size: 13.5px; color: var(--ms-text); overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+  .ms-activity-row__group { margin: 0 16px 12px; padding-left: 12px; }
+  .ms-activity-member__line { grid-template-columns: minmax(0, 1fr) auto auto; gap: 4px 10px; }
+  .ms-activity-member__time { grid-column: 1 / -1; }
+  .ms-activity-member__detail { margin-left: 0; }
+}
+
+/* ---- Media library: PDF documents (change log 1.16) ---------------------- */
+.ms-doc-drop { display: grid; justify-items: center; padding: 20px 16px; border: 2px dashed var(--ms-border); border-radius: 12px; background: var(--ms-surface-muted); text-align: center; }
+.ms-doc-drop.is-dragging { border-color: var(--ms-primary); background: var(--ms-primary-softer); }
+.ms-doc-drop__icon { font-size: 26px; color: #b91c1c; }
+.ms-doc-list { list-style: none; margin: 0; padding: 0; }
+.ms-doc-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 8px 16px; padding: 14px 20px; border-bottom: 1px solid var(--ms-border-soft); }
+.ms-doc-row:last-child { border-bottom: 0; }
+.ms-doc-row.is-rejected { background: var(--ms-row-critical); box-shadow: inset 3px 0 0 var(--ms-danger); }
+.ms-doc-row__icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: #fee2e2; color: #b91c1c; font-size: 20px; }
+[data-theme='dark'] .ms-doc-row__icon,
+[data-theme='dark'] .ms-doc-drop__icon { color: #fca5a5; }
+[data-theme='dark'] .ms-doc-row__icon { background: rgba(252, 165, 165, 0.14); }
+.ms-doc-row__body { min-width: 0; }
+.ms-doc-row__title { font-weight: 600; overflow-wrap: anywhere; }
+.ms-doc-row__meta { margin: 2px 0 0; font-size: 12.5px; color: var(--ms-text-subtle); overflow-wrap: anywhere; }
+.ms-doc-row__reason { margin: 4px 0 0; font-size: 13px; color: var(--ms-danger); }
+.ms-doc-row__state { display: grid; justify-items: end; gap: 4px; }
+.ms-doc-row__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.ms-doc-summary { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.ms-doc-picker { list-style: none; margin: 0; padding: 0; max-height: 280px; overflow-y: auto; display: grid; gap: 2px; }
+.ms-doc-picker li { padding: 6px 8px; border-radius: 8px; }
+.ms-doc-picker li:hover { background: var(--ms-surface-hover); }
+.ms-doc-picker__name { font-weight: 500; }
+.ms-doc-picker__name .anticon { color: #b91c1c; }
+.ms-doc-picker__upload { padding: 12px 14px; border: 1px solid var(--ms-border-soft); border-radius: 10px; background: var(--ms-surface-muted); }
+@media (max-width: 767px) {
+  .ms-doc-row { grid-template-columns: auto minmax(0, 1fr); padding: 12px 16px; }
+  .ms-doc-row__state { grid-column: 2; justify-items: start; }
+  .ms-doc-row__actions { grid-column: 2; justify-content: flex-start; }
+}
+
+
+/* Page builder (change log 1.17): the section outline, the "Add section"
+   gallery and the template choice. Colours come from Ant Design's tokens so
+   both themes work. */
+.ms-page-sections { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.ms-page-section { border: 1px solid var(--ant-color-border-secondary, rgba(5, 5, 5, 0.06)); border-radius: 10px; background: var(--ant-color-bg-container, #fff); }
+.ms-page-section.has-errors { border-color: var(--ant-color-error, #ff4d4f); }
+.ms-page-section.is-dragging { position: relative; z-index: 2; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18); }
+.ms-page-section.is-hidden .ms-page-section__bar { opacity: 0.7; }
+.ms-page-section__bar { display: flex; align-items: center; gap: 6px; padding: 6px 8px; min-height: 52px; }
+.ms-page-section__handle { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 36px; border: 0; border-radius: 6px; background: transparent; color: inherit; cursor: grab; flex-shrink: 0; }
+.ms-page-section__handle:hover { background: var(--ant-color-fill-tertiary, rgba(0, 0, 0, 0.04)); }
+.ms-page-section__handle:focus-visible, .ms-page-section__toggle:focus-visible { outline: 2px solid var(--ant-color-primary, #1677ff); outline-offset: 2px; }
+.ms-page-section__handle.is-static { cursor: default; }
+.ms-page-section__toggle { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; border: 0; background: transparent; color: inherit; padding: 6px 4px; text-align: left; cursor: pointer; border-radius: 6px; }
+.ms-page-section__icon { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 8px; background: var(--ant-color-primary-bg, #e6f4ff); color: var(--ant-color-primary, #1677ff); flex-shrink: 0; }
+.ms-page-section__text { display: flex; flex-direction: column; min-width: 0; }
+.ms-page-section__label { font-weight: 600; }
+.ms-page-section__summary { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ms-page-section__tags { display: inline-flex; gap: 4px; flex-shrink: 0; }
+.ms-page-section__actions { display: inline-flex; gap: 2px; flex-shrink: 0; }
+.ms-page-section__body { padding: 4px 16px 16px 48px; border-top: 1px solid var(--ant-color-border-secondary, rgba(5, 5, 5, 0.06)); padding-top: 16px; }
+.ms-page-section__editor { border: 1px solid var(--ant-color-border, #d9d9d9); border-radius: 8px; overflow: hidden; }
+@media (max-width: 640px) {
+  .ms-page-section__bar { flex-wrap: wrap; }
+  .ms-page-section__actions { width: 100%; justify-content: flex-end; }
+  .ms-page-section__body { padding-left: 16px; }
+}
+.ms-section-gallery { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.ms-section-gallery__item { display: flex; gap: 12px; align-items: flex-start; width: 100%; height: 100%; padding: 14px; text-align: left; border: 1px solid var(--ant-color-border-secondary, rgba(5, 5, 5, 0.06)); border-radius: 10px; background: var(--ant-color-bg-container, #fff); color: inherit; cursor: pointer; }
+.ms-section-gallery__item:hover { border-color: var(--ant-color-primary, #1677ff); }
+.ms-section-gallery__item:focus-visible { outline: 2px solid var(--ant-color-primary, #1677ff); outline-offset: 2px; }
+.ms-section-gallery__icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 9px; background: var(--ant-color-primary-bg, #e6f4ff); color: var(--ant-color-primary, #1677ff); font-size: 18px; flex-shrink: 0; }
+.ms-section-gallery__label { display: block; font-weight: 600; }
+.ms-section-gallery__description { display: block; font-size: 13px; opacity: 0.75; margin-top: 2px; }
+.ms-page-templates { border: 0; margin: 0 0 16px; padding: 0; }
+.ms-page-templates legend { font-weight: 600; margin-bottom: 8px; }
+.ms-page-templates__grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.ms-page-templates__option { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--ant-color-border-secondary, rgba(5, 5, 5, 0.06)); border-radius: 10px; cursor: pointer; }
+.ms-page-templates__option.is-selected { border-color: var(--ant-color-primary, #1677ff); box-shadow: 0 0 0 1px var(--ant-color-primary, #1677ff); }
+.ms-page-templates__option input { position: absolute; opacity: 0; pointer-events: none; }
+.ms-page-templates__option:focus-within { outline: 2px solid var(--ant-color-primary, #1677ff); outline-offset: 2px; }
+.ms-page-templates__label { font-weight: 600; }
+.ms-page-templates__description { font-size: 12.5px; opacity: 0.75; }
+.ms-page-help { margin: 0; padding-inline-start: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }

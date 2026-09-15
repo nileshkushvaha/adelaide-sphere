@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+out/
+.next/
+*.tsbuildinfo
+apps/web/next-env.d.ts
+
+# Test output
+coverage/
+
+# Caches and logs
+.cache/
+.turbo/
+.eslintcache
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# Local environment files and credentials (examples stay tracked)
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Local tooling (developer-specific; launch.json is documented but not portable)
+.claude/settings.local.json
+.vercel
+
+# Playwright artefacts (traces and screenshots from failed journeys)
+e2e/test-results/
+e2e/playwright-report/
+e2e/blob-report/
+
+# Local metrics scrape credential (see docs/operations/monitoring.md). Never tracked.
+infrastructure/monitoring/metrics-token

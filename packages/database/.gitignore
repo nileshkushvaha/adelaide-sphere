@@ -1,0 +1,6 @@
+# Generated Prisma Client (recreated by `pnpm generate`)
+/src/generated/
+# Build output
+/dist/
+# Local connection settings (see .env.example)
+/.env

@@ -1,0 +1,19 @@
+{
+  "name": "@adelaide-sphere/load",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Load profile for the SRS NFR 003 capacity target.",
+  "type": "module",
+  "scripts": {
+    "load": "node run-load.mjs",
+    "lint": "echo \"load: no lint config\"",
+    "typecheck": "echo \"load: plain ESM, no types to check\"",
+    "seed": "node seed-load-data.mjs"
+  },
+  "devDependencies": {
+    "autocannon": "8.0.0"
+  },
+  "dependencies": {
+    "@adelaide-sphere/database": "workspace:*"
+  }
+}

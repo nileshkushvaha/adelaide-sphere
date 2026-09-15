@@ -1,0 +1,56 @@
+# Adelaide Sphere — project rules for AI sessions
+
+> **This repository is the Adelaide fork of `melbourne-sphere`** (folder copy, 15 Sep 2026; own git repo to follow). Local infrastructure, ports, database and bucket names are separate so both run side by side. Public branding is Adelaide Sphere with the Australian-flag palette (15 Sep 2026). The timezone is **Australia/Adelaide** (ACST +9:30 / ACDT +10:30) everywhere, including labels, scheduled tasks and date helpers (`apps/api/src/directory/hours/adelaide-time.ts`). Internal package scope is `@adelaide-sphere/*` and the queue `adelaide-sphere`; the local-area seed is Inner Adelaide (108 localities); addresses are validated as South Australian (postcode 5xxx, SA coordinates). Hero and About photographs are Adelaide (Wikimedia Commons, CC BY-SA; see `docs/content/`). Still Melbourne on purpose: the SRS and the demonstration content scripts in `apps/api/scripts/` (businesses, blog, hero slides), which must not be run until rewritten for Adelaide. The Melbourne-only rules below are inherited and are being re-scoped for Adelaide (see `docs/setup-progress.md`, last entries). **Never touch the `melbourne-sphere` Compose project, its `melbourne-sphere-*` containers or `melbourne-sphere_*` volumes, nor anything in `../melbourne-sphere`.**
+
+## Authority
+- `docs/Melbourne_Sphere_Technical_SRS_v1.md` is the product and technical source of truth (Markdown; the Word original is not in the repo). Navigate it with `docs/ai/srs-index.md`; read the complete relevant sections, never a summary in place of them.
+- Melbourne-only for MVP: no multi-city, tenancy or generic city routes (SRS SCP 001–005, UX 003).
+- Never edit the SRS to match the implementation. Document material conflicts or ambiguities in `docs/setup-progress.md` and surface them; explicit user instructions win only when they deliberately change scope.
+- Client decisions D01–D08 (SRS §23) are open: build on the SRS baselines and record that in traceability.
+
+## Architecture (stable)
+- pnpm workspace, one root lockfile and `pnpm-workspace.yaml`; Node 24.19.0 (`.nvmrc`), pnpm 12.3.4 (`packageManager`).
+- `apps/web` Next.js 16 public site (port 4000) — reads domain data only through the API (`API_ORIGIN`, server-only). Public UI: Tailwind v4 + `packages/ui` (shadcn-style). No Refine/antd in public bundles.
+- `apps/api` NestJS 12 REST API under `/api/v1` (port 4001): global prefix, `{data}` / `{data, meta}` / `{error:{code,message,fields,requestId}}` envelopes, DTO allowlists, helmet, request IDs, default-deny guard chain on `/api/v1/admin/*`.
+- `apps/admin` Vite + React 19 + Refine 5 + Ant Design 5 at `/admin/` (port 4002), cookie-session auth; the UI never authorises anything.
+- `e2e` Playwright UAT journeys, `tools/load` capacity seeder and profile, `infrastructure/backup` backup and restore-drill scripts.
+- `packages/database` Prisma 7 + MySQL 8.4 (`utf8mb4_unicode_ci`, plural snake_case tables, reviewed migrations); `packages/contracts` OpenAPI JSON + generated types; `packages/ui` public design system. Redis 8 for throttling/cache/BullMQ (worker app still to come); S3-compatible object storage for media (Phase 20).
+- Local infrastructure: Docker Compose project `adelaide-sphere` (Colima) — MySQL `127.0.0.1:3317` (`adelaide_sphere_dev` / `_dev_shadow` / `_test`, user `adelaide_sphere`), Redis `127.0.0.1:6390`, Adminer `127.0.0.1:8092`, MinIO `127.0.0.1:9020` (console 9021; buckets `adelaide-sphere-media` / `-quarantine`), Mailpit SMTP `1035`, inbox http://127.0.0.1:8035. **Melbourne Sphere's stack (3000–3002, 3307, 6380, 8082, 9010/9011, 1025/8025) and Homebrew MySQL on 3306 are unrelated: never read, restart or modify them, nor any `docker-*` container from other projects.**
+
+## Engineering rules
+- Production-grade, secure by default; backend-enforced authorization on every admin route (`@RequirePermissions`); no fake auth, placeholder CRUD, mock data or silent fallbacks.
+- No credentials in tracked files: real env files are git-ignored, `*.example` files hold placeholders only; never print secrets; scan trackable files after configuration changes. `DATABASE_ALLOW_PUBLIC_KEY_RETRIEVAL=true` is local-only; production DB connectivity uses verified TLS.
+- No destructive database resets or volume deletion on retained data without explicit authorization. Schema changes go through reviewed Prisma migrations (`pnpm db:migrations:check` must pass; destructive statements need a `-- reviewed:` note).
+- Do not touch unrelated services, containers, databases or applications. Leave user-started processes running (e.g. the API watch on 4001); stop only servers you started.
+- Explicit validation everywhere (400 with field errors), bounded collections (`pageSize ≤ 50`, allowlisted sort keys), `expectedVersion` on updates (409 `STALE_VERSION`), explicit state actions, audit log for admin mutations.
+- Meaningful tests: unit for rules, integration against the real `adelaide_sphere_test` MySQL/Redis for constraints, permissions, failure paths and stale edits; admin/web tests for real behaviour. Never weaken a test to pass.
+- Accessibility (WCAG 2.2 AA, NFR 006/011) and SEO (SEO 001–007) are delivery obligations of public work, not polish.
+- No `git commit`, `push`, `tag`, `branch` or PR without the user's separate authorization. Do not discard user changes.
+- The Next.js scaffold's `apps/web/AGENTS.md` (imported by `apps/web/CLAUDE.md`) is regenerated by `next dev`; it only points at the pinned Next.js docs in `node_modules/next/dist/docs/`.
+
+## Canonical commands (root `package.json`)
+```bash
+pnpm install --frozen-lockfile
+pnpm infra:up | infra:status | infra:down          # Compose MySQL/Redis (down keeps data)
+pnpm dev:api | dev:admin | dev:web                 # 4001 / 4002 / 4000
+pnpm lint            pnpm typecheck                # all workspaces
+pnpm test            pnpm test:e2e                 # unit (db + api + admin + web) / API e2e, no DB
+pnpm test:integration                              # db + api suites against the local infra
+pnpm --filter api test:integration                 # API integration only
+pnpm build           pnpm contracts:generate | contracts:check
+pnpm db:migrate:status | db:migrate:dev | db:migrate:deploy | db:migrations:check | db:build
+pnpm check           # phase gate: db build, migration lint, lint, typecheck, unit, e2e, build, bundle budget, contracts
+pnpm --filter @adelaide-sphere/e2e test          # Playwright UAT journeys (needs the stack running)
+node tools/load/run-load.mjs --api --duration 60  # NFR 003 capacity profile (seed a *_load database first)
+```
+Focused runs: `pnpm --filter api exec vitest run src/<dir>`, `pnpm --filter api exec vitest run --config ./vitest.config.integration.ts test/<file>`, `pnpm --filter admin exec vitest run src/<path>`, `pnpm --filter web exec vitest run`.
+
+## Efficient working protocol
+1. Read this file, then `docs/ai/current-state.md` (compact handoff: phase, versions, running services, next actions).
+2. Read only the SRS sections the active phase needs, via `docs/ai/srs-index.md`.
+3. Inspect only the packages you will change; do not sweep the repository or re-read archived history (`docs/history/`).
+4. Reuse recorded dependency decisions (current-state "Dependency decisions"); research only new/upgraded/broken dependencies, from official sources.
+5. **Do not run test suites. At all, unless the user asks for it in this session.** Not while iterating, not "once at the end", not `pnpm test`, `pnpm check`, `pnpm test:integration` or a single focused `vitest run`. Verify by reading the code and with `tsc --noEmit` and `eslint`, which are cheap, plus runtime checks in the browser. The suites take minutes each and running them without being asked wastes the user's time; they have said so repeatedly. If you believe a suite needs running, say so in one line and let the user decide.
+6. Verify at runtime (curl/browser) including failure paths, permissions and 320 px layout for public pages; never type real credentials into the browser — use the reset-link flow with a temporary value and rotate it afterwards.
+7. At the gate: update `docs/ai/current-state.md` (overwrite, keep it current), `docs/requirements-traceability.md`, add a concise phase record to `docs/setup-progress.md`, update READMEs touched by the phase.
+8. Continue to the next phase from the roadmap in `docs/setup-progress.md` unless genuinely blocked (missing secret/account/business decision, destructive step, material SRS ambiguity, unavailable dependency). Keep phase reports under ~500 words; put durable detail in docs, not chat.

@@ -1,0 +1,30 @@
+# Local scrape configuration. host.docker.internal reaches the API and worker
+# running on the host; in a deployed environment these become the service
+# addresses, and METRICS_TOKEN is supplied as a bearer token instead of relying
+# on loopback.
+global:
+  scrape_interval: 15s
+  scrape_timeout: 10s
+
+# The token is read from a file mounted into the container; it is never inlined
+# here, because this file is tracked. A scraper on a different host or in a
+# different container is not on the API's loopback interface, so the token is
+# what makes the scrape possible at all — without it the endpoint answers 404.
+scrape_configs:
+  - job_name: adelaide-sphere-api
+    metrics_path: /metrics
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/metrics-token
+    static_configs:
+      # Prometheus does not expand environment variables in this file; edit the
+      # targets for the environment you are scraping.
+      - targets: ['host.docker.internal:3011']
+
+  - job_name: adelaide-sphere-worker
+    metrics_path: /metrics
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/metrics-token
+    static_configs:
+      - targets: ['host.docker.internal:9464', 'host.docker.internal:9465']

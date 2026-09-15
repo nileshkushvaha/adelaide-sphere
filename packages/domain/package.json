@@ -1,0 +1,62 @@
+{
+  "name": "@adelaide-sphere/domain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Domain rules shared by the API and the worker (SRS ARC 002: share the service, never copy the invariant).",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./alerts": {
+      "types": "./dist/alerts.d.ts",
+      "default": "./dist/alerts.js"
+    },
+    "./embeds": {
+      "types": "./dist/embeds.d.ts",
+      "default": "./dist/embeds.js"
+    },
+    "./pricing": {
+      "types": "./dist/pricing.d.ts",
+      "default": "./dist/pricing.js"
+    },
+    "./menus": {
+      "types": "./dist/menus.d.ts",
+      "default": "./dist/menus.js"
+    },
+    "./page-sections": {
+      "types": "./dist/page-sections.d.ts",
+      "default": "./dist/page-sections.js"
+    },
+    "./posts": {
+      "types": "./dist/posts.d.ts",
+      "default": "./dist/posts.js"
+    },
+    "./seo-routes": {
+      "types": "./dist/seo-routes.d.ts",
+      "default": "./dist/seo-routes.js"
+    },
+    "./service-icons": {
+      "types": "./dist/service-icons.d.ts",
+      "default": "./dist/service-icons.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "oxlint src",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "oxlint": "^1.58.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.2"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ]
+}

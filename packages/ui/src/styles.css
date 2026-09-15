@@ -1,0 +1,227 @@
+/*
+ * Adelaide Sphere public palette: the Australian flag — Commonwealth blue,
+ * red and white. White cards and cool light surfaces carry most content. Deep
+ * flag-blue bands frame the hero and footer; flag red marks secondary accents
+ * and selections. (The `sky-*` tokens are the blues and `teal-*`/`gold-*` the
+ * reds; the names are kept so existing classes need no change.)
+ * Contrast, including translucent surfaces, is guarded by palette.test.ts.
+ */
+:root {
+  /* Brand */
+  --ms-navy-950: #000f36;
+  --ms-navy-900: #01184d;
+  --ms-navy-800: #0a2a6e;
+  --ms-navy-700: #1c3f8a;
+  --ms-sky-700: #0b3aa4;
+  --ms-sky-600: #012169;
+  --ms-sky-500: #4d7ee8;
+  --ms-sky-400: #a9c1f7;
+  --ms-sky-100: #e5ebf8;
+  --ms-sky-50: #f3f6fc;
+  --ms-teal-700: #c8102e;
+  --ms-teal-100: #fdecee;
+  /* Legacy accent names retained for existing consumers. */
+  --ms-gold-500: #c8102e;
+  --ms-gold-100: #fdecee;
+
+  /* Light surfaces: white cards on pale blue-grey backgrounds. */
+  --ms-surface: #ffffff;
+  --ms-surface-muted: #f5f7fb;
+  --ms-surface-raised: #ffffff;
+  --ms-surface-sunken: #e9eef7;
+  --ms-border: #d4dcea;
+  --ms-border-strong: #a3b1cb;
+  --ms-text: #0b1d42;
+  --ms-text-muted: #4a5876;
+  --ms-text-inverse: #ffffff;
+  --ms-link: #0b3aa4;
+
+  /* Dark bands (hero, call to action, footer). These
+     never follow a colour scheme: they are a fixed part of the composition. */
+  --ms-band: #012169;
+  --ms-band-deep: #001a55;
+  --ms-band-raised: #13307a;
+  --ms-band-text: #ffffff;
+  --ms-band-muted: #c8d3ec;
+  --ms-band-border: #41558e;
+  --ms-band-link: #a9c1f7;
+
+  /* The hero search panel sits on photography, so it keeps its own light
+     colours whatever the image looks like (#0b1d42 on #ffffff). */
+  --ms-panel: #ffffff;
+  --ms-panel-muted: #eef2f9;
+  --ms-panel-text: #0b1d42;
+  --ms-panel-text-muted: #4a5876;
+  --ms-panel-border: #d4dcea;
+  --ms-hero-text: #e2e8f6;
+
+  --ms-focus: #0b3aa4;
+  --ms-success: #15803d;
+  --ms-warning: #b45309;
+  --ms-danger: #b91c1c;
+
+  /* Shape and elevation: restrained, so cards read as editorial rather than
+     as dashboard widgets. */
+  --ms-radius-sm: 0.5rem;
+  --ms-radius: 1rem;
+  --ms-radius-lg: 1.5rem;
+  --ms-radius-pill: 999px;
+  --ms-shadow-sm: 0 1px 2px rgba(1, 20, 60, 0.05), 0 8px 24px -20px rgba(1, 20, 60, 0.25);
+  --ms-shadow-md: 0 22px 50px -30px rgba(1, 20, 60, 0.48);
+  --ms-shadow-lg: 0 38px 90px -38px rgba(1, 20, 60, 0.62);
+
+  /* Layout rhythm: wide section composition, readable text measure. */
+  --ms-content: 1520px;
+  --ms-content-tight: 1120px;
+  /* The reading column of a long editorial body. An article's words are set in
+     this measure while its media may use the tighter *section* width above, so
+     the picture is wider than the text it belongs to. */
+  --ms-content-read: 46rem;
+  --ms-content-prose: 68ch;
+  --ms-gutter: clamp(1rem, 4vw, 3.5rem);
+  --ms-section-space: clamp(3.25rem, 6vw, 6rem);
+
+  /* Motion timing shared by the hero rotation and hover transitions. */
+  --ms-motion-fast: 150ms;
+  --ms-motion-base: 300ms;
+  --ms-motion-slow: 700ms;
+
+  /* Premium glass surfaces: reserved for overlays and information panels. */
+  --ms-glass-light: rgba(255, 255, 255, 0.78);
+  /* Preserve muted-text contrast even when dark glass sits over white. */
+  --ms-glass-dark: rgba(1, 26, 85, 0.9);
+  --ms-glass-border-light: rgba(255, 255, 255, 0.72);
+  --ms-glass-border-dark: rgba(169, 193, 247, 0.2);
+}
+
+@theme inline {
+  --color-navy-950: var(--ms-navy-950);
+  --color-navy-900: var(--ms-navy-900);
+  --color-navy-800: var(--ms-navy-800);
+  --color-navy-700: var(--ms-navy-700);
+  --color-sky-700: var(--ms-sky-700);
+  --color-sky-600: var(--ms-sky-600);
+  --color-sky-500: var(--ms-sky-500);
+  --color-sky-400: var(--ms-sky-400);
+  --color-sky-100: var(--ms-sky-100);
+  --color-sky-50: var(--ms-sky-50);
+  --color-teal-700: var(--ms-teal-700);
+  --color-teal-100: var(--ms-teal-100);
+  --color-gold-500: var(--ms-gold-500);
+  --color-gold-100: var(--ms-gold-100);
+  --color-surface: var(--ms-surface);
+  --color-surface-muted: var(--ms-surface-muted);
+  --color-surface-raised: var(--ms-surface-raised);
+  --color-surface-sunken: var(--ms-surface-sunken);
+  --color-border-strong: var(--ms-border-strong);
+  --color-border: var(--ms-border);
+  --color-text: var(--ms-text);
+  --color-text-muted: var(--ms-text-muted);
+  --color-text-inverse: var(--ms-text-inverse);
+  --color-band: var(--ms-band);
+  --color-band-deep: var(--ms-band-deep);
+  --color-band-raised: var(--ms-band-raised);
+  --color-band-text: var(--ms-band-text);
+  --color-band-muted: var(--ms-band-muted);
+  --color-band-border: var(--ms-band-border);
+  --color-band-link: var(--ms-band-link);
+  --color-panel: var(--ms-panel);
+  --color-panel-muted: var(--ms-panel-muted);
+  --color-panel-text: var(--ms-panel-text);
+  --color-panel-text-muted: var(--ms-panel-text-muted);
+  --color-panel-border: var(--ms-panel-border);
+  --color-link: var(--ms-link);
+  --color-hero-text: var(--ms-hero-text);
+  --color-focus: var(--ms-focus);
+  --color-success: var(--ms-success);
+  --color-warning: var(--ms-warning);
+  --color-danger: var(--ms-danger);
+  --radius-card: var(--ms-radius);
+  --radius-card-lg: var(--ms-radius-lg);
+  --shadow-sm: var(--ms-shadow-sm);
+  --shadow-md: var(--ms-shadow-md);
+  --shadow-lg: var(--ms-shadow-lg);
+}
+
+/*
+ * Layout primitives. Sections are full-bleed; only their inner container is
+ * bounded, so a wide screen gets a wide composition instead of one narrow
+ * column (the container itself never constrains a paragraph — `.ms-prose` and
+ * `max-w-*` on text blocks keep the reading measure sensible).
+ */
+.ms-container {
+  width: 100%;
+  max-width: var(--ms-content);
+  margin-inline: auto;
+  padding-inline: var(--ms-gutter);
+}
+
+.ms-container-tight {
+  width: 100%;
+  max-width: var(--ms-content-tight);
+  margin-inline: auto;
+  padding-inline: var(--ms-gutter);
+}
+
+/* The reading column: narrower than a section, so a paragraph never runs the
+   width of a desktop screen (SRS NFR 006 readability). */
+.ms-container-read {
+  width: 100%;
+  /* The *content box* is the reading measure, so the gutter is added on top of
+     it rather than eaten out of it. */
+  max-width: calc(var(--ms-content-read) + 2 * var(--ms-gutter));
+  margin-inline: auto;
+  padding-inline: var(--ms-gutter);
+}
+
+.ms-section {
+  padding-block: var(--ms-section-space);
+}
+
+/* Visible focus for every interactive element (SRS NFR 011). */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--ms-focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* On a dark band a light sky ring keeps the
+   3:1 non-text contrast the focus indicator needs. */
+.ms-on-dark :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline-color: var(--ms-sky-400);
+}
+
+.ms-skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -100px;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  background: var(--ms-navy-900);
+  color: var(--ms-text-inverse);
+  border-radius: var(--ms-radius-sm);
+  font-weight: 600;
+}
+.ms-skip-link:focus {
+  top: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * Service alert region above the header (SRS 1.2 ALRT 004). It carries no
+ * height of its own: an alert supplies its own padding, and the region exists so
+ * the alerts share one landmark rather than each becoming a separate one.
+ */
+.ms-alert-region {
+  display: flex;
+  flex-direction: column;
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@adelaide-sphere/contracts",
+  "version": "0.0.1",
+  "private": true,
+  "description": "OpenAPI document and generated TypeScript contracts for the Adelaide Sphere API (no persistence models).",
+  "type": "module",
+  "exports": {
+    ".": { "types": "./src/api.d.ts" },
+    "./openapi.json": "./openapi/api.json"
+  },
+  "scripts": {
+    "generate": "openapi-typescript openapi/api.json -o src/api.d.ts",
+    "check": "openapi-typescript openapi/api.json -o src/api.generated.check.d.ts && cmp -s src/api.d.ts src/api.generated.check.d.ts; status=$?; rm -f src/api.generated.check.d.ts; exit $status",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3"
+  }
+}

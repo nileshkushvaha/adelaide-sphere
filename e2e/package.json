@@ -1,0 +1,22 @@
+{
+  "name": "@adelaide-sphere/e2e",
+  "version": "0.0.1",
+  "private": true,
+  "description": "End-to-end journeys for the SRS QA 003 acceptance flows.",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "install:browsers": "playwright install chromium",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "echo \"e2e: no lint config\""
+  },
+  "devDependencies": {
+    "@adelaide-sphere/database": "workspace:*",
+    "@node-rs/argon2": "2.2.0",
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.13.3",
+    "axe-core": "4.13.0",
+    "typescript": "5.9.3"
+  }
+}

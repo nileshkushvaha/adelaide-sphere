@@ -1,0 +1,42 @@
+# Production-shaped reverse proxy in front of the built web, API and admin
+# applications. Not started by `pnpm infra:up`; behind a profile so it can never
+# come up by accident.
+#
+#   MS_WEB_UPSTREAM=host.docker.internal:3210 \
+#   MS_API_UPSTREAM=host.docker.internal:4001 \
+#   MS_ADMIN_UPSTREAM=host.docker.internal:3211 \
+#   docker compose -f infrastructure/edge/docker-compose.edge.yml --profile edge up -d
+#
+# The not-found document is mounted read-only from the web build, so it is the
+# artefact the application itself produced and cannot drift from it.
+
+# Its own project name: `docker compose down` here must never be able to remove a
+# network or container belonging to the main `adelaide-sphere` project.
+name: adelaide-sphere-edge
+
+services:
+  edge:
+    profiles: ['edge']
+    image: nginx:1.29.4-alpine
+    container_name: adelaide-sphere-edge
+    restart: unless-stopped
+    environment:
+      MS_WEB_UPSTREAM: ${MS_WEB_UPSTREAM:-host.docker.internal:4000}
+      MS_API_UPSTREAM: ${MS_API_UPSTREAM:-host.docker.internal:4001}
+      MS_ADMIN_UPSTREAM: ${MS_ADMIN_UPSTREAM:-host.docker.internal:4002}
+    volumes:
+      - ../../infrastructure/edge/nginx.conf:/etc/nginx/templates/nginx.conf.template:ro
+      - ../../apps/web/.next/server/app/_not-found.html:/usr/share/nginx/not-found/_not-found.html:ro
+    command: >-
+      /bin/sh -c "envsubst '$$MS_WEB_UPSTREAM $$MS_API_UPSTREAM $$MS_ADMIN_UPSTREAM'
+      < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf
+      && exec nginx -g 'daemon off;'"
+    ports:
+      - "127.0.0.1:${EDGE_HOST_PORT:-8090}:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1/api/v1/health']
+      interval: 15s
+      timeout: 5s
+      retries: 5

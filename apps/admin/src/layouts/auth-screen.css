@@ -1,0 +1,285 @@
+/*
+ * The signed-out frame (AuthScreen): a deep navy gradient lit by three soft
+ * glows, with the form on a frosted-glass card.
+ *
+ * Contrast is designed, not hoped for. Text on the gradient is white or
+ * #a9bbdd (at least 7:1 on the darkest and lightest parts of the ground). The
+ * card is 95% white before the blur, so the form's text reads at the same
+ * contrast as on plain white; where `backdrop-filter` is unsupported the card is
+ * simply solid white. The primary button carries the brand gradient from the
+ * global stylesheet.
+ */
+
+.ms-auth {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  isolation: isolate;
+  color: #e6eef8;
+  background:
+    radial-gradient(1100px 720px at 10% 6%, rgba(143, 176, 255, 0.26), transparent 62%),
+    radial-gradient(900px 720px at 92% 96%, rgba(228, 0, 43, 0.22), transparent 60%),
+    radial-gradient(760px 520px at 78% 12%, rgba(99, 102, 241, 0.2), transparent 60%),
+    linear-gradient(155deg, #012169 0%, #011a52 46%, #000f36 100%);
+}
+
+/* A faint dot grid, fading out towards the edges: texture, not content. */
+.ms-auth::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 20%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 20%, transparent 75%);
+}
+
+/* Two slow-moving orbs give the glass something to blur. */
+.ms-auth-orb {
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: ms-auth-drift 22s ease-in-out infinite alternate;
+}
+.ms-auth-orb--sky {
+  width: 420px;
+  height: 420px;
+  top: 12%;
+  right: 18%;
+  background: radial-gradient(circle, #4d7ee8 0%, rgba(77, 126, 232, 0) 70%);
+}
+.ms-auth-orb--teal {
+  width: 360px;
+  height: 360px;
+  bottom: 6%;
+  left: 38%;
+  background: radial-gradient(circle, #e4002b 0%, rgba(228, 0, 43, 0) 70%);
+  animation-duration: 28s;
+  animation-direction: alternate-reverse;
+}
+@keyframes ms-auth-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-40px, 30px, 0) scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ms-auth-orb { animation: none; }
+}
+
+.ms-auth-inner {
+  position: relative;
+  max-width: 1180px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 28px 16px 32px;
+  display: grid;
+  align-content: center;
+  gap: 24px;
+}
+@media (min-width: 992px) {
+  .ms-auth-inner {
+    padding: 48px 48px;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    align-items: center;
+    gap: 72px;
+  }
+}
+
+/* The form comes first in the document, so a screen reader and the first Tab
+   reach it straight away; visually the brand panel is drawn first — to the left
+   on a wide screen, above the card on a phone. It holds nothing focusable, so
+   the focus order is unaffected. */
+.ms-auth-intro { order: -1; }
+
+/* ---- brand panel -------------------------------------------------------- */
+
+.ms-auth-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.ms-auth-headline {
+  margin: 0;
+  font-size: clamp(28px, 3.2vw, 40px);
+  line-height: 1.15;
+  font-weight: 680;
+  letter-spacing: -0.025em;
+  color: #ffffff;
+}
+/* Gradient text degrades to the solid white above where clipping is missing. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .ms-auth-headline span {
+    background: linear-gradient(92deg, #ffffff 0%, #c9d7fb 55%, #ffb8c2 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+.ms-auth-lede {
+  margin: 0;
+  max-width: 480px;
+  font-size: 15.5px;
+  line-height: 1.65;
+  color: #a9bbdd;
+}
+.ms-auth-features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  max-width: 480px;
+}
+.ms-auth-feature {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: #e6eef8;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.ms-auth-feature-icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(11, 58, 164, 0.95), rgba(200, 16, 46, 0.95));
+  box-shadow: 0 6px 16px -6px rgba(11, 58, 164, 0.7);
+}
+.ms-auth-footnote {
+  margin: 0;
+  font-size: 12.5px;
+  color: #a9bbdd;
+}
+
+/* On a phone the panel is only the brand and one line: nothing in it is needed
+   to sign in, and the form should be on the first screen. */
+@media (max-width: 991px) {
+  .ms-auth-intro { gap: 10px; }
+  .ms-auth-lede,
+  .ms-auth-features,
+  .ms-auth-intro .ms-auth-footnote { display: none; }
+  .ms-auth-headline { font-size: 20px; }
+  .ms-auth-inner { align-content: start; padding-top: 32px; }
+}
+
+/* ---- glass card --------------------------------------------------------- */
+
+.ms-auth-card-wrap {
+  width: 100%;
+  max-width: 440px;
+  justify-self: center;
+}
+@media (min-width: 992px) {
+  .ms-auth-card-wrap { justify-self: end; }
+}
+.ms-auth-card {
+  position: relative;
+  padding: 34px 32px 28px;
+  border-radius: 22px;
+  color: var(--ms-text, #0f172a);
+  background: var(--ms-surface-raised, #ffffff);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 40px 90px -30px rgba(2, 8, 23, 0.75),
+    0 12px 32px -12px rgba(2, 8, 23, 0.45);
+}
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .ms-auth-card {
+    background: rgba(255, 255, 255, 0.95);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    backdrop-filter: blur(24px) saturate(160%);
+  }
+  /* The dark theme's glass is the dark card colour at the same opacity, so the
+     form reads exactly as it does on a dark card. */
+  [data-theme='dark'] .ms-auth-card {
+    background: rgba(17, 26, 43, 0.9);
+  }
+}
+[data-theme='dark'] .ms-auth-card {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+/* A thin gradient rule along the top edge ties the card to the ground behind. */
+.ms-auth-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 18px auto;
+  height: 3px;
+  border-radius: 0 0 4px 4px;
+  background: linear-gradient(90deg, #012169, #0b3aa4 55%, #c8102e);
+}
+@media (max-width: 575px) {
+  .ms-auth-card { padding: 26px 20px 22px; border-radius: 18px; }
+}
+
+.ms-auth-title {
+  margin: 0 0 6px;
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  color: var(--ms-text, #0f172a);
+}
+.ms-auth-description {
+  margin: 0 0 24px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ms-text-muted, #475569);
+}
+
+/* The gradient itself is the global primary-button rule (styles/global.css);
+   on these screens the button is only taller. */
+.ms-auth-card .ant-btn.ant-btn-primary {
+  height: 46px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.ms-auth-card .ant-input-affix-wrapper,
+.ms-auth-card .ant-input {
+  border-radius: 10px;
+}
+
+.ms-auth-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--ms-warning, #92400e);
+}
+
+.ms-auth-secondary {
+  margin: 18px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  font-size: 14px;
+}
+
+.ms-auth-below {
+  margin: 18px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #a9bbdd;
+  text-align: center;
+}
+.ms-auth-below .anticon {
+  margin-right: 6px;
+}

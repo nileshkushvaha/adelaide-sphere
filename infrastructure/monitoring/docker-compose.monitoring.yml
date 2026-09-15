@@ -1,0 +1,73 @@
+# Optional local monitoring stack (post-audit remediation).
+#
+# Not started by `pnpm infra:up`. It is a separate file behind a profile, so it
+# can never be brought up by accident. Relative volume paths resolve against the
+# FIRST compose file's directory, so always pass infrastructure/docker-compose.yml
+# first, exactly as below:
+#
+#   docker compose -f infrastructure/docker-compose.yml \
+#                  -f infrastructure/monitoring/docker-compose.monitoring.yml \
+#                  --profile monitoring up -d
+#
+# Ports are published on 127.0.0.1 only, and chosen to avoid the ports already
+# used by this project (3317 MySQL, 6390 Redis, 8092 Adminer, 9000/9001 MinIO,
+# 8035/1035 Mailpit) and by anything on the host's usual 4000-4002.
+# Images are pinned; bump deliberately. Credentials are placeholders and belong
+# in infrastructure/.env, which is git-ignored.
+
+name: adelaide-sphere
+
+services:
+  prometheus:
+    profiles: ['monitoring']
+    image: prom/prometheus:v3.6.0
+    container_name: adelaide-sphere-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+      - --web.listen-address=0.0.0.0:9090
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      # Read-only, mode 0600 on the host, git-ignored. Prometheus reads it at
+      # scrape time; it is never written into the configuration file.
+      - ./monitoring/metrics-token:/etc/prometheus/metrics-token:ro
+      - prometheus-data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:${PROMETHEUS_HOST_PORT:-9490}:9090"
+    healthcheck:
+      test: ['CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:9090/-/healthy']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  grafana:
+    profiles: ['monitoring']
+    image: grafana/grafana-oss:12.2.0
+    container_name: adelaide-sphere-grafana
+    restart: unless-stopped
+    environment:
+      # Placeholder: change it in infrastructure/.env before using this locally.
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-change-me-locally}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+    volumes:
+      - ./monitoring/grafana-datasource.yml:/etc/grafana/provisioning/datasources/prometheus.yml:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:${GRAFANA_HOST_PORT:-9501}:3000"
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget --spider -q http://127.0.0.1:3000/api/health || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  prometheus-data:
+  grafana-data:

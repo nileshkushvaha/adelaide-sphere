@@ -1,0 +1,39 @@
+{
+  "name": "@adelaide-sphere/database",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Prisma schema, migrations and backend-only database client for Adelaide Sphere. Never import from browser code.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "generate": "prisma generate",
+    "validate": "prisma validate",
+    "build": "prisma generate && tsc -p tsconfig.build.json",
+    "typecheck": "prisma generate && tsc --noEmit -p tsconfig.json",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:status": "prisma migrate status",
+    "migrate:deploy": "prisma migrate deploy",
+    "introspect": "prisma db pull --print",
+    "test": "vitest run",
+    "test:integration": "vitest run --config ./vitest.config.integration.ts",
+    "migrations:check": "node scripts/check-migrations.mjs"
+  },
+  "dependencies": {
+    "@prisma/adapter-mariadb": "7.10.0",
+    "@prisma/client": "7.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "prisma": "7.10.0",
+    "typescript": "6.0.3",
+    "vitest": "^4.1.2"
+  }
+}
