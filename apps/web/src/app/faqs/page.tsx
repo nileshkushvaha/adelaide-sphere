@@ -13,6 +13,9 @@ import { contactChannelFrom, faqRichResultsEnabled } from '@/lib/site';
 import { faqPageJsonLd } from '@/lib/structured-data';
 
 /** The page's own metadata, with any administrator overrides applied (SEO 001). */
+/** Rendered per request (data cached per fetch) so builds never depend on a live API (SRS CACHE 001). */
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata(): Promise<Metadata> {
   return routeMetadata(
     'faqs',

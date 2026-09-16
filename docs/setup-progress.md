@@ -2392,4 +2392,8 @@ Fixes for three findings from the production-readiness audit of the same day.
   - Second run, all green with none skipped:
     - `pnpm test`: database 27, API 333, admin 338, web 256, domain 95, mail 38, worker 51.
     - `pnpm test:integration`: database 5, API 316.
-  - Not run: the Playwright browser suite and `pnpm test:e2e`.
+  - `pnpm test:e2e`: 20 passed.
+  - `pnpm build` first failed: `/faqs` was prerendered at build time and throws when the API is unreachable, so every build without a live API failed, including the CI build job.
+    - This predates today's changes.
+    - `/faqs` is now `force-dynamic`, like home, contact and about, and the web app builds with no API running.
+  - `pnpm test:browser`: 75 passed, 0 failed, 0 skipped.
