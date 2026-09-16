@@ -33,8 +33,8 @@ export async function SiteHeader() {
   return (
     <>
       {topBar && (
-        <div aria-label="Contact details" className={`ms-on-dark border-b border-white/10 bg-band-deep text-band-text ${contactDetails ? '' : 'hidden md:block'}`}>
-          <div className="ms-container flex flex-wrap items-center justify-between gap-x-6 gap-y-1 py-1 text-xs">
+        <div aria-label="Contact details" className={`as-on-dark border-b border-white/10 bg-band-deep text-band-text ${contactDetails ? '' : 'hidden md:block'}`}>
+          <div className="as-container flex flex-wrap items-center justify-between gap-x-6 gap-y-1 py-1 text-xs">
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
               {phone && (
                 <a href={phone.telHref} className="inline-flex min-h-9 items-center gap-1.5 text-band-muted transition-colors hover:text-white">
@@ -56,8 +56,8 @@ export async function SiteHeader() {
           </div>
         </div>
       )}
-      <header className="ms-site-header sticky top-0 z-40 border-b border-border bg-surface text-text shadow-sm">
-        <div className="ms-container flex items-center py-3.5">
+      <header className="as-site-header sticky top-0 z-40 border-b border-border bg-surface text-text shadow-sm">
+        <div className="as-container flex items-center py-3.5">
           <Link href="/" className="flex shrink-0 items-center gap-2.5 rounded-lg py-1 text-text">
               <span className={settings.branding.logo ? "block w-[230px] max-w-full sm:w-[280px]" : "relative block aspect-[7.5/1] w-[230px] max-w-full overflow-hidden sm:w-[280px]"}>
               <Image

@@ -98,7 +98,7 @@ export function PermissionCatalogPage() {
           <PageLoader label="Loading the catalogue…" />
         ) : (
           <Table<PermissionCatalogEntry>
-            className="ms-scroll-table"
+            className="as-scroll-table"
             scroll={{ x: 560 }}
             rowKey="key"
             dataSource={rows}

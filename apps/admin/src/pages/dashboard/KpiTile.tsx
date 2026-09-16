@@ -34,13 +34,13 @@ function changeText({ current, previous }: { current: number; previous: number }
 }
 
 /** A headline figure (dataviz stat tile): label, value, change and an optional sparkline. */
-export function KpiTile({ label, value, icon, href, detail, change, trend, color = 'var(--ms-series-1)', accent = 'sky' }: Props) {
+export function KpiTile({ label, value, icon, href, detail, change, trend, color = 'var(--as-series-1)', accent = 'sky' }: Props) {
   const delta = change ? changeText(change) : null;
   const body = (
-    <Card className={`ms-kpi-tile ms-accent-${accent}`} style={{ height: '100%' }} styles={{ body: { padding: 18, display: 'flex', flexDirection: 'column', gap: 10, height: '100%', position: 'relative' } }}>
+    <Card className={`as-kpi-tile as-accent-${accent}`} style={{ height: '100%' }} styles={{ body: { padding: 18, display: 'flex', flexDirection: 'column', gap: 10, height: '100%', position: 'relative' } }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {icon && (
-          <span aria-hidden="true" className="ms-kpi-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 11, fontSize: 16 }}>
+          <span aria-hidden="true" className="as-kpi-icon" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: 11, fontSize: 16 }}>
             {icon}
           </span>
         )}
@@ -65,7 +65,7 @@ export function KpiTile({ label, value, icon, href, detail, change, trend, color
     </Card>
   );
   return href ? (
-    <Link to={href} className="ms-card-link" style={{ display: 'block', height: '100%', color: 'inherit' }}>
+    <Link to={href} className="as-card-link" style={{ display: 'block', height: '100%', color: 'inherit' }}>
       {body}
     </Link>
   ) : (

@@ -21,12 +21,12 @@ describe('serialiseJsonLd', () => {
 describe('localBusinessJsonLd', () => {
   const base = {
     id: 'b1',
-    name: 'Little Collins Espresso',
-    slug: 'little-collins-espresso',
+    name: 'Peel Street Espresso',
+    slug: 'peel-street-espresso',
     description: 'A neighbourhood espresso bar.',
     primaryCategory: { name: 'Cafes', slug: 'cafes' },
     secondaryCategories: [],
-    localArea: { name: 'Melbourne CBD', slug: 'melbourne-cbd' },
+    localArea: { name: 'Adelaide CBD', slug: 'adelaide-cbd' },
     rating: null,
     image: null,
     gallery: [],
@@ -40,7 +40,7 @@ describe('localBusinessJsonLd', () => {
     const { localBusinessJsonLd } = await load();
     const data = localBusinessJsonLd(base as never);
     expect(data['@type']).toBe('CafeOrCoffeeShop');
-    expect(data.url).toBe('https://adelaidesphere.example/business/little-collins-espresso');
+    expect(data.url).toBe('https://adelaidesphere.example/business/peel-street-espresso');
     expect(data).not.toHaveProperty('address');
     expect(data).not.toHaveProperty('geo');
     expect(data).not.toHaveProperty('telephone');

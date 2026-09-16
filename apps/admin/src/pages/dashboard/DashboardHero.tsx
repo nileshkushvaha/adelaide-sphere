@@ -22,17 +22,17 @@ export function DashboardHero({ data }: { data: Dashboard }) {
   ];
 
   return (
-    <section aria-labelledby="dashboard-hero-title" className="ms-dash-hero">
-      <p className="ms-dash-hero__eyebrow">Directory overview</p>
-      <h2 id="dashboard-hero-title" className="ms-dash-hero__title">
+    <section aria-labelledby="dashboard-hero-title" className="as-dash-hero">
+      <p className="as-dash-hero__eyebrow">Directory overview</p>
+      <h2 id="dashboard-hero-title" className="as-dash-hero__title">
         {waiting > 0 ? `${count.format(waiting)} ${waiting === 1 ? 'item needs' : 'items need'} a decision` : 'Everything is up to date'}
       </h2>
-      <p className="ms-dash-hero__lead">
+      <p className="as-dash-hero__lead">
         {waiting > 0 ? 'Moderation, reports and enquiry delivery come first; the figures below show how the directory is moving.' : `No reviews, comments, reports or enquiries are waiting. Here is how the last ${days} days went.`}
       </p>
-      <dl className="ms-dash-hero__stats">
+      <dl className="as-dash-hero__stats">
         {stats.map((stat) => (
-          <div key={stat.label} className="ms-dash-hero__stat">
+          <div key={stat.label} className="as-dash-hero__stat">
             <dt>{stat.label}</dt>
             <dd>{stat.value}</dd>
           </div>

@@ -60,17 +60,17 @@ export function RevisionsDrawer({ post, current, dirty, onClose, onRestored }: P
       {list.status === 'error' && <ErrorState message={list.message} reference={list.reference} onRetry={reloadList} />}
       {list.status === 'ready' && list.data.length === 0 && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No earlier versions yet. One is kept the next time the text is saved." />}
       {list.status === 'ready' && list.data.length > 0 && (
-        <div className="ms-revisions">
+        <div className="as-revisions">
           <List
-            className="ms-revisions__list"
+            className="as-revisions__list"
             size="small"
             bordered
             dataSource={list.data}
             renderItem={(item) => (
               <List.Item style={{ padding: 0 }}>
-                <button type="button" className="ms-revisions__item" aria-pressed={selected === item.id} onClick={() => setSelected(item.id)}>
+                <button type="button" className="as-revisions__item" aria-pressed={selected === item.id} onClick={() => setSelected(item.id)}>
                   <span style={{ fontWeight: 600 }}>{formatDateTime(item.createdAt)}</span>
-                  <span className="ms-revisions__meta">
+                  <span className="as-revisions__meta">
                     {item.actorName ?? 'Unknown editor'}
                     {item.reason ? ` · ${item.reason}` : ''}
                   </span>
@@ -78,7 +78,7 @@ export function RevisionsDrawer({ post, current, dirty, onClose, onRestored }: P
               </List.Item>
             )}
           />
-          <div className="ms-revisions__detail">
+          <div className="as-revisions__detail">
             {!selected && <Typography.Text type="secondary">Choose a version to compare it with what is in the editor now.</Typography.Text>}
             {selected && detail.status === 'loading' && <Skeleton active paragraph={{ rows: 8 }} />}
             {selected && detail.status === 'error' && <ErrorState message={detail.message} reference={detail.reference} onRetry={reloadDetail} />}
@@ -96,7 +96,7 @@ export function RevisionsDrawer({ post, current, dirty, onClose, onRestored }: P
                   )}
                 </Space>
                 <Typography.Text type="secondary" style={{ fontSize: 12.5 }}>
-                  <del className="ms-diff-removed">Struck through</del> is in that version but not now; <ins className="ms-diff-added">highlighted</ins> is new since.
+                  <del className="as-diff-removed">Struck through</del> is in that version but not now; <ins className="as-diff-added">highlighted</ins> is new since.
                 </Typography.Text>
                 {detail.data.title !== null && detail.data.title !== current.title && (
                   <section>

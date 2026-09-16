@@ -319,7 +319,7 @@ model AuditLog {
 }
 
 // ---------------------------------------------------------------------------
-// Directory taxonomy and Melbourne local areas (SRS CFG 003, BUS 008; Phase 11)
+// Directory taxonomy and Adelaide local areas (SRS CFG 003, BUS 008; Phase 11)
 // ---------------------------------------------------------------------------
 
 /// Business category; two levels only (a child's parent must be a root).
@@ -389,7 +389,7 @@ model ServiceSynonym {
   @@map("service_synonyms")
 }
 
-/// Approved Melbourne local area (allowlist; subdivisions only, no city entity — SRS SCP 001, BUS 008).
+/// Approved Adelaide local area (allowlist; subdivisions only, no city entity — SRS SCP 001, BUS 008).
 model LocalArea {
   id                    String    @id @default(cuid())
   name                  String    @db.VarChar(80)
@@ -503,7 +503,7 @@ model Business {
   @@map("businesses")
 }
 
-/// One address per business; state/country are fixed (VIC, AU) and not stored (SRS SCP 001).
+/// One address per business; state/country are fixed (SA, AU) and not stored (SRS SCP 001).
 model BusinessAddress {
   businessId String   @id
   line1      String   @db.VarChar(120)
@@ -987,7 +987,7 @@ model Author {
   /// Long profile text, sanitised HTML (SRS SEC 001).
   bio            String?  @db.Text
   pronouns       String?  @db.VarChar(40)
-  /// Melbourne suburb or area the author writes from.
+  /// Adelaide suburb or area the author writes from.
   location       String?  @db.VarChar(120)
   /// Public contact address for editorial correspondence; never an admin login.
   publicEmail    String?  @db.VarChar(255)

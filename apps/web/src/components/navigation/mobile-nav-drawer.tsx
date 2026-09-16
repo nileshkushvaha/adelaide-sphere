@@ -72,7 +72,7 @@ export function MobileNavDrawer({ primary, secondary }: Props) {
         ref={dialogRef}
         id="site-menu-drawer"
         aria-labelledby="site-menu-drawer-title"
-        className="ms-drawer"
+        className="as-drawer"
         onClose={() => {
           setOpen(false);
           triggerRef.current?.focus();
@@ -90,7 +90,7 @@ export function MobileNavDrawer({ primary, secondary }: Props) {
           if (event.target === event.currentTarget) event.currentTarget.close();
         }}
       >
-        <div className="ms-drawer-panel">
+        <div className="as-drawer-panel">
           <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
             <p id="site-menu-drawer-title" className="font-display text-lg font-bold text-text">
               Menu
@@ -121,7 +121,7 @@ export function MobileNavDrawer({ primary, secondary }: Props) {
           {buttons.length > 0 && (
             <div className="mt-auto flex flex-col gap-2 border-t border-border pt-4">
               {buttons.map((item) => (
-                <MenuLink key={item.id} item={item} className="ms-primary-action flex min-h-12 items-center justify-center gap-2 rounded-full bg-sky-700 px-4 text-sm font-semibold text-white hover:bg-sky-600" />
+                <MenuLink key={item.id} item={item} className="as-primary-action flex min-h-12 items-center justify-center gap-2 rounded-full bg-sky-700 px-4 text-sm font-semibold text-white hover:bg-sky-600" />
               ))}
             </div>
           )}
@@ -137,7 +137,7 @@ function DrawerItem({ item, trail, depth }: { item: PublicMenuItem; trail: Activ
   const [expanded, setExpanded] = useState(() => trail.ancestors.has(item.id));
   const hasChildren = item.children.length > 0;
   const listId = `drawer-${item.id}`;
-  const linkClass = `ms-header-link flex min-h-12 flex-1 items-center gap-2 rounded-lg px-3 ${depth === 0 ? 'text-base font-semibold' : 'text-[0.9375rem] font-medium'}`;
+  const linkClass = `as-header-link flex min-h-12 flex-1 items-center gap-2 rounded-lg px-3 ${depth === 0 ? 'text-base font-semibold' : 'text-[0.9375rem] font-medium'}`;
 
   return (
     <li>

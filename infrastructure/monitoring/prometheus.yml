@@ -19,7 +19,7 @@ scrape_configs:
     static_configs:
       # Prometheus does not expand environment variables in this file; edit the
       # targets for the environment you are scraping.
-      - targets: ['host.docker.internal:3011']
+      - targets: ['host.docker.internal:4011']
 
   - job_name: adelaide-sphere-worker
     metrics_path: /metrics
@@ -27,4 +27,4 @@ scrape_configs:
       type: Bearer
       credentials_file: /etc/prometheus/metrics-token
     static_configs:
-      - targets: ['host.docker.internal:9464', 'host.docker.internal:9465']
+      - targets: ['host.docker.internal:9474', 'host.docker.internal:9475']

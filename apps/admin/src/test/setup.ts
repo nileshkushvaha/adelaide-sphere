@@ -69,7 +69,7 @@ afterEach(() => {
   capabilityStore.set(undefined);
   // The stored theme choice is the same kind of shared state.
   try {
-    window.localStorage.removeItem('ms.admin.theme');
+    window.localStorage.removeItem('as.admin.theme');
   } catch {
     // jsdom always has storage; nothing to undo if it does not.
   }

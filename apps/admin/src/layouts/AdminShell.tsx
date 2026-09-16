@@ -39,6 +39,7 @@ import { brand, layoutDimensions } from '@/config/theme';
 import { useScrollableTables } from '@/shared/useScrollableTables';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ACTIVITY_VIEW_CODES, type PermissionCode } from '@/auth/permissions';
+import type { LogoutParams } from '@/auth/auth-provider';
 
 const { Header, Sider, Content, Footer } = Layout;
 
@@ -167,7 +168,7 @@ export function AdminShell({ children }: AdminShellProps) {
   const navId = useId();
   const { data: identity } = useGetIdentity<AdminSummary>();
   const { data: permissions } = usePermissions<string[]>({});
-  const { mutate: logout, isPending: loggingOut } = useLogout();
+  const { mutate: logout, isPending: loggingOut } = useLogout<LogoutParams>();
 
   // `undefined` means the server has not answered yet. Nothing permission-gated
   // is rendered until it has, so no entry appears and is then withdrawn
@@ -229,7 +230,7 @@ export function AdminShell({ children }: AdminShellProps) {
     .join('');
 
   return (
-    <Layout className="ms-app" style={{ minHeight: '100vh' }}>
+    <Layout className="as-app" style={{ minHeight: '100vh' }}>
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
@@ -247,7 +248,7 @@ export function AdminShell({ children }: AdminShellProps) {
               if (!open) toggleRef.current?.focus();
             }}
             width={layoutDimensions.siderWidth}
-            classNames={{ body: 'ms-drawer-nav' }}
+            classNames={{ body: 'as-drawer-nav' }}
             styles={{ body: { padding: 0 }, header: { background: brand.navy, color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.08)' } }}
             title={<span style={{ color: '#FFFFFF' }}>Navigation</span>}
             closeIcon={
@@ -261,7 +262,7 @@ export function AdminShell({ children }: AdminShellProps) {
         ) : (
           <Sider
             id={navId}
-            className="ms-sider"
+            className="as-sider"
             width={layoutDimensions.siderWidth}
             collapsedWidth={layoutDimensions.siderCollapsedWidth}
             collapsed={collapsed}
@@ -275,11 +276,11 @@ export function AdminShell({ children }: AdminShellProps) {
                 <Brand compact={collapsed} showSuffix={false} />
               </Link>
             </div>
-            <nav aria-label="Admin navigation" className="ms-sider-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 8 }}>
+            <nav aria-label="Admin navigation" className="as-sider-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 8 }}>
               {menu}
             </nav>
             {identity && (
-              <div className="ms-sider-account" style={{ flexShrink: 0, padding: collapsed ? '12px 0' : '12px 16px', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', gap: 10 }}>
+              <div className="as-sider-account" style={{ flexShrink: 0, padding: collapsed ? '12px 0' : '12px 16px', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start', gap: 10 }}>
                 <Avatar size={32} style={{ background: brand.primarySolid, fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
                   {initials || <UserOutlined aria-hidden="true" />}
                 </Avatar>
@@ -294,7 +295,7 @@ export function AdminShell({ children }: AdminShellProps) {
           </Sider>
         )}
         <Layout style={{ minWidth: 0 }}>
-      <Header className="ms-topbar" role="banner" style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 100 }}>
+      <Header className="as-topbar" role="banner" style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'sticky', top: 0, zIndex: 100 }}>
         <Button
           ref={toggleRef}
           type="text"
@@ -342,7 +343,7 @@ export function AdminShell({ children }: AdminShellProps) {
                 { key: 'who', disabled: true, label: <span style={{ display: 'block', maxWidth: 240 }}>{identity.email}</span> },
                 { type: 'divider' as const },
                 { key: 'account', icon: <SafetyOutlined aria-hidden="true" />, label: <Link to="/account">Account security</Link> },
-                { key: 'signout', icon: <LogoutOutlined aria-hidden="true" />, danger: true, label: 'Sign out', onClick: () => logout() },
+                { key: 'signout', icon: <LogoutOutlined aria-hidden="true" />, danger: true, label: 'Sign out', onClick: () => logout({ signedOut: true }) },
               ],
             }}
           >

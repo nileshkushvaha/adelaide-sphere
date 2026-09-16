@@ -8,8 +8,8 @@ import { ArticleCollectionSkeleton } from '@/components/article-skeleton';
 export default function BlogIndexLoading() {
   return (
     <>
-      <div className="ms-on-dark ms-editorial-band text-band-text">
-        <div className="ms-container py-8 sm:py-10">
+      <div className="as-on-dark as-editorial-band text-band-text">
+        <div className="as-container py-8 sm:py-10">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-400">Adelaide Sphere</p>
           <p className="font-display mt-3.5 text-balance text-[clamp(2.25rem,5vw,3.5rem)] leading-[1.04] tracking-tight">Stories from around the city</p>
           <p className="mt-4 max-w-4xl text-lg leading-relaxed text-band-muted">Local guides, food discoveries, and stories from Adelaide’s neighbourhoods.</p>
@@ -20,7 +20,7 @@ export default function BlogIndexLoading() {
           </div>
         </div>
       </div>
-      <div className="ms-container pt-6 pb-12 sm:pt-8 sm:pb-16">
+      <div className="as-container pt-6 pb-12 sm:pt-8 sm:pb-16">
         <ArticleCollectionSkeleton />
       </div>
     </>

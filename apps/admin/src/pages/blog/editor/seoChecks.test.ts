@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { seoChecks, type SeoCheckInput } from './seoChecks';
 
-const sentence = 'Fitzroy rewards a slow walk between its galleries and cafés.';
+const sentence = 'Prospect rewards a slow walk between its galleries and cafés.';
 const long = (count: number) => Array.from({ length: count }, () => sentence).join(' ');
 
 function input(overrides: Partial<SeoCheckInput> = {}): SeoCheckInput {
   return {
-    focusPhrase: 'Fitzroy walk',
-    title: 'A Fitzroy walk for a slow Sunday',
+    focusPhrase: 'Prospect walk',
+    title: 'A Prospect walk for a slow Sunday',
     seoTitle: '',
-    summary: 'Our Fitzroy walk starts on Gertrude Street and ends with coffee.',
+    summary: 'Our Prospect walk starts on Prospect Road and ends with coffee.',
     seoDescription: '',
-    slug: 'fitzroy-walk-sunday',
-    bodyHtml: `<p>This Fitzroy walk takes two hours.</p><h2>Start</h2><p>${long(40)}</p><p><a href="/blog/lygon-street">Lygon Street</a></p><figure><img src="/a.webp" alt="Gertrude Street"></figure>`,
+    slug: 'prospect-walk-sunday',
+    bodyHtml: `<p>This Prospect walk takes two hours.</p><h2>Start</h2><p>${long(40)}</p><p><a href="/blog/rundle-street">Rundle Street</a></p><figure><img src="/a.webp" alt="Prospect Road"></figure>`,
     ...overrides,
   };
 }

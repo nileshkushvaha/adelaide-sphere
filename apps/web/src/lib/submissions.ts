@@ -38,7 +38,7 @@ export function validateReviewForm(values: ReviewFormValues): FieldErrors {
 
 /** Idempotency key for one form session; regenerated only after a successful submission (SRS API 003). */
 export function newIdempotencyKey(): string {
-  return `ms-${Date.now().toString(36)}-${crypto.randomUUID()}`;
+  return `as-${Date.now().toString(36)}-${crypto.randomUUID()}`;
 }
 
 /** Mirrors `SubmitCommentDto` in the API; the API remains the authority (SRS COM 001). */

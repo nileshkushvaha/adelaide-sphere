@@ -99,9 +99,9 @@ async function main(): Promise<void> {
   // Liveness, published for the API and the Queue Monitor to read. A worker
   // that dies stops writing and its key expires; a worker that never starts
   // never writes one at all, which is the signal audit F-01 lacked.
-  // Same 'ms:' namespace the API reads under, so a heartbeat written here is
+  // Same 'as:' namespace the API reads under, so a heartbeat written here is
   // found there. BullMQ keeps its own prefix and is unaffected.
-  const heartbeatRedis = new Redis({ ...redisConnectionFromUrl(config.redisUrl), keyPrefix: 'ms:' });
+  const heartbeatRedis = new Redis({ ...redisConnectionFromUrl(config.redisUrl), keyPrefix: 'as:' });
   const heartbeat = new WorkerHeartbeatPublisher(heartbeatRedis, runnerId, process.env.APP_VERSION ?? 'dev', [QUEUE_NAME], (line) => log.line(line));
   await heartbeat.start();
   worker.on('completed', () => heartbeat.recordCompleted());

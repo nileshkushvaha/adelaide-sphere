@@ -29,7 +29,7 @@ export function StatusTag({ status, label: override }: { status: string; label?:
         whiteSpace: 'nowrap',
       }}
     >
-      <span className="ms-status-dot" aria-hidden="true" />
+      <span className="as-status-dot" aria-hidden="true" />
       {override ?? label ?? status.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase()}
     </span>
   );

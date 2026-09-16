@@ -10,7 +10,7 @@ export default defineConfig({
     // Port 1 never listens: readiness must report 503 quickly; no real database in unit/e2e runs.
     env: {
       NODE_ENV: 'test',
-      DATABASE_URL: 'mysql://test:test@127.0.0.1:1/melbourne_sphere_test',
+      DATABASE_URL: 'mysql://test:test@127.0.0.1:1/adelaide_sphere_test',
       REDIS_URL: 'redis://127.0.0.1:1/0',
       APP_SECRET_KEY: 'test-secret-key-for-unit-and-e2e-tests-only-0123456789',
       SESSION_COOKIE_SECURE: 'false',

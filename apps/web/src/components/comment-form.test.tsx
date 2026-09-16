@@ -134,7 +134,7 @@ describe('CommentForm submission (SRS COM 001, API 003)', () => {
     await screen.findByText(/submitted for review/i);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('/api/v1/posts/p1/comments');
-    expect((init.headers as Record<string, string>)['idempotency-key']).toMatch(/^ms-/);
+    expect((init.headers as Record<string, string>)['idempotency-key']).toMatch(/^as-/);
     expect(JSON.parse(init.body as string)).toMatchObject({ displayName: 'Dev Reader', email: 'reader@example.com', acknowledged: true });
 
     // The comment must not be presented as though it were already on the page.

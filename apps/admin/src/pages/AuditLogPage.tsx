@@ -145,13 +145,13 @@ export function AuditLogPage() {
   const pagination = state.status === 'ready' ? tablePagination(state.data.meta, list) : false;
 
   return (
-    <div className="ms-activity-page">
+    <div className="as-activity-page">
       <PageHeader
         crumbs={[{ label: 'Configuration' }, { label: 'Activity log' }]}
         title="Activity log"
         description="Every change and operational event, with who did it. Entries are never edited or deleted."
         actions={
-          <span className="ms-activity-switch">
+          <span className="as-activity-switch">
             <Switch id="activity-every-event" checked={!grouped} disabled={Boolean(requestId)} onChange={(checked) => list.set('each', checked ? '1' : undefined)} />
             <label htmlFor="activity-every-event">Show every event</label>
           </span>
@@ -160,11 +160,11 @@ export function AuditLogPage() {
 
       <AreaChips areas={summary.status === 'ready' ? summary.data.areas : null} value={category || undefined} onChange={(value) => list.set('category', value)} />
 
-      <div className="ms-activity-card">
-        <div className="ms-activity-toolbar">
+      <div className="as-activity-card">
+        <div className="as-activity-toolbar">
           <Input.Search
             key={`${action}|${requestId}`}
-            className="ms-activity-search"
+            className="as-activity-search"
             aria-label="Search by action code (for example auth.*) or request id"
             placeholder="Action, e.g. auth.*, or a request id"
             allowClear
@@ -185,7 +185,7 @@ export function AuditLogPage() {
         </div>
 
         {active.length > 0 && (
-          <div className="ms-activity-filters-active">
+          <div className="as-activity-filters-active">
             <FilterSummary onClear={list.clear}>
               {active.map((filter) => (
                 <Tag key={filter.key} closable onClose={filter.clear} closeIcon={<span aria-label={`Remove ${filter.label}`}>×</span>}>
@@ -197,7 +197,7 @@ export function AuditLogPage() {
         )}
 
         {state.status === 'ready' && total > 0 && (
-          <p className="ms-activity-summary" role="status">
+          <p className="as-activity-summary" role="status">
             {total} {grouped ? (total === 1 ? 'entry' : 'entries') : total === 1 ? 'event' : 'events'}
             {grouped ? ', repeated events grouped' : ''}
             {list.filtered ? ' matching your filters' : ''}
@@ -205,12 +205,12 @@ export function AuditLogPage() {
         )}
 
         {state.status === 'error' && (
-          <div className="ms-activity-skeleton">
+          <div className="as-activity-skeleton">
             <ErrorState message={state.message} reference={state.reference} onRetry={reload} />
           </div>
         )}
         {state.status === 'loading' && (
-          <div className="ms-activity-skeleton" aria-hidden="true">
+          <div className="as-activity-skeleton" aria-hidden="true">
             {Array.from({ length: 5 }, (_, index) => (
               <Skeleton key={index} active avatar={{ shape: 'square', size: 32 }} title={false} paragraph={{ rows: 2 }} />
             ))}
@@ -218,20 +218,20 @@ export function AuditLogPage() {
         )}
         {state.status === 'ready' && entries.length > 0 && <ActivityFeed entries={entries} onShowRequest={showRequest} />}
         {state.status === 'ready' && entries.length === 0 && (
-          <div className="ms-activity-skeleton">
+          <div className="as-activity-skeleton">
             <ListEmpty state={state} filtered={list.filtered} noun="activity" onClear={list.clear} empty={{ title: 'No activity recorded yet', description: 'Every change an administrator makes is recorded here.' }} />
           </div>
         )}
 
         {pagination && total > 0 && (
-          <div className="ms-activity-pagination">
+          <div className="as-activity-pagination">
             <Pagination {...pagination} size={narrow ? 'small' : 'default'} simple={narrow} />
           </div>
         )}
       </div>
 
       <Drawer title="Filter activity" placement="bottom" height="auto" open={narrow && filtersOpen} onClose={() => setFiltersOpen(false)}>
-        <div className="ms-activity-drawer">
+        <div className="as-activity-drawer">
           {whoControl}
           {dateControl}
           {outcomeControl}

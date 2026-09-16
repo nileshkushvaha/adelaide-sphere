@@ -35,7 +35,7 @@ const lookups = (): MenuLookups => {
   value.blogCategories.set('bc', { slug: 'guides', title: 'Guides', active: true });
   value.blogTags.set('bt', { slug: 'coffee', title: 'Coffee', active: false });
   value.categories.set('c', { slug: 'cafes', title: 'Cafés', active: true });
-  value.areas.set('a', { slug: 'fitzroy', title: 'Fitzroy', active: true });
+  value.areas.set('a', { slug: 'unley', title: 'Unley', active: true });
   value.businesses.set('b', { slug: 'bean-there', title: 'Bean There', status: 'published' });
   return value;
 };
@@ -49,7 +49,7 @@ describe('resolveSource', () => {
     expect(resolveSource(item({ type: 'blog_category', routeKey: null, blogCategoryId: 'bc' }), l).href).toBe('/blog/category/guides');
     expect(resolveSource(item({ type: 'blog_tag', routeKey: null, blogTagId: 'bt' }), l).href).toBe('/blog/tag/coffee');
     expect(resolveSource(item({ type: 'business_category', routeKey: null, categoryId: 'c' }), l).href).toBe('/business/category/cafes');
-    expect(resolveSource(item({ type: 'area', routeKey: null, localAreaId: 'a' }), l).href).toBe('/business/area/fitzroy');
+    expect(resolveSource(item({ type: 'area', routeKey: null, localAreaId: 'a' }), l).href).toBe('/business/area/unley');
     expect(resolveSource(item({ type: 'business', routeKey: null, businessId: 'b' }), l).href).toBe('/business/bean-there');
     expect(resolveSource(item({ type: 'custom', routeKey: null, url: 'https://example.com' }), l)).toEqual({ state: 'ok', title: null, href: 'https://example.com' });
   });

@@ -183,7 +183,7 @@ export function SeoSettingsPage() {
                 name={['routes', routeKey, 'metaKeywords']}
                 extra="Comma separated. Search engines ignore this tag; it will not affect ranking."
               >
-                <Input maxLength={LIMITS.metaKeywords} placeholder="e.g. cafes, trades, melbourne" />
+                <Input maxLength={LIMITS.metaKeywords} placeholder="e.g. cafes, trades, adelaide" />
               </Form.Item>
             </Col>
           </Row>

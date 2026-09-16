@@ -37,7 +37,7 @@ export function redirectBareBase(base = ADMIN_BASE): Plugin {
     res.end();
   };
   return {
-    name: 'ms-redirect-bare-base',
+    name: 'as-redirect-bare-base',
     configureServer: (server) => void server.middlewares.use(redirect),
     configurePreviewServer: (server) => void server.middlewares.use(redirect),
   };

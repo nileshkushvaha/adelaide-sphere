@@ -168,7 +168,7 @@ export function RichTextEditor({ value, onChange, disabled = false, ariaLabel = 
         'aria-label': ariaLabel,
         role: 'textbox',
         'aria-multiline': 'true',
-        class: 'ms-editor-body',
+        class: 'as-editor-body',
         style: `min-height:${minHeight}px;padding:16px;outline:none;`,
       },
       // Ctrl/Cmd+K opens the link box, as it does in most writing tools.
@@ -262,7 +262,7 @@ export function RichTextEditor({ value, onChange, disabled = false, ariaLabel = 
   };
 
   const insertDocument = (link: DocumentLink) => {
-    const attrs = { href: link.href, mediaId: link.mediaId, class: 'ms-doc-link' };
+    const attrs = { href: link.href, mediaId: link.mediaId, class: 'as-doc-link' };
     const { empty } = editor.state.selection;
     if (empty) editor.chain().focus().insertContent({ type: 'text', text: link.text, marks: [{ type: 'link', attrs }] }).run();
     else editor.chain().focus().extendMarkRange('link').insertContent({ type: 'text', text: link.text, marks: [{ type: 'link', attrs }] }).run();

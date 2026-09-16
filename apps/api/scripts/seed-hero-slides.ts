@@ -1,63 +1,58 @@
 /**
- * Adds five licensed Melbourne photographs to the media library and saves them
- * as the Home banner slides, so the home page banner comes from the database
- * and is managed in Configuration → Home page settings (SRS HERO 002).
+ * Adds the two licensed Adelaide photographs recorded in
+ * `docs/content/hero-photography.md` to the media library and saves them as
+ * the Home banner slides, so the home page banner comes from the database and
+ * is managed in Configuration → Home page settings (SRS HERO 002).
  *
- * The two photographs bundled with the web app (`apps/web/public/hero/`) are
- * not imported: they stay as the fallback the site shows only when no slide is
- * configured (client instruction, 13 Sep 2026).
+ * The same two photographs are bundled with the web app
+ * (`apps/web/public/hero/`, `apps/web/src/lib/hero-assets.ts`) as pre-cropped
+ * WebP files; those stay as the fallback the site shows only when no slide is
+ * configured (client instruction, 13 Sep 2026). This script imports the
+ * Commons originals instead, so the media library holds its own variants and
+ * the stored credit and rights note come from Commons itself.
  *
- * Each photograph is chosen by exact Wikimedia Commons file name, after reading
- * its title and description, and goes through the normal pipeline: the
- * licence check in `resolveCommonsFile` (attribution-only or public domain),
- * an upload to quarantine with an outbox event, and the worker's processing. A
- * photograph that comes out portrait is reported and left out, because a
- * banner is wide. Slides are added only while the banner holds nothing but
- * this script's own photographs (topping it up to the five listed), so an
- * administrator's own choice is never overwritten. Re-running is safe: assets
- * are matched on their stored name.
+ * Each photograph is named by its exact Wikimedia Commons file name and goes
+ * through the normal pipeline: the licence check in `resolveCommonsFile`
+ * (public domain, CC0, CC BY or CC BY-SA; both files are CC BY-SA, so the
+ * credit is kept with the asset), an upload to quarantine with an outbox event,
+ * and the worker's processing. A photograph that comes out portrait is
+ * reported and left out, because a banner is wide. Slides are added only while
+ * the banner holds nothing but this script's own photographs (topping it up to
+ * the ones listed), so an administrator's own choice is never overwritten.
+ * Re-running is safe: assets are matched on their stored name.
  *
  *   pnpm --filter api exec tsx --env-file=.env scripts/seed-hero-slides.ts
  *
  * The worker must be running (`pnpm dev:worker`).
  */
 import { Redis } from 'ioredis';
-import { HOME_SETTINGS_KEY, validateHomeSettings } from '../src/settings/home-settings.js';
+import { DEFAULT_HOME_SETTINGS, HOME_SETTINGS_KEY, validateHomeSettings } from '../src/settings/home-settings.js';
 import { databaseName, db, resolveCommonsFile, sleep, uploadImage, waitUntilReady } from './seed-commons.js';
 
-/** Alt text and captions are written here: they describe what the banner shows, not what the uploader wrote. */
+/**
+ * Alt text and captions match the bundled fallback slides
+ * (`apps/web/src/lib/hero-assets.ts`): they describe what the banner shows,
+ * not what the uploader wrote. The author and licence are stored as the
+ * asset's credit and rights note, read from Commons at import time.
+ */
 const PHOTOS = [
   {
-    name: 'princes-bridge-night',
-    file: 'File:Melbourne CBD and Princes Bridge at night (2013).jpg',
-    alt: 'The Melbourne CBD skyline lit up at night above Princes Bridge and the Yarra River',
-    caption: 'Princes Bridge and the Yarra',
+    name: 'adelaide-river-torrens',
+    // Yu Chu Chin, CC BY-SA 4.0
+    file: 'File:Adelaide CBD skyline across the River Torrens, July 2026 (028A8462).jpg',
+    alt: 'The Adelaide city skyline and Festival Centre reflected in the River Torrens on a clear afternoon',
+    caption: 'River Torrens',
+    focalX: 0.45,
+    focalY: 0.45,
   },
   {
-    name: 'southbank-bolte-bridge',
-    file: 'File:Southbank and the Bolte Bridge at night (11866185983).jpg',
-    alt: 'Southbank towers and the Bolte Bridge reflected in the Yarra River at night',
-    caption: 'Southbank at night',
-  },
-  {
-    name: 'federation-square',
-    file: 'File:Federation Square Melbourne (6768126635).jpg',
-    alt: 'The angular facades of Federation Square in central Melbourne',
-    caption: 'Federation Square',
-  },
-  // The Royal Exhibition Building photograph was tried first and is portrait
-  // (1600×2388), so the Docklands skyline takes its place.
-  {
-    name: 'docklands-skyline',
-    file: 'File:City of Melbourne Skyline From Docklands.JPG',
-    alt: 'The Melbourne CBD skyline seen across the water from Docklands',
-    caption: 'The city from Docklands',
-  },
-  {
-    name: 'hosier-lane',
-    file: 'File:Hosier Lane Melbourne. (21380271866).jpg',
-    alt: 'Street art covering the walls of Hosier Lane in Melbourne',
-    caption: 'Hosier Lane',
+    name: 'adelaide-oval-footbridge',
+    // Luke Anderson, CC BY-SA 2.0
+    file: 'File:Adelaide Oval Footbridge.jpg',
+    alt: 'The Adelaide Oval footbridge lit at night over the River Torrens, with the Oval glowing behind',
+    caption: 'Adelaide Oval footbridge',
+    focalX: 0.55,
+    focalY: 0.55,
   },
 ] as const;
 
@@ -99,13 +94,13 @@ async function main(): Promise<void> {
     return;
   }
   const kept = new Set(existing.map((slide) => slide.mediaId));
-  const additions = usable.filter((entry) => !kept.has(entry.id)).map(({ id, photo }) => ({ mediaId: id, caption: photo.caption, focalX: 0.5, focalY: 0.5 }));
+  const additions = usable.filter((entry) => !kept.has(entry.id)).map(({ id, photo }) => ({ mediaId: id, caption: photo.caption, focalX: photo.focalX, focalY: photo.focalY }));
   if (additions.length === 0) {
     console.log(`\nThe banner already has all ${existing.length} slide(s); nothing to add.`);
     return;
   }
 
-  const base = current?.value ?? { heroHeadline: 'Discover Melbourne businesses', heroPhrases: ['local services', 'places to eat', 'independent shops'], countersEnabled: false };
+  const base = current?.value ?? DEFAULT_HOME_SETTINGS;
   const next = validateHomeSettings({ ...base, heroSlides: [...existing, ...additions] });
   if (Object.keys(next.errors).length > 0) throw new Error(`New home settings do not validate: ${JSON.stringify(next.errors)}`);
   const data = JSON.parse(JSON.stringify(next.value));
@@ -115,7 +110,7 @@ async function main(): Promise<void> {
 
   const url = process.env.REDIS_URL;
   if (!url) return;
-  const redis = new Redis(url, { keyPrefix: 'ms:', lazyConnect: true, maxRetriesPerRequest: 1 });
+  const redis = new Redis(url, { keyPrefix: 'as:', lazyConnect: true, maxRetriesPerRequest: 1 });
   try {
     await redis.connect();
     await redis.incr('cache:public:ns');

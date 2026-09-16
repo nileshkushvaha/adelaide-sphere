@@ -36,7 +36,7 @@ const subscribeToVisibility = (onChange: () => void) => {
 };
 
 /**
- * Hero banner (SRS HERO 001/003): a full-bleed Melbourne photograph behind a
+ * Hero banner (SRS HERO 001/003): a full-bleed Adelaide photograph behind a
  * directional navy gradient, with the headline and search panel fixed on top.
  * Slides cross-fade in place, so the rotation never moves the layout; it stops
  * under `prefers-reduced-motion`, while the tab is hidden, and whenever the
@@ -81,10 +81,10 @@ export function HeroBanner({ slides, children }: Props) {
   return (
     <section
       aria-label="Adelaide Sphere"
-      className="ms-on-dark relative z-10 isolate flex min-h-[31rem] items-center overflow-x-clip bg-navy-950 py-9 text-band-text sm:min-h-[33rem] sm:py-10 lg:min-h-[34rem]"
+      className="as-on-dark relative z-10 isolate flex min-h-[31rem] items-center overflow-x-clip bg-navy-950 py-9 text-band-text sm:min-h-[33rem] sm:py-10 lg:min-h-[34rem]"
     >
       {/* Designed fallback: present whether or not a photograph loads (SRS HERO 001). */}
-      <div aria-hidden="true" className="absolute inset-0 -z-30 bg-[radial-gradient(120%_120%_at_10%_-10%,var(--ms-navy-700)_0%,var(--ms-band)_45%,var(--ms-band-deep)_100%)]" />
+      <div aria-hidden="true" className="absolute inset-0 -z-30 bg-[radial-gradient(120%_120%_at_10%_-10%,var(--as-navy-700)_0%,var(--as-band)_45%,var(--as-band-deep)_100%)]" />
 
       {slides.map((slide, position) => (
         <div key={slide.url} aria-hidden={position !== index} className={`absolute inset-0 -z-20 transition-opacity duration-700 ${position === index ? 'opacity-100' : 'opacity-0'}`}>
@@ -115,7 +115,7 @@ export function HeroBanner({ slides, children }: Props) {
       />
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 -z-10 h-1/2 bg-gradient-to-t from-navy-950/70 to-transparent" />
 
-      <div className="ms-container relative w-full">
+      <div className="as-container relative w-full">
         {children}
 
         {slides.length > 1 && (

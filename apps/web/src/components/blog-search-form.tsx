@@ -22,7 +22,7 @@ export function BlogSearchForm({ defaultValue = '', tone = 'light' }: { defaultV
           className="mt-1.5 block min-h-11 w-full rounded-full border border-border bg-white px-4 text-base text-slate-900 placeholder:text-slate-500"
         />
       </div>
-      <button type="submit" className="ms-primary-action inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold text-white">
+      <button type="submit" className="as-primary-action inline-flex min-h-11 items-center justify-center rounded-full px-6 text-sm font-semibold text-white">
         Search
       </button>
     </form>

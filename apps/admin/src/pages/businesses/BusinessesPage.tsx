@@ -187,7 +187,7 @@ export function BusinessesPage() {
         summary={list.query.isSuccess ? `${total} listing${total === 1 ? '' : 's'}${chips.length > 0 ? ' match these filters' : ''}` : undefined}
       >
         {chips.length > 0 && (
-          <div className="ms-table-toolbar" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+          <div className="as-table-toolbar" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
             <Typography.Text type="secondary" style={{ fontSize: 13 }}>
               Filters:
             </Typography.Text>
@@ -217,7 +217,7 @@ export function BusinessesPage() {
 
         <Table<BusinessListItem>
           rowKey="id"
-          className="ms-scroll-table"
+          className="as-scroll-table"
           loading={loading}
           dataSource={rows}
           pagination={{

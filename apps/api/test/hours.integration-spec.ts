@@ -35,7 +35,7 @@ describe('Listing hours and links (integration)', () => {
     await db.adminRole.create({ data: { adminId: reader.id, roleId: readerRole.id } });
     readerCookie = await loginAs('hours.reader@example.com', 'reader-password-12345', '203.0.113.141');
     const category = (await withAuth(agent().post('/api/v1/admin/categories')).send({ name: 'Bars' }).expect(201)).body.data.id;
-    const area = (await withAuth(agent().post('/api/v1/admin/areas')).send({ name: 'Fitzroy', eligibilitySource: 'council list' }).expect(201)).body.data.id;
+    const area = (await withAuth(agent().post('/api/v1/admin/areas')).send({ name: 'Unley', eligibilitySource: 'council list' }).expect(201)).body.data.id;
     const created = await withAuth(agent().post('/api/v1/admin/businesses'))
       .send({ name: 'Night Owl Bar', description: 'A late-night bar with a long enough description for the record.', primaryCategoryId: category, localAreaId: area, publicPhone: '+61 3 9000 5555', publicUrl: 'https://nightowl.example/', links: [{ kind: 'instagram', url: 'https://www.instagram.com/nightowl' }, { kind: 'other', url: 'https://menu.example.com/', label: 'Menu' }] })
       .expect(201);

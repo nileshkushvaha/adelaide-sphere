@@ -4,7 +4,7 @@ import { useState, useSyncExternalStore } from 'react';
 import { alertPresentation, type AlertSeverity } from '@adelaide-sphere/domain/alerts';
 import type { PublicServiceAlert } from '@/lib/api';
 
-const STORAGE_PREFIX = 'ms.alert.dismissed.';
+const STORAGE_PREFIX = 'as.alert.dismissed.';
 
 /** Keyed by content version, so editing an alert brings it back (SRS 1.2 ALRT 006). */
 const storageKey = (alert: PublicServiceAlert) => `${STORAGE_PREFIX}${alert.id}.${alert.contentVersion}`;
@@ -65,7 +65,7 @@ export function ServiceAlertBanner({ alert }: { alert: PublicServiceAlert }) {
       style={{ background: presentation.background, color: presentation.foreground }}
       className="px-4 py-2.5 text-sm"
     >
-      <div className="ms-container flex items-start justify-between gap-4">
+      <div className="as-container flex items-start justify-between gap-4">
         <p className="min-w-0">
           <strong className="font-semibold">{alert.title}</strong> <span>{alert.message}</span>
           {alert.linkUrl && alert.linkLabel && (

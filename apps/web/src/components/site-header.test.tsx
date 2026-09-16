@@ -34,13 +34,13 @@ const item = (id: string, label: string, href: string | null, extra: Partial<Pub
 const MENUS: PublicMenus = {
   primary: [
     item('home', 'Home', '/'),
-    item('businesses', 'Businesses', '/business', { children: [item('cbd', 'Melbourne CBD', '/business/area/melbourne-cbd', { description: 'The city centre' })] }),
+    item('businesses', 'Businesses', '/business', { children: [item('cbd', 'Adelaide CBD', '/business/area/adelaide-cbd', { description: 'The city centre' })] }),
     item('blog', 'Blog', '/blog'),
     item('add', 'Add a business', '/contact', { style: 'button' }),
   ],
   secondary: [item('help', 'Help', '/faqs')],
   footer: [
-    item('areas', 'Local areas', null, { children: [item('carlton', 'Carlton', '/business/area/carlton')] }),
+    item('areas', 'Local areas', null, { children: [item('norwood', 'Norwood', '/business/area/norwood')] }),
     item('info', 'Information', null, { children: [item('partner', 'Partner site', 'https://example.com', { external: true, newTab: true, rel: 'noopener noreferrer' })] }),
   ],
   footer_bottom: [item('privacy', 'Privacy Policy', '/privacy')],
@@ -114,7 +114,7 @@ describe('Footer navigation from menus', () => {
     const { container } = render(await SiteFooter());
     const footer = within(container);
     const areas = footer.getByRole('navigation', { name: 'Local areas' });
-    expect(within(areas).getByRole('link', { name: 'Carlton' })).toHaveAttribute('href', '/business/area/carlton');
+    expect(within(areas).getByRole('link', { name: 'Norwood' })).toHaveAttribute('href', '/business/area/norwood');
     const partner = footer.getByRole('link', { name: /Partner site/ });
     expect(partner).toHaveAttribute('target', '_blank');
     expect(partner).toHaveAttribute('rel', 'noopener noreferrer');

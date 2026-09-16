@@ -42,7 +42,7 @@ export default async function BlogSearchPage({ searchParams }: PageProps<'/blog/
         crumbs={[{ label: 'Home', href: '/' }, { label: 'Blog', href: '/blog' }, { label: 'Search' }]}
         footer={<BlogSearchForm defaultValue={q} tone="dark" />}
       />
-      <div className="ms-container py-12 sm:py-16">
+      <div className="as-container py-12 sm:py-16">
         {/* Announced when the results change, so a screen-reader user hears the outcome of the search. */}
         <p role="status" className="mb-8 text-lg">
           {!q ? 'Type a word or phrase to find articles.' : total === 0 ? `No articles match “${q}”.` : `${total} ${total === 1 ? 'article matches' : 'articles match'} “${q}”.`}

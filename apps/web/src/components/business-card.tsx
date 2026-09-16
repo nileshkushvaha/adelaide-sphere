@@ -18,8 +18,8 @@ import { RatingSummary } from './rating-summary';
 export function BusinessCard({ business, featured = false }: { business: BusinessCardData; featured?: boolean }) {
   const href = `/business/${encodeURIComponent(business.slug)}`;
   return (
-    <article className="ms-on-light ms-card-lift group relative flex h-full flex-col overflow-hidden rounded-card-lg border border-white/80 bg-surface text-text shadow-md backdrop-blur-sm">
-      <div className="ms-media-shine relative aspect-[4/3] overflow-hidden">
+    <article className="as-on-light as-card-lift group relative flex h-full flex-col overflow-hidden rounded-card-lg border border-white/80 bg-surface text-text shadow-md backdrop-blur-sm">
+      <div className="as-media-shine relative aspect-[4/3] overflow-hidden">
         {business.image ? (
           <Image
             src={business.image.url}
@@ -63,7 +63,7 @@ export function BusinessCard({ business, featured = false }: { business: Busines
 
       <div className="flex items-center justify-between border-t border-border px-5 py-3 text-sm">
         <span className="font-semibold text-link">View details</span>
-        <Link href={`${href}#contact`} className="relative z-10 inline-flex min-h-9 items-center rounded-lg px-2 text-text-muted underline-offset-4 hover:text-link ms-text-link">
+        <Link href={`${href}#contact`} className="relative z-10 inline-flex min-h-9 items-center rounded-lg px-2 text-text-muted underline-offset-4 hover:text-link as-text-link">
           Contact
         </Link>
       </div>

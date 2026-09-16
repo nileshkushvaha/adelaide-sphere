@@ -45,7 +45,7 @@ const card = (n: number): BusinessCardData => ({
   name: `Business ${n}`,
   slug: `business-${n}`,
   primaryCategory: { name: 'Plumbers', slug: 'plumbers', icon: null },
-  localArea: { name: 'Carlton', slug: 'carlton', icon: null },
+  localArea: { name: 'Norwood', slug: 'norwood', icon: null },
   rating: null,
   image: null,
 });
@@ -65,13 +65,13 @@ describe('Lazy directory results', () => {
 
   it('appends the next page when the button is pressed, with the filters the visitor has', async () => {
     loadBusinessPage.mockResolvedValue(page(3));
-    render(<LazyBusinessGrid initial={page(1)} page={1} pageCount={3} query="q=plumber&sort=rating" area="carlton" />);
+    render(<LazyBusinessGrid initial={page(1)} page={1} pageCount={3} query="q=plumber&sort=rating" area="norwood" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Show more businesses' }));
 
     expect(await screen.findByText('Business 3')).toBeInTheDocument();
     expect(screen.getByText('Business 1')).toBeInTheDocument();
-    expect(loadBusinessPage).toHaveBeenCalledWith({ query: 'q=plumber&sort=rating', category: undefined, area: 'carlton', page: 2 });
+    expect(loadBusinessPage).toHaveBeenCalledWith({ query: 'q=plumber&sort=rating', category: undefined, area: 'norwood', page: 2 });
   });
 
   it('loads the next page on its own when the end of the list comes into view', async () => {

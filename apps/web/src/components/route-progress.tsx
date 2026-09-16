@@ -79,8 +79,8 @@ export function RouteProgress() {
       <span className="sr-only">{pending ? 'Loading the next page' : ''}</span>
       {pending && (
         <>
-          <span aria-hidden="true" className="ms-route-progress" />
-          <span aria-hidden="true" className="ms-route-spinner" />
+          <span aria-hidden="true" className="as-route-progress" />
+          <span aria-hidden="true" className="as-route-spinner" />
         </>
       )}
     </div>

@@ -44,7 +44,7 @@ export function ButtonField({ label, value, onChange, required = false, errors, 
   const set = (patch: Partial<PageButton>) => onChange({ ...value, ...patch });
 
   return (
-    <fieldset className="ms-page-button-field" style={{ border: 0, padding: 0, margin: '0 0 16px' }}>
+    <fieldset className="as-page-button-field" style={{ border: 0, padding: 0, margin: '0 0 16px' }}>
       <legend style={{ fontWeight: 500, fontSize: 14, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
         <span>{label}</span>
         {!required && (

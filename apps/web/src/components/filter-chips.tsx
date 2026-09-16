@@ -16,7 +16,7 @@ export function FilterChips({ chips, resetHref }: { chips: ChipData[]; resetHref
         </li>
       ))}
       <li>
-        <Link href={resetHref} className="text-sm text-link underline-offset-2 ms-text-link">
+        <Link href={resetHref} className="text-sm text-link underline-offset-2 as-text-link">
           Clear all
         </Link>
       </li>

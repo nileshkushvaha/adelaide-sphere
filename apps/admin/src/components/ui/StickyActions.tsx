@@ -16,7 +16,7 @@ interface Props {
 export function StickyActions({ status, children, style }: Props) {
   return (
     <div
-      className="ms-sticky-actions"
+      className="as-sticky-actions"
       style={{
         position: 'sticky',
         bottom: 16,

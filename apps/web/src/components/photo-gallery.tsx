@@ -98,7 +98,7 @@ export function PhotoGallery({ photos, businessName }: Props) {
         ref={strip}
         aria-label={`Photographs of ${businessName}`}
         tabIndex={0}
-        className="ms-gallery-strip mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-link motion-reduce:scroll-auto"
+        className="as-gallery-strip mt-5 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-link motion-reduce:scroll-auto"
       >
         {photos.map((photo, position) => {
           const picture = photo.variants.find((variant) => variant.kind === 'card') ?? photo.variants.find((variant) => variant.kind === 'hero') ?? photo.variants[0];

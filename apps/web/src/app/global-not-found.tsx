@@ -29,7 +29,7 @@ export default function GlobalNotFound() {
   return (
     <html lang="en-AU" className={`${bodyFont.variable} ${displayFont.variable} h-full antialiased`}>
       <body suppressHydrationWarning className="flex min-h-full flex-col font-sans">
-        <a className="ms-skip-link" href="#main-content">
+        <a className="as-skip-link" href="#main-content">
           Skip to main content
         </a>
         <SiteHeader />

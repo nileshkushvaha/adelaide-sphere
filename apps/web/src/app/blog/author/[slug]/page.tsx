@@ -96,7 +96,7 @@ export default async function AuthorPage({ params, searchParams }: PageProps<'/b
         meta={`${posts.meta.total} ${posts.meta.total === 1 ? 'article' : 'articles'}`}
         footer={<ProfileDetails author={author} />}
       />
-      <div className="ms-container py-12 sm:py-16">
+      <div className="as-container py-12 sm:py-16">
         <h2 className="font-display mb-8 text-2xl tracking-tight sm:text-3xl">Articles by {author.displayName}</h2>
         <ArticleCollection posts={posts.data} label={`Articles by ${author.displayName}`} headingLevel={3} leadIsAboveFold />
         {posts.meta.pageCount > 1 && (

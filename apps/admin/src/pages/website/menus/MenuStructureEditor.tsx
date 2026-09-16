@@ -148,7 +148,7 @@ export function MenuStructureEditor({ items, onChange, maxDepth, readOnly, error
       }}
     >
       <SortableContext items={visible.map((item) => item.key)} strategy={verticalListSortingStrategy}>
-        <ol className="ms-menu-tree" style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <ol className="as-menu-tree" style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {visible.map((item) => (
             <SortableItem
               key={item.key}
@@ -178,7 +178,7 @@ export function MenuStructureEditor({ items, onChange, maxDepth, readOnly, error
       </SortableContext>
       <DragOverlay dropAnimation={reducedMotion ? null : undefined}>
         {active ? (
-          <div className="ms-menu-card ms-menu-card--overlay" style={{ padding: '10px 14px' }}>
+          <div className="as-menu-card as-menu-card--overlay" style={{ padding: '10px 14px' }}>
             <Typography.Text strong>{itemLabel(active)}</Typography.Text>
             {activeHeight > 0 && <Typography.Text type="secondary"> and the items under it</Typography.Text>}
           </div>
@@ -192,7 +192,7 @@ function SortableItem({ item, depth, readOnly, reducedMotion, children }: { item
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: item.key, disabled: readOnly });
   const label = itemLabel(item);
   const handle = readOnly ? null : (
-    <button type="button" ref={setActivatorNodeRef} className="ms-menu-handle" aria-label={`Reorder ${label}`} {...attributes} {...listeners}>
+    <button type="button" ref={setActivatorNodeRef} className="as-menu-handle" aria-label={`Reorder ${label}`} {...attributes} {...listeners}>
       <HolderOutlined aria-hidden="true" />
     </button>
   );
@@ -240,7 +240,7 @@ function MenuItemCard({ item, index, handle, expanded, onToggle, readOnly, error
   const field = (name: string, text: string, control: ReactNode, help?: string) => {
     const problem = errorFor(name);
     return (
-      <div className="ms-menu-field">
+      <div className="as-menu-field">
         <label htmlFor={fieldId(name)} style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
           {text}
         </label>
@@ -259,10 +259,10 @@ function MenuItemCard({ item, index, handle, expanded, onToggle, readOnly, error
   };
 
   return (
-    <div className={`ms-menu-card${itemErrors.length > 0 ? ' ms-menu-card--error' : ''}`}>
+    <div className={`as-menu-card${itemErrors.length > 0 ? ' as-menu-card--error' : ''}`}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px 6px 6px' }}>
         {handle}
-        <button type="button" className="ms-menu-toggle" aria-expanded={expanded} aria-controls={bodyId} onClick={onToggle}>
+        <button type="button" className="as-menu-toggle" aria-expanded={expanded} aria-controls={bodyId} onClick={onToggle}>
           <span style={{ flex: 1, minWidth: 0, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>{label}</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             {item.style === 'button' && <Tag color="geekblue">Button</Tag>}
@@ -280,10 +280,10 @@ function MenuItemCard({ item, index, handle, expanded, onToggle, readOnly, error
       </div>
 
       {expanded && (
-        <div id={bodyId} className="ms-menu-card-body">
+        <div id={bodyId} className="as-menu-card-body">
           {item.source.state === 'missing' && state && <Alert type="error" showIcon style={{ marginBottom: 12 }} message={state.help} />}
           {structuralErrors.length > 0 && <Alert type="error" showIcon role="alert" style={{ marginBottom: 12 }} message={structuralErrors.join(' ')} />}
-          <div className="ms-menu-fields">
+          <div className="as-menu-fields">
             {field(
               'label',
               isHeading ? 'Heading text' : 'Navigation label',
@@ -377,7 +377,7 @@ function MenuItemCard({ item, index, handle, expanded, onToggle, readOnly, error
           )}
 
           {!readOnly && (
-            <div className="ms-menu-card-actions">
+            <div className="as-menu-card-actions">
               <Space wrap size={[4, 4]}>
                 <Typography.Text type="secondary" style={{ fontSize: 12.5 }}>
                   Move

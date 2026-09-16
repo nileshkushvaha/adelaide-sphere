@@ -17,7 +17,7 @@ import { absoluteUrl } from '@/lib/site';
  * left and a fixed sidebar on the right, with any spare width falling between
  * them rather than stretching the measure.
  */
-export const PAGE_GRID = 'ms-container grid gap-10 lg:grid-cols-[minmax(0,48rem)_19rem] lg:justify-between lg:gap-12';
+export const PAGE_GRID = 'as-container grid gap-10 lg:grid-cols-[minmax(0,48rem)_19rem] lg:justify-between lg:gap-12';
 
 /** An article's breadcrumb trail, shared by the page and its structured data. */
 export function articleCrumbs(post: PostDetail): { label: string; href?: string }[] {
@@ -53,8 +53,8 @@ export function ArticleView({ post, preview = false }: Props) {
 
   return (
     <>
-      <header className="ms-on-dark ms-editorial-band text-band-text">
-        <div className={`ms-container pt-8 sm:pt-10 ${hasCover ? 'pb-28 sm:pb-36' : 'pb-9 sm:pb-12'}`}>
+      <header className="as-on-dark as-editorial-band text-band-text">
+        <div className={`as-container pt-8 sm:pt-10 ${hasCover ? 'pb-28 sm:pb-36' : 'pb-9 sm:pb-12'}`}>
           <div className="min-w-0">
             <Breadcrumbs items={crumbs} tone="dark" />
             <Link
@@ -140,7 +140,7 @@ export function ArticleView({ post, preview = false }: Props) {
               <div className="flex items-baseline justify-between gap-4 py-2.5 first:pt-0">
                 <dt className="text-text-muted">Category</dt>
                 <dd className="text-right">
-                  <Link href={`/blog/category/${post.category.slug}`} className="font-medium text-link underline-offset-2 ms-text-link">
+                  <Link href={`/blog/category/${post.category.slug}`} className="font-medium text-link underline-offset-2 as-text-link">
                     {post.category.name}
                   </Link>
                 </dd>
@@ -167,7 +167,7 @@ export function ArticleView({ post, preview = false }: Props) {
                   {preview ? (
                     post.commentsEnabled ? 'On' : 'Off'
                   ) : (
-                    <a href="#comments-heading" className="text-link underline-offset-2 ms-text-link">
+                    <a href="#comments-heading" className="text-link underline-offset-2 as-text-link">
                       {post.approvedCommentCount}
                     </a>
                   )}

@@ -119,7 +119,7 @@ export default async function AboutPage() {
   const title = `About ${settings.name}`;
   const { email } = contactChannelFrom(settings);
   const { phone } = settings.contact;
-  const contactLinkClass = 'flex min-h-11 items-center gap-2.5 break-words font-medium text-link underline-offset-4 ms-text-link [overflow-wrap:anywhere]';
+  const contactLinkClass = 'flex min-h-11 items-center gap-2.5 break-words font-medium text-link underline-offset-4 as-text-link [overflow-wrap:anywhere]';
   const figures = [
     { value: metrics.businesses, label: 'Published businesses' },
     { value: metrics.areas, label: 'Local areas' },
@@ -128,15 +128,15 @@ export default async function AboutPage() {
   ].filter((figure): figure is { value: number; label: string } => typeof figure.value === 'number' && figure.value > 0);
 
   return (
-    <article className="ms-product-page">
+    <article className="as-product-page">
       <JsonLdScript data={aboutPageJsonLd({ name: title, description: `${settings.name} is an independently edited guide to Adelaide’s local businesses.` })} />
-      <InformationHero title={title} eyebrow="About us" intro="An independently edited guide to Adelaide’s local businesses, neighbourhoods and city life." className="ms-editorial-band ms-ocean-band" />
+      <InformationHero title={title} eyebrow="About us" intro="An independently edited guide to Adelaide’s local businesses, neighbourhoods and city life." className="as-editorial-band as-ocean-band" />
 
       <ProductPageLayout
         lead={
           <>
             <Photo photo={PHOTOS.skyline} className="aspect-[5/2] sm:aspect-[4/1]" sizes="(min-width: 1024px) 60vw, 100vw" priority />
-            <section aria-labelledby="who-heading" className="ms-content-panel">
+            <section aria-labelledby="who-heading" className="as-content-panel">
               <h2 id="who-heading" className="font-display text-2xl tracking-tight sm:text-3xl">
                 Who we are
               </h2>
@@ -175,7 +175,7 @@ export default async function AboutPage() {
               <ul className="flex flex-wrap gap-2">
                 {areas.slice(0, 12).map((area) => (
                   <li key={area.id}>
-                    <Link href={`/business/area/${area.slug}`} className="ms-text-link inline-flex min-h-11 items-center rounded-full px-3.5 text-sm font-medium">
+                    <Link href={`/business/area/${area.slug}`} className="as-text-link inline-flex min-h-11 items-center rounded-full px-3.5 text-sm font-medium">
                       {area.name}
                     </Link>
                   </li>
@@ -230,7 +230,7 @@ export default async function AboutPage() {
           </div>
         </ContentSection>
 
-        <section aria-labelledby="join-heading" className="ms-on-dark ms-ocean-band relative isolate overflow-hidden rounded-card-lg bg-band-deep p-6 text-white shadow-lg sm:p-8">
+        <section aria-labelledby="join-heading" className="as-on-dark as-ocean-band relative isolate overflow-hidden rounded-card-lg bg-band-deep p-6 text-white shadow-lg sm:p-8">
           <div aria-hidden="true" className="absolute -right-16 -top-20 -z-10 size-64 rounded-full bg-sky-400/30 blur-3xl" />
           <h2 id="join-heading" className="font-display text-2xl tracking-tight sm:text-3xl">
             Be part of {settings.name}
@@ -239,7 +239,7 @@ export default async function AboutPage() {
           <ul className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             {JOIN.map((item) => (
               <li key={item.href}>
-                <Link href={item.href} className="ms-primary-action group flex h-full min-h-14 items-center gap-3 rounded-card border border-white/15 bg-white/[0.07] px-4 py-3 font-semibold transition-colors hover:border-sky-400 hover:bg-white/12">
+                <Link href={item.href} className="as-primary-action group flex h-full min-h-14 items-center gap-3 rounded-card border border-white/15 bg-white/[0.07] px-4 py-3 font-semibold transition-colors hover:border-sky-400 hover:bg-white/12">
                   <item.icon aria-hidden="true" className="size-5 shrink-0 text-sky-400" />
                   <span className="flex-1">{item.label}</span>
                   <ArrowRightIcon aria-hidden="true" className="size-4 shrink-0 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />

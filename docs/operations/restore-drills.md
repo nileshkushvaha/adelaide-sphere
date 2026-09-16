@@ -12,7 +12,7 @@ found has an owner and a target date.
 
 - **Scope**: a rehearsal against the local Compose MySQL to prove the procedure
   and the scripts, not a production drill. It restored a development database
-  into `melbourne_sphere_restore` (the script refuses any name that does not end
+  into `adelaide_sphere_restore` (the script refuses any name that does not end
   in `_restore`) and dropped it afterwards.
 - **Encryption**: the local machine has `gpg` but not `age`, so the scripts now
   use whichever is installed; the drill used a symmetric passphrase generated

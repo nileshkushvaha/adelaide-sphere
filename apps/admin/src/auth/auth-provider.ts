@@ -1,4 +1,4 @@
-import { clearAllLocalDrafts } from '@/shared/postDrafts';
+import { clearAllLocalDrafts, setLocalDraftOwner } from '@/shared/postDrafts';
 import type { AuthProvider } from '@refinedev/core';
 import { isApiError } from '@/api/errors';
 import { authApi, type Authenticated, type LoginChallenge } from '@/api/auth';
@@ -13,6 +13,15 @@ import { toSignInFailure } from './sign-in-failure';
  */
 /** Concurrent/rapid `check` calls (Refine mounts several consumers per navigation) share one `/me` request. */
 const CHECK_SHARE_WINDOW_MS = 1_000;
+
+/**
+ * Passed by the "Sign out" action. A logout Refine starts itself (an expired
+ * session answering 401) does not carry it, and keeps the browser copies of
+ * unsaved articles so the administrator can recover them after signing in.
+ */
+export interface LogoutParams {
+  signedOut?: boolean;
+}
 
 export function createAuthProvider(deps: { api?: typeof authApi; now?: () => number } = {}): AuthProvider & { current: () => Authenticated | null } {
   const api = deps.api ?? authApi;
@@ -39,6 +48,7 @@ export function createAuthProvider(deps: { api?: typeof authApi; now?: () => num
       try {
         if ('challenge' in params) {
           current = await accountApi.totpChallenge(params.challenge, params.code);
+          setLocalDraftOwner(current.admin.id);
           inflightMe = null;
           return { success: true, redirectTo: '/' };
         }
@@ -48,6 +58,7 @@ export function createAuthProvider(deps: { api?: typeof authApi; now?: () => num
           return { success: false, error: { name: 'totp', message: JSON.stringify(outcome.value satisfies LoginChallenge) } };
         }
         current = outcome.value;
+        setLocalDraftOwner(current.admin.id);
         inflightMe = null;
         return { success: true, redirectTo: '/' };
       } catch (error) {
@@ -58,14 +69,14 @@ export function createAuthProvider(deps: { api?: typeof authApi; now?: () => num
       }
     },
 
-    async logout() {
+    async logout(params?: LogoutParams) {
       try {
         await api.logout();
       } catch {
         // The server may already consider the session gone; either way the client forgets it.
       }
-      // Unsaved article copies stay on this computer only while someone is signed in.
-      clearAllLocalDrafts();
+      // Choosing to sign out removes unsaved article copies from this computer.
+      if (params?.signedOut) clearAllLocalDrafts();
       current = null;
       inflightMe = null;
       return { success: true, redirectTo: '/login' };
@@ -74,6 +85,7 @@ export function createAuthProvider(deps: { api?: typeof authApi; now?: () => num
     async check() {
       try {
         current = await fetchMe();
+        setLocalDraftOwner(current.admin.id);
         return { authenticated: true };
       } catch (error) {
         current = null;

@@ -313,7 +313,7 @@ export function BusinessEditorPage() {
           <Col xs={24} lg={16}>
             <SectionCard title="Business identity" description="What visitors use to recognise this business.">
               <Form.Item label="Business name" name="name" rules={[{ required: true, message: 'Enter the business name' }, { min: 2, max: 120, message: 'Use between 2 and 120 characters' }]}>
-                <Input maxLength={120} placeholder="e.g. Carlton Corner Bakery" />
+                <Input maxLength={120} placeholder="e.g. Norwood Corner Bakery" />
               </Form.Item>
               {/* The address, shown the way a CMS shows it. Before the listing has
                   been published it is part of the form; afterwards it moves through
@@ -366,10 +366,10 @@ export function BusinessEditorPage() {
               </Form.Item>
               {hasAddress && (
                 <>
-                  <Form.Item label="Address line 1" name={['address', 'line1']} rules={[{ required: true, message: 'Enter the street address' }]}><Input maxLength={120} placeholder="123 Collins Street" /></Form.Item>
+                  <Form.Item label="Address line 1" name={['address', 'line1']} rules={[{ required: true, message: 'Enter the street address' }]}><Input maxLength={120} placeholder="123 Grenfell Street" /></Form.Item>
                   <Form.Item label="Address line 2" name={['address', 'line2']}><Input maxLength={120} placeholder="Level 2, Suite 4 (optional)" /></Form.Item>
                   <Row gutter={16}>
-                    <Col xs={24} md={12}><Form.Item label="Suburb" name={['address', 'suburb']} rules={[{ required: true, message: 'Enter the suburb' }]}><Input maxLength={80} placeholder="Carlton" /></Form.Item></Col>
+                    <Col xs={24} md={12}><Form.Item label="Suburb" name={['address', 'suburb']} rules={[{ required: true, message: 'Enter the suburb' }]}><Input maxLength={80} placeholder="Norwood" /></Form.Item></Col>
                     <Col xs={24} md={12}><Form.Item label="Postcode" name={['address', 'postcode']} extra="A South Australian postcode." rules={[{ required: true, message: 'Enter the postcode' }, { pattern: /^5\d{3}$/, message: 'Enter a South Australian postcode' }]}><Input maxLength={4} inputMode="numeric" placeholder="3053" /></Form.Item></Col>
                     <Col xs={24} md={12}><Form.Item label="Latitude" name={['address', 'latitude']} extra="Optional. Places the pin on the map."><InputNumber style={{ width: '100%' }} min={-38.1} max={-26} step={0.000001} placeholder="-34.9285" /></Form.Item></Col>
                     <Col xs={24} md={12}><Form.Item label="Longitude" name={['address', 'longitude']} extra="Optional. Places the pin on the map."><InputNumber style={{ width: '100%' }} min={129} max={141} step={0.000001} placeholder="138.6007" /></Form.Item></Col>
@@ -392,7 +392,7 @@ export function BusinessEditorPage() {
                 {(fields, { add, remove }) => (
                   <div style={{ marginTop: 8, marginBottom: 16 }}>
                     {fields.map((field) => (
-                      <div key={field.key} className="ms-field-row">
+                      <div key={field.key} className="as-field-row">
                         <Form.Item name={[field.name, 'kind']} style={{ marginBottom: 8, width: 150 }}>
                           <Select aria-label="Link type" style={{ width: '100%' }} optionLabelProp="title" options={LINK_KINDS.map((k) => ({ value: k, title: brandLabel(k), label: <BrandOptionLabel kind={k} /> }))} />
                         </Form.Item>
@@ -444,13 +444,13 @@ export function BusinessEditorPage() {
               description="How the listing looks in search and shares. Empty fields use its name, description and cover photo."
             >
               <Form.Item label="SEO title" name="seoTitle" extra="About 60 characters shows in full in search results.">
-                <Input maxLength={180} showCount placeholder="e.g. Carlton Corner Bakery — sourdough bakery in Carlton, Adelaide" />
+                <Input maxLength={180} showCount placeholder="e.g. Norwood Corner Bakery — sourdough bakery in Norwood, Adelaide" />
               </Form.Item>
               <Form.Item label="Meta description" name="seoDescription" extra="The summary under the title in search results; about 155 characters shows in full.">
                 <Input.TextArea rows={3} maxLength={300} showCount placeholder="What the business does and where, in a sentence or two" />
               </Form.Item>
               <Form.Item label="Keywords" name="seoKeywords" extra="Comma separated. Search engines ignore this tag; it will not affect ranking.">
-                <Input maxLength={255} placeholder="e.g. bakery, sourdough, carlton, melbourne" />
+                <Input maxLength={255} placeholder="e.g. bakery, sourdough, norwood, adelaide" />
               </Form.Item>
               <Form.Item label="Share image" name="ogImageMediaId" extra="Used when the listing is shared. Empty uses the cover photograph, then the site image." style={{ marginBottom: 0 }}>
                 <MediaField current={business?.ogImage ?? null} emptyLabel="The cover photograph is used" clearLabel="Use the cover photograph" aspectRatio="1.91 / 1" />
@@ -459,7 +459,7 @@ export function BusinessEditorPage() {
           </Col>
 
           <Col xs={24} lg={8}>
-            <div className="ms-editor-sidebar">
+            <div className="as-editor-sidebar">
             {business && (
               <SectionCard title="Publishing" description="Where this listing stands, and what is still needed.">
                 <Space size={8} wrap style={{ marginBottom: 12 }}>

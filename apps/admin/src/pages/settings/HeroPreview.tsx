@@ -57,7 +57,7 @@ export function HeroPreview({ headline, phrases, slides, countersEnabled }: Prop
         )}
       </div>
 
-      <div aria-hidden="true" style={{ display: 'grid', gap: 16, gridTemplateColumns: 'minmax(0, 1fr) 320px', alignItems: 'start' }} className="ms-hero-preview">
+      <div aria-hidden="true" style={{ display: 'grid', gap: 16, gridTemplateColumns: 'minmax(0, 1fr) 320px', alignItems: 'start' }} className="as-hero-preview">
         <Frame label="Desktop" width="100%" height={300} narrow={false} slide={slide} headline={headline} phrase={phrase} longest={longest} countersEnabled={countersEnabled} />
         <Frame label="Phone (320 px)" width={320} height={420} narrow slide={slide} headline={headline} phrase={phrase} longest={longest} countersEnabled={countersEnabled} />
       </div>

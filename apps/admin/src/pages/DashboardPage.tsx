@@ -62,7 +62,7 @@ const ACCENTS: Record<string, KpiAccent> = {
 };
 
 /** Colour follows the entity, never its position: hiding a queue for lack of permission never repaints the others. */
-const SERIES_COLORS: Record<string, string> = { reviews: 'var(--ms-series-1)', comments: 'var(--ms-series-2)', enquiries: 'var(--ms-series-3)' };
+const SERIES_COLORS: Record<string, string> = { reviews: 'var(--as-series-1)', comments: 'var(--as-series-2)', enquiries: 'var(--as-series-3)' };
 
 const DELIVERY_TONES: Record<string, SegmentTone> = { delivered: 'good', providerAccepted: 'good', queued: 'warning', retrying: 'warning', failed: 'critical', suppressed: 'serious' };
 const LISTING_TONES: Record<string, SegmentTone> = { published: 'good', draft: 'warning', archived: 'neutral' };
@@ -139,7 +139,7 @@ export function DashboardPage() {
   // The payload is defensive: a partial response must not blank the screen.
   const metrics: DashboardMetric[] = data?.metrics ?? [];
   const needsAttention = metrics.filter((metric) => metric.value > 0 && metric.tone !== 'neutral');
-  const series: TrendSeries[] = (data?.trend?.series ?? []).map((item) => ({ key: item.key, label: item.label, points: item.points, color: SERIES_COLORS[item.key] ?? 'var(--ms-series-1)' }));
+  const series: TrendSeries[] = (data?.trend?.series ?? []).map((item) => ({ key: item.key, label: item.label, points: item.points, color: SERIES_COLORS[item.key] ?? 'var(--as-series-1)' }));
   const days = data?.periodDays ?? 30;
   const enquiryDelivery = data?.enquiryDelivery ?? [];
   const listingStatus = data?.listingStatus ?? [];

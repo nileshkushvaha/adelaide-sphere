@@ -13,7 +13,7 @@ describe('Blog editorial core (integration)', () => {
   let tagId: string;
   const agent = () => request(app.getHttpServer());
   const admin = (req: request.Test, c = cookie) => req.set('Origin', ORIGIN).set('Cookie', c);
-  const body = 'Melbourne laneways are full of small operators. '.repeat(8);
+  const body = 'Adelaide laneways are full of small operators. '.repeat(8);
   const login = async (email: string, password: string, ip: string) => {
     const res = await agent().post('/api/v1/admin/auth/login').set('Origin', ORIGIN).set('X-Forwarded-For', ip).send({ email, password }).expect(200);
     return ([] as string[]).concat(res.headers['set-cookie'] ?? []).find((c) => c.startsWith(`${SESSION_COOKIE_NAME}=`))!.split(';')[0]!;
@@ -36,8 +36,8 @@ describe('Blog editorial core (integration)', () => {
     await db.adminRole.create({ data: { adminId: writer.id, roleId: role.id } });
     writerCookie = await login('writer@example.com', 'writer-password-12345', '203.0.113.191');
 
-    authorId = (await admin(agent().post('/api/v1/admin/authors')).send({ displayName: 'Alex Editor', bio: 'Writes about Melbourne.' }).expect(201)).body.data.id;
-    categoryId = (await admin(agent().post('/api/v1/admin/blog-categories')).send({ name: 'City guides', landingContent: '## City guides\n\nOur guides to Melbourne.' }).expect(201)).body.data.id;
+    authorId = (await admin(agent().post('/api/v1/admin/authors')).send({ displayName: 'Alex Editor', bio: 'Writes about Adelaide.' }).expect(201)).body.data.id;
+    categoryId = (await admin(agent().post('/api/v1/admin/blog-categories')).send({ name: 'City guides', landingContent: '## City guides\n\nOur guides to Adelaide.' }).expect(201)).body.data.id;
     tagId = (await admin(agent().post('/api/v1/admin/blog-tags')).send({ name: 'Coffee' }).expect(201)).body.data.id;
   });
 
@@ -68,26 +68,26 @@ describe('Blog editorial core (integration)', () => {
       .expect(201);
     postId = created.body.data.id;
     version = created.body.data.version;
-    expect(created.body.data).toMatchObject({ slug: 'best-laneway-coffee-in-melbourne', status: 'draft', commentsEnabled: true, publicationBlockers: [] });
+    expect(created.body.data).toMatchObject({ slug: 'best-laneway-coffee-in-adelaide', status: 'draft', commentsEnabled: true, publicationBlockers: [] });
     expect(created.body.data.sanitizedBody).not.toContain('<script');
     expect(created.body.data.sanitizedBody).toContain('rel="noopener noreferrer nofollow"');
     expect(created.body.data.bodyMarkdown).toContain('<script>'); // the source is preserved verbatim
-    await admin(agent().post('/api/v1/admin/posts')).send({ title: 'Duplicate slug test', slug: 'best-laneway-coffee-in-melbourne', authorId, categoryId }).expect(409);
+    await admin(agent().post('/api/v1/admin/posts')).send({ title: 'Duplicate slug test', slug: 'best-laneway-coffee-in-adelaide', authorId, categoryId }).expect(409);
     await admin(agent().post('/api/v1/admin/posts')).send({ title: 'Unknown author', authorId: 'nope', categoryId }).expect(400);
   });
 
   it('writes a summary from the opening text when the writer leaves it empty, and suggests a free address', async () => {
-    const opening = 'Carlton has more independent cafés per street than anywhere else in the city.';
+    const opening = 'Norwood has more independent cafés per street than anywhere else in the city.';
     // The summary ends at the last whole sentence that fits in 160 characters (deriveExcerpt, SRS 1.10 BLOG 002 (3)).
     const summary = `${opening} Each one roasts its own beans and bakes every morning.`;
     const created = await admin(agent().post('/api/v1/admin/posts'))
-      .send({ title: 'Cafés of Carlton', excerpt: '', bodyFormat: 'html', bodyMarkdown: `<p>${opening} ${'Each one roasts its own beans and bakes every morning. '.repeat(6)}</p>`, authorId, categoryId })
+      .send({ title: 'Cafés of Norwood', excerpt: '', bodyFormat: 'html', bodyMarkdown: `<p>${opening} ${'Each one roasts its own beans and bakes every morning. '.repeat(6)}</p>`, authorId, categoryId })
       .expect(201);
     expect(created.body.data.excerpt).toBe(summary);
     // Emptying it again on an edit rewrites it from the current text.
     const cleared = await admin(agent().patch(`/api/v1/admin/posts/${created.body.data.id}`)).send({ expectedVersion: created.body.data.version, excerpt: '' }).expect(200);
     expect(cleared.body.data.excerpt).toBe(summary);
-    const clash = await admin(agent().post('/api/v1/admin/posts')).send({ title: 'Cafés of Carlton', slug: created.body.data.slug, authorId, categoryId }).expect(409);
+    const clash = await admin(agent().post('/api/v1/admin/posts')).send({ title: 'Cafés of Norwood', slug: created.body.data.slug, authorId, categoryId }).expect(409);
     expect(clash.body.error.fields.slug[0]).toContain(`${created.body.data.slug}-2`);
   });
 
@@ -130,7 +130,7 @@ describe('Blog editorial core (integration)', () => {
   it('renders unsaved content without storing it, and serves a draft only through a live preview link', async () => {
     const db = testDatabase();
     const rendered = await admin(agent().post('/api/v1/admin/posts/preview-render'))
-      .send({ title: 'Not saved yet', bodyFormat: 'html', bodyMarkdown: `<p>${'Unsaved words about Melbourne laneways. '.repeat(4)}</p><script>alert(1)</script>`, authorId, categoryId })
+      .send({ title: 'Not saved yet', bodyFormat: 'html', bodyMarkdown: `<p>${'Unsaved words about Adelaide laneways. '.repeat(4)}</p><script>alert(1)</script>`, authorId, categoryId })
       .expect(200);
     expect(rendered.headers['x-robots-tag']).toContain('noindex');
     expect(rendered.body.data).toMatchObject({ title: 'Not saved yet', excerptGenerated: true, authorName: 'Alex Editor', noindex: true });

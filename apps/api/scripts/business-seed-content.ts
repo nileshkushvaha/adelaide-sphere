@@ -536,7 +536,7 @@ export const SEED_ENRICHMENT: Record<string, Partial<SeedBusiness> & Pick<SeedBu
       { name: 'Sean M.', rating: 5, text: 'Tuesday quiz is a St Peters institution. Food is better than it needs to be.', daysAgo: 63 },
     ],
   },
-  'carlton-corner-bakery': {
+  'beulah-road-bakery': {
     established: 2010,
     description:
       'A corner bakery on Beulah Road in Norwood doing bread, pies and pastries from a wood-fired oven at the back of the shop, with a handful of tables and coffee from an Adelaide roaster. The bread is mostly sourdough — a white, a wholemeal and a fruit loaf on weekends — and the pies change with the season. The bakery supplies a couple of local cafés and takes orders for celebration cakes with a week’s notice. Opens early and usually sells through the pastries by mid-morning.',
@@ -554,7 +554,7 @@ export const SEED_ENRICHMENT: Record<string, Partial<SeedBusiness> & Pick<SeedBu
       { name: 'Priya S.', rating: 5, text: 'Ordered a birthday cake and it was beautiful and not too sweet.', daysAgo: 91 },
     ],
   },
-  'docklands-mobile-mechanics': {
+  'keswick-mobile-mechanics': {
     established: 2017,
     description:
       'A mobile mechanic based in Keswick covering the city, the inner west and the inner south, working from a fully equipped van so the car never has to leave the driveway or the office car park. Logbook services, brakes, batteries, diagnostics and pre-purchase inspections are the bulk of the work; anything needing a hoist is referred to a partner workshop in Mile End. Quotes are given before the job starts and parts are itemised on the invoice. Bookings are usually available within two working days.',

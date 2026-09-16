@@ -32,8 +32,8 @@ describe('SEO settings validation', () => {
   });
 
   it('tidies keywords into a list without blanks or duplicates', () => {
-    const { value } = validateSeoSettings({ routes: { directory: { metaKeywords: 'cafes, , cafes ,melbourne' } } });
-    expect(value.routes.directory?.metaKeywords).toBe('cafes, melbourne');
+    const { value } = validateSeoSettings({ routes: { directory: { metaKeywords: 'cafes, , cafes ,adelaide' } } });
+    expect(value.routes.directory?.metaKeywords).toBe('cafes, adelaide');
   });
 
   it('refuses a canonical URL that is not an absolute http(s) address', () => {

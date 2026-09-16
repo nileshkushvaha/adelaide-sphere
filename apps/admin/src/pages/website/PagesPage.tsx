@@ -109,7 +109,7 @@ export function PagesPage() {
         }
       >
       <Table<StaticPage>
-        className="ms-scroll-table"
+        className="as-scroll-table"
         scroll={{ x: 640 }}
         rowKey="slug"
         dataSource={pages}

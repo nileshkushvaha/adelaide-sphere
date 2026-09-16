@@ -41,7 +41,7 @@ const { fixture, dispose } = await provision();
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: WIDTH, height: HEIGHT } });
 // The same key the theme toggle writes, set before any page script runs.
-await page.addInitScript((theme) => window.localStorage.setItem('ms.admin.theme', theme), THEME);
+await page.addInitScript((theme) => window.localStorage.setItem('as.admin.theme', theme), THEME);
 
 try {
   await page.goto(`${ADMIN_URL}/login`);

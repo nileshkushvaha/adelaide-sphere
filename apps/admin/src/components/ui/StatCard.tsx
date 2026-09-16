@@ -37,7 +37,7 @@ export function StatCard({ label, value, href, tone = 'neutral', icon, hint }: P
           aria-hidden="true"
           // A neutral figure gets the brand gradient from the stylesheet; one that
           // needs attention takes its status colour instead.
-          className={needsAttention ? undefined : 'ms-stat-icon'}
+          className={needsAttention ? undefined : 'as-stat-icon'}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -79,7 +79,7 @@ export function StatCard({ label, value, href, tone = 'neutral', icon, hint }: P
     </Card>
   );
   return href ? (
-    <Link to={href} className="ms-card-link" style={{ display: 'block', height: '100%', color: 'inherit' }} aria-label={`${label}: ${value}`}>
+    <Link to={href} className="as-card-link" style={{ display: 'block', height: '100%', color: 'inherit' }} aria-label={`${label}: ${value}`}>
       {body}
     </Link>
   ) : (

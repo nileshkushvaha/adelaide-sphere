@@ -97,11 +97,11 @@ export function DocumentPickerDialog({ selectedText, onCancel, onInsert }: { sel
             {list.status === 'ready' && rows.length === 0 && <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={query ? 'No documents match that search' : 'No documents are ready yet'} />}
             {rows.length > 0 && (
               <Radio.Group value={chosen?.id} onChange={(event) => pick(rows.find((row) => row.id === event.target.value)!)} style={{ width: '100%' }}>
-                <ul className="ms-doc-picker">
+                <ul className="as-doc-picker">
                   {rows.map((row) => (
                     <li key={row.id}>
                       <Radio value={row.id}>
-                        <span className="ms-doc-picker__name">
+                        <span className="as-doc-picker__name">
                           <FilePdfOutlined aria-hidden="true" /> {row.title ?? row.sourceName}
                         </span>
                         <Typography.Text type="secondary" style={{ display: 'block', fontSize: 12.5 }}>
@@ -122,7 +122,7 @@ export function DocumentPickerDialog({ selectedText, onCancel, onInsert }: { sel
         )}
 
         {mayUpload && (
-          <div className="ms-doc-picker__upload">
+          <div className="as-doc-picker__upload">
             <Typography.Text strong style={{ display: 'block' }}>
               Or upload a new PDF
             </Typography.Text>

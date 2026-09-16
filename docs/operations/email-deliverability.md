@@ -18,10 +18,10 @@ Covers SRS 1.2 **MAIL 001–010**. The provider decision is **D03b / D09** in `d
 | Variable | Local | Staging | Production |
 | --- | --- | --- | --- |
 | `MAIL_TRANSPORT` | `smtp` (Mailpit) | `resend` | `resend` |
-| `SMTP_HOST` / `SMTP_PORT` | `127.0.0.1` / `1025` | — | — |
+| `SMTP_HOST` / `SMTP_PORT` | `127.0.0.1` / `1035` | — | — |
 | `RESEND_API_KEY` | — | staging key | production key |
 | `MAIL_FROM_ADDRESS` | anything | verified staging sender | verified production sender |
-| `MAIL_FROM_NAME` | optional | `Melbourne Sphere` | `Melbourne Sphere` |
+| `MAIL_FROM_NAME` | optional | `Adelaide Sphere` | `Adelaide Sphere` |
 | `MAIL_REPLY_TO_ADDRESS` | optional | monitored address | monitored address |
 | `RESEND_WEBHOOK_SECRET` | optional | required to test events | **required** |
 

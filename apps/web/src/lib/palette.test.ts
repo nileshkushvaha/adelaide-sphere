@@ -52,15 +52,15 @@ function composite(name: string, behind: string): string {
  * failure reached the home page (audit F-04).
  */
 describe('glass panels, composited over the surfaces they sit on', () => {
-  const lightBehind = ['ms-surface', 'ms-surface-muted', 'ms-surface-sunken'];
-  const darkBehind = ['ms-band', 'ms-band-deep'];
+  const lightBehind = ['as-surface', 'as-surface-muted', 'as-surface-sunken'];
+  const darkBehind = ['as-band', 'as-band-deep'];
 
   it('keeps dark-glass text readable wherever a dark panel is used', () => {
     for (const behind of [...lightBehind, ...darkBehind]) {
-      const background = composite('ms-glass-dark', token(behind));
-      expect(contrast(token('ms-band-text'), background), `band text on dark glass over ${behind}`).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(token('ms-band-muted'), background), `muted band text on dark glass over ${behind}`).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(token('ms-band-link'), background), `band link on dark glass over ${behind}`).toBeGreaterThanOrEqual(4.5);
+      const background = composite('as-glass-dark', token(behind));
+      expect(contrast(token('as-band-text'), background), `band text on dark glass over ${behind}`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(token('as-band-muted'), background), `muted band text on dark glass over ${behind}`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(token('as-band-link'), background), `band link on dark glass over ${behind}`).toBeGreaterThanOrEqual(4.5);
     }
   });
 
@@ -73,62 +73,62 @@ describe('glass panels, composited over the surfaces they sit on', () => {
    */
   it('keeps light-glass text readable on the light surfaces', () => {
     for (const behind of lightBehind) {
-      const background = composite('ms-glass-light', token(behind));
-      expect(contrast(token('ms-text'), background), `text on light glass over ${behind}`).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(token('ms-text-muted'), background), `muted text on light glass over ${behind}`).toBeGreaterThanOrEqual(4.5);
+      const background = composite('as-glass-light', token(behind));
+      expect(contrast(token('as-text'), background), `text on light glass over ${behind}`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(token('as-text-muted'), background), `muted text on light glass over ${behind}`).toBeGreaterThanOrEqual(4.5);
     }
   });
 });
 
 describe('light surfaces', () => {
-  const backgrounds = ['ms-surface', 'ms-surface-muted', 'ms-surface-sunken'].map(token);
+  const backgrounds = ['as-surface', 'as-surface-muted', 'as-surface-sunken'].map(token);
 
   it('meets WCAG AA for body text, muted text and links on every light background', () => {
     for (const background of backgrounds) {
-      expect(contrast(token('ms-text'), background), `text on ${background}`).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(token('ms-text-muted'), background), `muted text on ${background}`).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(token('ms-link'), background), `link on ${background}`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(token('as-text'), background), `text on ${background}`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(token('as-text-muted'), background), `muted text on ${background}`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(token('as-link'), background), `link on ${background}`).toBeGreaterThanOrEqual(4.5);
     }
   });
 
   it('separates cards from the page and the soft band', () => {
     // A card must be visibly distinct from whatever section it sits on.
-    expect(Math.abs(luminance(token('ms-surface-raised')) - luminance(token('ms-surface-muted')))).toBeGreaterThan(0.004);
-    expect(Math.abs(luminance(token('ms-surface-raised')) - luminance(token('ms-surface-sunken')))).toBeGreaterThan(0.004);
+    expect(Math.abs(luminance(token('as-surface-raised')) - luminance(token('as-surface-muted')))).toBeGreaterThan(0.004);
+    expect(Math.abs(luminance(token('as-surface-raised')) - luminance(token('as-surface-sunken')))).toBeGreaterThan(0.004);
   });
 
   it('keeps borders visible against the surfaces they divide', () => {
-    expect(Math.abs(luminance(token('ms-border')) - luminance(token('ms-surface')))).toBeGreaterThan(0.01);
+    expect(Math.abs(luminance(token('as-border')) - luminance(token('as-surface')))).toBeGreaterThan(0.01);
   });
 
   it('keeps the keyboard focus indicator visible on every light surface', () => {
     for (const background of backgrounds) {
-      expect(contrast(token('ms-focus'), background), `focus on ${background}`).toBeGreaterThanOrEqual(3);
+      expect(contrast(token('as-focus'), background), `focus on ${background}`).toBeGreaterThanOrEqual(3);
     }
   });
 });
 
 describe('dark bands', () => {
-  const bands = ['ms-band', 'ms-band-deep', 'ms-band-raised'].map(token);
+  const bands = ['as-band', 'as-band-deep', 'as-band-raised'].map(token);
 
   it('meets WCAG AA for band text, muted text and links on every band shade', () => {
     for (const band of bands) {
-      expect(contrast(token('ms-band-text'), band), `band text on ${band}`).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(token('ms-band-muted'), band), `band muted text on ${band}`).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(token('ms-band-link'), band), `band link on ${band}`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(token('as-band-text'), band), `band text on ${band}`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(token('as-band-muted'), band), `band muted text on ${band}`).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(token('as-band-link'), band), `band link on ${band}`).toBeGreaterThanOrEqual(4.5);
     }
   });
 
   it('is unmistakably darker than the light surfaces it alternates with', () => {
     // The light/dark rhythm is the composition; a band that drifts light
     // collapses the page back into one flat field.
-    expect(luminance(token('ms-surface-muted')) - luminance(token('ms-band'))).toBeGreaterThan(0.5);
+    expect(luminance(token('as-surface-muted')) - luminance(token('as-band'))).toBeGreaterThan(0.5);
   });
 
   it('keeps the hero panel readable over photography', () => {
-    expect(contrast(token('ms-panel-text'), token('ms-panel'))).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(token('ms-panel-text-muted'), token('ms-panel'))).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(token('ms-hero-text'), token('ms-band-deep'))).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(token('as-panel-text'), token('as-panel'))).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(token('as-panel-text-muted'), token('as-panel'))).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(token('as-hero-text'), token('as-band-deep'))).toBeGreaterThanOrEqual(4.5);
   });
 });
 
@@ -143,29 +143,29 @@ it('does not reintroduce an operating-system dark scheme', () => {
 
 describe('ocean actions and teal selections', () => {
   it('keeps white button labels readable at rest and on hover', () => {
-    for (const background of ['ms-sky-700', 'ms-sky-600']) {
-      expect(contrast(token('ms-text-inverse'), token(background))).toBeGreaterThanOrEqual(4.5);
+    for (const background of ['as-sky-700', 'as-sky-600']) {
+      expect(contrast(token('as-text-inverse'), token(background))).toBeGreaterThanOrEqual(4.5);
     }
   });
 
   it('keeps teal labels and sky focus rings readable on their intended surfaces', () => {
-    expect(contrast(token('ms-teal-700'), token('ms-teal-100'))).toBeGreaterThanOrEqual(4.5);
-    for (const background of ['ms-surface', 'ms-surface-muted', 'ms-surface-sunken']) {
-      expect(contrast(token('ms-teal-700'), token(background))).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(token('as-teal-700'), token('as-teal-100'))).toBeGreaterThanOrEqual(4.5);
+    for (const background of ['as-surface', 'as-surface-muted', 'as-surface-sunken']) {
+      expect(contrast(token('as-teal-700'), token(background))).toBeGreaterThanOrEqual(4.5);
     }
-    for (const background of ['ms-band', 'ms-band-deep', 'ms-band-raised']) {
-      expect(contrast(token('ms-sky-400'), token(background))).toBeGreaterThanOrEqual(3);
+    for (const background of ['as-band', 'as-band-deep', 'as-band-raised']) {
+      expect(contrast(token('as-sky-400'), token(background))).toBeGreaterThanOrEqual(3);
     }
   });
 });
 
 
 it('keeps inverted area cards and gradient actions readable', () => {
-  expect(contrast(token('ms-text'), token('ms-sky-100'))).toBeGreaterThanOrEqual(4.5);
+  expect(contrast(token('as-text'), token('as-sky-100'))).toBeGreaterThanOrEqual(4.5);
   // Sample the full sRGB blue-to-teal gradient, not just its endpoints.
   const rgb = (hex: string) => hex.slice(1).match(/.{2}/g)!.map((part) => parseInt(part, 16));
-  const start = rgb(token('ms-sky-700'));
-  const end = rgb(token('ms-teal-700'));
+  const start = rgb(token('as-sky-700'));
+  const end = rgb(token('as-teal-700'));
   for (let step = 0; step <= 20; step++) {
     const background = '#' + start.map((value, i) => Math.round(value + (end[i]! - value) * step / 20).toString(16).padStart(2, '0')).join('');
     expect(contrast('#ffffff', background)).toBeGreaterThanOrEqual(4.5);

@@ -12,7 +12,7 @@ page, in `apps/web/src/app/about/page.tsx` (`PHOTOS`).
 | `adelaide-leigh-street.webp` (1600×1200) | Leigh Street, a laneway of cafés and small bars | Pangalau | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Leigh_Street,_Adelaide_01.jpg) |
 | `adelaide-central-market.webp` (1600×1200) | Fruit and vegetable stalls inside the Adelaide Central Market | Pangalau | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Interior_of_Central_Market,_Adelaide_01.jpg) |
 
-These replaced the Melbourne photographs on 15 September 2026 (downloads approved by the user). The originals were cropped (skyline 5:2 across the buildings; laneway 4:3 from the left, removing an advertising panel; market 4:3 centred), resized and re-encoded as WebP with all metadata removed. The previous market image showed Queen Victoria Market in Melbourne despite its alternative text.
+These were added on 15 September 2026 (downloads approved by the user). The originals were cropped (skyline 5:2 across the buildings; laneway 4:3 from the left, removing an advertising panel; market 4:3 centred), resized and re-encoded as WebP with all metadata removed.
 
 Replacing a photograph means replacing the file and its `PHOTOS` entry
 (alternative text, credit and dimensions). The client's commissioned Adelaide

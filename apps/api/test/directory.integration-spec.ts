@@ -9,7 +9,7 @@ describe('Business listings core (integration)', () => {
   let app: INestApplication;
   let cookie: string;
   let readerCookie: string;
-  let ids: { food: string; cafes: string; shopping: string; coffee: string; cbd: string; carlton: string };
+  let ids: { food: string; cafes: string; shopping: string; coffee: string; cbd: string; norwood: string };
   const agent = () => request(app.getHttpServer());
   const post = (path: string, c = cookie) => agent().post(path).set('Origin', ORIGIN).set('Cookie', c);
   const patch = (path: string, c = cookie) => agent().patch(path).set('Origin', ORIGIN).set('Cookie', c);
@@ -28,7 +28,7 @@ describe('Business listings core (integration)', () => {
     publicUrl: 'https://littlecollins.example',
     address: { line1: '12 Peel St', suburb: 'Adelaide', postcode: '5000', latitude: -34.9235, longitude: 138.5979 },
     privateEnquiryEmail: 'Owner@LittleCollins.example',
-    eligibilitySource: 'City of Melbourne suburb list, checked 2026-09-06',
+    eligibilitySource: 'City of Adelaide suburb list, checked 2026-09-06',
     contentRightsReviewed: true,
   });
 
@@ -55,9 +55,9 @@ describe('Business listings core (integration)', () => {
     const cafes = await mk('/api/v1/admin/categories', { name: 'Cafes', parentId: food });
     const shopping = await mk('/api/v1/admin/categories', { name: 'Shopping' });
     const coffee = await mk('/api/v1/admin/services', { name: 'Coffee', synonyms: ['espresso'] });
-    const cbd = await mk('/api/v1/admin/areas', { name: 'Melbourne CBD', eligibilitySource: 'council list' });
-    const carlton = await mk('/api/v1/admin/areas', { name: 'Carlton', eligibilitySource: 'council list' });
-    ids = { food, cafes, shopping, coffee, cbd, carlton };
+    const cbd = await mk('/api/v1/admin/areas', { name: 'Adelaide CBD', eligibilitySource: 'council list' });
+    const norwood = await mk('/api/v1/admin/areas', { name: 'Norwood', eligibilitySource: 'council list' });
+    ids = { food, cafes, shopping, coffee, cbd, norwood };
   });
 
   afterAll(async () => {
@@ -108,7 +108,7 @@ describe('Business listings core (integration)', () => {
     expect(detail.body.data.hasPrivateEnquiryEmail).toBe(true);
     const list = await agent().get('/api/v1/admin/businesses?q=espresso&status=draft&categoryId=' + ids.shopping).set('Cookie', cookie).expect(200);
     expect(list.body.data).toHaveLength(1);
-    expect(list.body.data[0]).toMatchObject({ id, primaryCategoryName: 'Cafes', localAreaName: 'Melbourne CBD', publishable: true, duplicateFlagged: false });
+    expect(list.body.data[0]).toMatchObject({ id, primaryCategoryName: 'Cafes', localAreaName: 'Adelaide CBD', publishable: true, duplicateFlagged: false });
     expect(JSON.stringify(list.body)).not.toMatch(/littlecollins\.example|privateEnquiry/);
     await agent().get('/api/v1/admin/businesses?sort=privateEnquiryEmailEncrypted').set('Cookie', cookie).expect(400);
   });
@@ -202,8 +202,8 @@ describe('Business listings core (integration)', () => {
 
   it('flags a duplicate name on the list without asking per row', async () => {
     // Same name, different addresses: the slug is unique, the normalised name is not.
-    const first = await post('/api/v1/admin/businesses').send({ ...validBody(), name: 'Twin Bakery', slug: 'twin-bakery-carlton' }).expect(201);
-    const second = await post('/api/v1/admin/businesses').send({ ...validBody(), name: 'Twin  bakery', slug: 'twin-bakery-fitzroy' }).expect(201);
+    const first = await post('/api/v1/admin/businesses').send({ ...validBody(), name: 'Twin Bakery', slug: 'twin-bakery-norwood' }).expect(201);
+    const second = await post('/api/v1/admin/businesses').send({ ...validBody(), name: 'Twin  bakery', slug: 'twin-bakery-unley' }).expect(201);
     const rows = (await agent().get('/api/v1/admin/businesses?q=twin').set('Cookie', cookie).expect(200)).body.data as { id: string; duplicateFlagged: boolean }[];
     expect(rows.filter((row) => [first.body.data.id, second.body.data.id].includes(row.id)).every((row) => row.duplicateFlagged)).toBe(true);
 
@@ -220,12 +220,12 @@ describe('Business listings core (integration)', () => {
     expect(blocked.body.error.code).toBe('TERM_IN_USE');
     const cbd = await db.localArea.findUniqueOrThrow({ where: { id: ids.cbd } });
     await post(`/api/v1/admin/areas/${ids.cbd}/deactivate`).send({ expectedVersion: cbd.version }).expect(409);
-    // Create a listing in Carlton, archive it, then Carlton can be deactivated.
-    const b = (await post('/api/v1/admin/businesses').send({ name: 'Carlton Only', description: 'x'.repeat(40), primaryCategoryId: ids.shopping, localAreaId: ids.carlton }).expect(201)).body.data;
+    // Create a listing in Norwood, archive it, then Norwood can be deactivated.
+    const b = (await post('/api/v1/admin/businesses').send({ name: 'Norwood Only', description: 'x'.repeat(40), primaryCategoryId: ids.shopping, localAreaId: ids.norwood }).expect(201)).body.data;
     await post(`/api/v1/admin/businesses/${b.id}/archive`).send({ expectedVersion: 1 }).expect(200);
-    const carlton = await db.localArea.findUniqueOrThrow({ where: { id: ids.carlton } });
-    await post(`/api/v1/admin/areas/${ids.carlton}/deactivate`).send({ expectedVersion: carlton.version }).expect(200);
+    const norwood = await db.localArea.findUniqueOrThrow({ where: { id: ids.norwood } });
+    await post(`/api/v1/admin/areas/${ids.norwood}/deactivate`).send({ expectedVersion: norwood.version }).expect(200);
     // Inactive area cannot be chosen for new/edited listings.
-    await post('/api/v1/admin/businesses').send({ ...validBody(), name: 'Nope', slug: 'nope', localAreaId: ids.carlton }).expect(400);
+    await post('/api/v1/admin/businesses').send({ ...validBody(), name: 'Nope', slug: 'nope', localAreaId: ids.norwood }).expect(400);
   });
 });

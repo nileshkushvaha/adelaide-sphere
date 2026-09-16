@@ -52,7 +52,7 @@ export function formatExceptionDate(isoDate: string): string {
   return dateFormatter.format(new Date(Date.UTC(y!, m! - 1, d!, 12)));
 }
 
-/** The calendar year in Melbourne right now (SRS NFR 012). */
+/** The calendar year in Adelaide right now (SRS NFR 012). */
 export function adelaideYear(now = new Date()): number {
   return Number(new Intl.DateTimeFormat('en-AU', { timeZone: 'Australia/Adelaide', year: 'numeric' }).format(now));
 }

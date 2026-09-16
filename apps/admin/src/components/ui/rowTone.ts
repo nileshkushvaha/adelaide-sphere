@@ -13,5 +13,5 @@ export function statusRowClass(status: string | null | undefined): string {
   const tone = toneOf(status);
   // A settled row needs no emphasis; it is the ones still waiting or broken that
   // have to stand out.
-  return tone === 'neutral' || tone === 'positive' ? '' : `ms-row-${tone}`;
+  return tone === 'neutral' || tone === 'positive' ? '' : `as-row-${tone}`;
 }

@@ -134,7 +134,7 @@ export function DocumentsLibrary() {
       {mayUpload && (
         <SectionCard title="Add a document" description={DOCUMENT_UPLOAD_RULES}>
           <div
-            className={`ms-doc-drop${dragging ? ' is-dragging' : ''}`}
+            className={`as-doc-drop${dragging ? ' is-dragging' : ''}`}
             onDragOver={(event) => {
               event.preventDefault();
               if (!uploading) setDragging(true);
@@ -146,7 +146,7 @@ export function DocumentsLibrary() {
               if (!uploading) choose(event.dataTransfer.files?.[0]);
             }}
           >
-            <FilePdfOutlined aria-hidden="true" className="ms-doc-drop__icon" />
+            <FilePdfOutlined aria-hidden="true" className="as-doc-drop__icon" />
             <Typography.Paragraph style={{ margin: '6px 0 12px' }}>Drop a PDF here, or choose one from your computer.</Typography.Paragraph>
             <input id="document-file" ref={fileInput} type="file" accept="application/pdf,.pdf" className="sr-only" tabIndex={-1} aria-label="PDF to upload" onChange={(event) => choose(event.target.files?.[0])} />
             <Button onClick={() => fileInput.current?.click()} disabled={uploading}>
@@ -210,22 +210,22 @@ export function DocumentsLibrary() {
           </div>
         )}
         {documents.length > 0 && (
-          <ul className="ms-doc-list">
+          <ul className="as-doc-list">
             {documents.map((asset) => (
-              <li key={asset.id} className={`ms-doc-row${asset.status === 'rejected' ? ' is-rejected' : ''}`}>
-                <span className="ms-doc-row__icon" aria-hidden="true">
+              <li key={asset.id} className={`as-doc-row${asset.status === 'rejected' ? ' is-rejected' : ''}`}>
+                <span className="as-doc-row__icon" aria-hidden="true">
                   <FilePdfOutlined />
                 </span>
-                <div className="ms-doc-row__body">
-                  <Link to={`/media/${asset.id}`} className="ms-doc-row__title">
+                <div className="as-doc-row__body">
+                  <Link to={`/media/${asset.id}`} className="as-doc-row__title">
                     {asset.title ?? asset.sourceName}
                   </Link>
-                  <p className="ms-doc-row__meta">
+                  <p className="as-doc-row__meta">
                     {[asset.sourceName, readableFileSize(asset.bytes), asset.pageCount ? `${asset.pageCount} page${asset.pageCount === 1 ? '' : 's'}` : null, `added ${formatDateTime(asset.createdAt)}`].filter(Boolean).join(' · ')}
                   </p>
-                  {asset.rejectionReason && <p className="ms-doc-row__reason">{asset.rejectionReason}</p>}
+                  {asset.rejectionReason && <p className="as-doc-row__reason">{asset.rejectionReason}</p>}
                 </div>
-                <div className="ms-doc-row__state">
+                <div className="as-doc-row__state">
                   <StatusTag status={asset.status} label={STATUS_LABELS[asset.status]} />
                   {asset.usages.length > 0 && (
                     <Typography.Text type="secondary" style={{ fontSize: 12.5 }}>
@@ -233,7 +233,7 @@ export function DocumentsLibrary() {
                     </Typography.Text>
                   )}
                 </div>
-                <div className="ms-doc-row__actions">
+                <div className="as-doc-row__actions">
                   {asset.documentUrl && (
                     <>
                       <Button size="small" icon={<CopyOutlined aria-hidden="true" />} onClick={() => void copyLink(asset)}>

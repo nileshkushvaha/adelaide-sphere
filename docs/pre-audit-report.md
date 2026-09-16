@@ -1,7 +1,7 @@
 # Internal pre-audit report
 
-**Product:** Melbourne Sphere — Melbourne-only business directory and editorial blog
-**Specification:** `docs/Melbourne_Sphere_Technical_SRS_v1.md` (MD5 `fcbd1675fb4cd505c1d395b4e7a0c0cb`)
+**Product:** Adelaide Sphere — Adelaide-only business directory and editorial blog
+**Specification:** `docs/Adelaide_Sphere_Technical_SRS_v1.md` (MD5 `fcbd1675fb4cd505c1d395b4e7a0c0cb`)
 **Date:** 2026-09-07 · **Prepared by:** implementation team (internal review, not an external audit)
 **Evidence commands:** `pnpm check`, `pnpm test:integration`
 
@@ -37,10 +37,10 @@ Full detail is in `docs/requirements-traceability.md`. Summary by SRS section:
 
 | Section | State | Notes |
 | --- | --- | --- |
-| 1 Scope (SCP) | Met in code | Melbourne is server-owned; no city routes, tenancy or public registration exist. The approved boundary itself is decision D01. |
+| 1 Scope (SCP) | Met in code | Adelaide is server-owned; no city routes, tenancy or public registration exist. The approved boundary itself is decision D01. |
 | 2 Public experience (UX) | Mostly met | Server-rendered pages, design tokens, light and dark schemes; a manual responsive and accessibility pass is still required. |
 | 3 Architecture (ARC) | Met | pnpm workspace, four apps, four packages, one API contract, no shared secrets in client bundles. |
-| 4 Hero (HERO) | Met | Full-bleed banner with admin-managed Melbourne photography, directional navy wash, focal points, rotating phrases, pause controls, reduced-motion behaviour, no-JavaScript search. Two licensed CC BY images ship as the interim default set (`docs/content/hero-photography.md`); the client’s own photography replaces them without a code change. |
+| 4 Hero (HERO) | Met | Full-bleed banner with admin-managed Adelaide photography, directional navy wash, focal points, rotating phrases, pause controls, reduced-motion behaviour, no-JavaScript search. Two licensed Creative Commons images ship as the interim default set (`docs/content/hero-photography.md`); the client’s own photography replaces them without a code change. |
 | 5 Discovery (DIR) | Met except DIR 008 | Search, filters, facets, pagination and the featured block are implemented and tested. "Open now" stays disabled pending hours-data readiness. |
 | 6 Listings (BUS) | Met | Publication gates, duplicates, hours with DST handling, links, address visibility. |
 | 7 Reviews and reports (REV/REP) | Met | Pending by default, transactional aggregates, redaction with a preserved original. |
@@ -86,14 +86,14 @@ penetration testing.
 
 ## 4. Open items before launch
 
-**Decision pack (2026-09-07).** The client-facing register for every item below is `docs/launch/client-decisions.md`, with the boundary recommendation (`docs/launch/melbourne-boundary.md`), the content and brand inventory (`docs/launch/content-requirements.md`) and the SEO proposals (`docs/launch/seo-approval.md`). Since this report was written, item 2's email half has been closed on the engineering side: a provider-independent SMTP adapter serves the API and the worker, production refuses to start without an authenticated TLS relay, and delivery was verified end to end against a local catcher; what remains is the client's provider account (D03b). Review rich results (item 6) are now explicitly off until signed off.
+**Decision pack (2026-09-07).** The client-facing register for every item below is `docs/launch/client-decisions.md`, with the boundary recommendation (`docs/launch/adelaide-boundary.md`), the content and brand inventory (`docs/launch/content-requirements.md`) and the SEO proposals (`docs/launch/seo-approval.md`). Since this report was written, item 2's email half has been closed on the engineering side: a provider-independent SMTP adapter serves the API and the worker, production refuses to start without an authenticated TLS relay, and delivery was verified end to end against a local catcher; what remains is the client's provider account (D03b). Review rich results (item 6) are now explicitly off until signed off.
 
 **Client decisions (blocking):**
 
-1. **D01 — Melbourne boundary.** The conservative City of Melbourne council area is applied. The approved boundary and local-area allowlist must be confirmed; listing eligibility depends on it.
+1. **D01 — Adelaide boundary.** The Inner Adelaide baseline is applied. The approved boundary and local-area allowlist must be confirmed; listing eligibility depends on it.
 2. **D03 — Third-party accounts.** No Turnstile keys, no email provider and no object-storage or CDN account. Public forms answer 503 without Turnstile, and enquiry delivery cannot be proven end to end without a provider.
 3. **Policy and content copy.** Privacy, terms, review guidelines, about and contact pages refuse to publish while they contain placeholder text — by design. The product owner supplies the approved copy. `/contact` meanwhile serves a factual, `noindex` explanation with the working contact form, so the route in the public contract is never a 404.
-4. **Hero photography and brand assets.** The client’s own Melbourne photography (two licensed CC BY images ship as an interim set), the logotype and wordmark, and the default share image.
+4. **Hero photography and brand assets.** The client’s own Adelaide photography (two licensed Creative Commons images ship as an interim set), the logotype and wordmark, and the default share image.
 5. **Approved public contact address.** `SITE_CONTACT_EMAIL` is still a development value, so the site withholds it: the footer, hours-correction and listing-correction links are suppressed and the "Add a business" action points at the homepage explanation. A routable address restores all of them with no code change.
 6. **SEO 006.** Confirmation from the technical lead before review rich results are enabled.
 7. **On-call ownership.** The responder and escalation table in the runbook must be filled in; alerts without a responder do not satisfy MON 002.

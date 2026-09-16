@@ -42,7 +42,7 @@ export function PageHeader({ title, description, crumbs, actions, meta, metrics 
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
         <div style={{ minWidth: 0 }}>
           <Space align="center" size={10} wrap>
-            <Typography.Title level={1} className="ms-page-title" style={{ fontSize: 28, fontWeight: 640, margin: 0, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+            <Typography.Title level={1} className="as-page-title" style={{ fontSize: 28, fontWeight: 640, margin: 0, letterSpacing: '-0.02em', lineHeight: 1.2 }}>
               {title}
             </Typography.Title>
             {meta}
@@ -56,7 +56,7 @@ export function PageHeader({ title, description, crumbs, actions, meta, metrics 
         {actions && <Space wrap>{actions}</Space>}
       </div>
       {metrics && metrics.length > 0 && (
-        <div className="ms-metric-strip" style={{ marginTop: 14 }}>
+        <div className="as-metric-strip" style={{ marginTop: 14 }}>
           {metrics.map((metric) => (
             <span
               key={metric.label}

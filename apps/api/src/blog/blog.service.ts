@@ -572,7 +572,7 @@ export class BlogService {
     const slug = input.slug ?? slugify(input.title);
     if (!isValidSlug(slug)) throw validation('slug', 'Slug must be lowercase letters, numbers and single hyphens');
     if (await db.post.findUnique({ where: { slug } })) {
-      // Two articles with the same title are common ("Best coffee in Carlton");
+      // Two articles with the same title are common ("Best coffee in Norwood");
       // offer the next free address rather than a bare refusal.
       let suggestion: string | undefined;
       for (let n = 2; n <= 20 && !suggestion; n += 1) {

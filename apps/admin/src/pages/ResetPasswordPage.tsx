@@ -31,7 +31,7 @@ export function ResetPasswordPage() {
           deadLink={{ codes: ['INVALID_RESET_TOKEN'], action: <Link to="/forgot-password">Request a new reset link</Link> }}
         />
       )}
-      <div className="ms-auth-secondary">
+      <div className="as-auth-secondary">
         <Link to="/login">Back to sign in</Link>
       </div>
     </AuthScreen>

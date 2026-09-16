@@ -4,7 +4,7 @@ import { SESSION_COOKIE_NAME } from '../src/auth/session.service.js';
 import { ORIGIN, TEST_ADMIN, clearThrottleKeys, seedSuperAdmin } from './integration/auth-fixtures.js';
 import { closeTestDatabase, createIntegrationApp, testDatabase, truncateApplicationTables } from './integration/harness.js';
 
-const realCopy = '<h2>How we work</h2><p>Adelaide Sphere is an independent directory of businesses inside the City of Melbourne. Our editors verify every listing against the approved boundary before it is published, and we correct details when readers tell us something has changed.</p>';
+const realCopy = '<h2>How we work</h2><p>Adelaide Sphere is an independent directory of businesses inside the City of Adelaide. Our editors verify every listing against the approved boundary before it is published, and we correct details when readers tell us something has changed.</p>';
 
 /** Information pages (SRS CFG 002). */
 describe('Static pages (integration)', () => {

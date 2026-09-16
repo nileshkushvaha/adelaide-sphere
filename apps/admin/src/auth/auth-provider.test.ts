@@ -1,5 +1,6 @@
 import { ApiError } from '@/api/errors';
 import { createAuthProvider } from './auth-provider';
+import { readLocalDraft, writeLocalDraft } from '@/shared/postDrafts';
 import type { Authenticated } from '@/api/auth';
 
 const principal: Authenticated = {
@@ -65,6 +66,21 @@ describe('cookie-session auth provider', () => {
     await provider.login({ email: 'a', password: 'b' });
     expect(await provider.logout({})).toEqual({ success: true, redirectTo: '/login' });
     expect(await provider.getIdentity?.()).toBeNull();
+  });
+
+  it('keeps unsaved article copies when a session expires and removes them when the administrator signs out', async () => {
+    const provider = createAuthProvider({ api: fakeApi() });
+    await provider.login({ email: 'a', password: 'b' });
+    writeLocalDraft('p1', { title: 't', excerpt: '', bodyMarkdown: 'body', bodyFormat: 'html', baseVersion: 1, savedAt: '2026-09-16T10:00:00.000Z' });
+
+    // What Refine does after a 401: onError asks for a logout without the sign-out flag.
+    expect(await provider.onError?.(unauthorized)).toMatchObject({ logout: true });
+    await provider.logout({ redirectPath: '/login' } as never);
+    await provider.login({ email: 'a', password: 'b' });
+    expect(readLocalDraft('p1')?.bodyMarkdown).toBe('body');
+
+    await provider.logout({ signedOut: true });
+    expect(Object.keys(localStorage).filter((key) => key.startsWith('as.post-draft:'))).toHaveLength(0);
   });
 
   it('shares one /me request across rapid concurrent checks and re-asks the server later', async () => {

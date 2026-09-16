@@ -15,6 +15,12 @@ import { NextResponse, type NextRequest } from 'next/server';
  */
 const CACHE_TTL_MS = 10_000;
 const CACHE_MAX_ENTRIES = 500;
+/**
+ * Every content request waits on this lookup, so a stalled API gives up
+ * quickly and the page renders as if there were no redirect (its own data
+ * fetches then show the error state).
+ */
+const LOOKUP_TIMEOUT_MS = 2_000;
 
 interface Resolution {
   kind: 'permanent' | 'temporary' | 'gone';
@@ -33,14 +39,15 @@ async function resolve(pathname: string): Promise<Resolution | null> {
   try {
     const url = new URL(`${apiOrigin}/api/v1/seo/redirects/resolve`);
     url.searchParams.set('path', pathname);
-    const response = await fetch(url, { headers: { accept: 'application/json' }, cache: 'no-store' });
+    const response = await fetch(url, { headers: { accept: 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS) });
     if (response.ok) {
       const body = (await response.json()) as { data?: Resolution };
       value = body.data ?? null;
     }
   } catch {
-    // The API being unreachable must not take the site down: fall through to
-    // normal rendering, which surfaces its own error state.
+    // The API being unreachable or too slow must not take the site down: fall
+    // through to normal rendering, which surfaces its own error state. Nothing
+    // is cached, so the next request asks again.
     return null;
   }
   if (cache.size >= CACHE_MAX_ENTRIES) cache.clear();

@@ -121,7 +121,7 @@ export function EditorialTermEditorPage({ config }: { config: EditorialTermsConf
       </Form.Item>
       <>
           {/* A real heading, so the group is announced as one — the same section the directory categories use. */}
-          <div className="ms-form-section">
+          <div className="as-form-section">
             <h3>Search appearance</h3>
             <p>How this {noun} appears in search results and when shared. Each falls back to the composed title and description, and the site image, when empty.</p>
           </div>
@@ -132,7 +132,7 @@ export function EditorialTermEditorPage({ config }: { config: EditorialTermsConf
             <Input.TextArea rows={3} maxLength={300} showCount placeholder="The summary shown under the title in search results" />
           </Form.Item>
           <Form.Item label="Keywords" name="seoKeywords" extra="Comma separated. Search engines ignore this tag; it will not affect ranking.">
-            <Input maxLength={255} placeholder={config.kind === 'blog-tags' ? 'e.g. melbourne coffee, cafés, roasters' : 'e.g. melbourne guides, walking tours, laneways'} />
+            <Input maxLength={255} placeholder={config.kind === 'blog-tags' ? 'e.g. adelaide coffee, cafés, roasters' : 'e.g. adelaide guides, walking tours, laneways'} />
           </Form.Item>
           <Form.Item label="Share image" name="ogImageMediaId" extra="Used when the landing page is shared. Empty uses the site image.">
             <MediaField current={term?.ogImage ?? null} emptyLabel="The site image is used" clearLabel="Use the site image" aspectRatio="1.91 / 1" />

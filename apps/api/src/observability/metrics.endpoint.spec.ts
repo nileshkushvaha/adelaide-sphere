@@ -17,7 +17,7 @@ describe('metrics exposition', () => {
     expect(response.status).toBe(200);
     expect(response.headers['content-type']).toContain('text/plain');
     expect(response.headers['cache-control']).toBe('no-store');
-    expect(response.text).toContain('ms_http_requests_total');
+    expect(response.text).toContain('as_http_requests_total');
   });
 
   it('does not admit to existing without the configured token', async () => {
@@ -25,7 +25,7 @@ describe('metrics exposition', () => {
     const denied = await request(appWith(token)).get(METRICS_PATH);
     // 404, not 401: an unauthorised caller learns nothing about the endpoint.
     expect(denied.status).toBe(404);
-    expect(denied.text).not.toContain('ms_');
+    expect(denied.text).not.toContain('as_');
 
     const wrong = await request(appWith(token)).get(METRICS_PATH).set('Authorization', `Bearer ${'y'.repeat(40)}`);
     expect(wrong.status).toBe(404);

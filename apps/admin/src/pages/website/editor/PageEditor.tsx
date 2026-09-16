@@ -386,18 +386,18 @@ export function PageEditor({ page, onReload }: Props) {
         <Alert type="warning" showIcon style={{ marginBottom: 16 }} message="This page was not published at its scheduled time" description={`It went back to draft because: ${page.publishFailure}`} />
       )}
 
-      <div className="ms-post-editor">
-        <div className="ms-post-editor__main">
+      <div className="as-post-editor">
+        <div className="as-post-editor__main">
           <SectionCard style={{ marginBottom: 16 }}>
             {isNew && (
-              <fieldset className="ms-page-templates">
+              <fieldset className="as-page-templates">
                 <legend>Start from</legend>
-                <div className="ms-page-templates__grid">
+                <div className="as-page-templates__grid">
                   {PAGE_TEMPLATES.map((entry) => (
-                    <label key={entry.key} className={`ms-page-templates__option${template === entry.key ? ' is-selected' : ''}`}>
+                    <label key={entry.key} className={`as-page-templates__option${template === entry.key ? ' is-selected' : ''}`}>
                       <input type="radio" name="page-template" value={entry.key} checked={template === entry.key} onChange={() => chooseTemplate(entry.key)} />
-                      <span className="ms-page-templates__label">{entry.label}</span>
-                      <span className="ms-page-templates__description">{entry.description}</span>
+                      <span className="as-page-templates__label">{entry.label}</span>
+                      <span className="as-page-templates__description">{entry.description}</span>
                     </label>
                   ))}
                 </div>
@@ -491,7 +491,7 @@ export function PageEditor({ page, onReload }: Props) {
                       <Input.TextArea rows={3} maxLength={300} showCount placeholder="What a visitor will find on this page, in a sentence or two" />
                     </Form.Item>
                     <Form.Item label="Keywords" name="seoKeywords" extra="Comma separated. Search engines ignore this tag; it will not affect ranking.">
-                      <Input maxLength={255} placeholder="e.g. guidelines, community, melbourne" />
+                      <Input maxLength={255} placeholder="e.g. guidelines, community, adelaide" />
                     </Form.Item>
                     <Form.Item label="Share image" name="ogImageMediaId" extra="Used when this page is shared. Empty uses the site image.">
                       <MediaField current={page?.ogImage ?? null} emptyLabel="The site image is used" clearLabel="Use the site image" aspectRatio="1.91 / 1" disabled={!canSave} />
@@ -549,7 +549,7 @@ export function PageEditor({ page, onReload }: Props) {
           />
         </div>
 
-        <div className="ms-post-editor__top">
+        <div className="as-post-editor__top">
           <PagePublishBox
             page={page}
             blockers={blockers}
@@ -573,9 +573,9 @@ export function PageEditor({ page, onReload }: Props) {
           />
         </div>
 
-        <div className="ms-post-editor__rest">
+        <div className="as-post-editor__rest">
           <SectionCard title="How pages work">
-            <ul className="ms-page-help">
+            <ul className="as-page-help">
               <li>A page is a stack of sections. Open a section to edit it; drag or use the arrows to reorder.</li>
               <li>Hide a section to keep it without showing it to visitors.</li>
               <li>Everything is saved as a draft until you publish. Published pages update when you save.</li>

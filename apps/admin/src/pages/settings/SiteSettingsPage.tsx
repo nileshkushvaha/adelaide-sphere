@@ -130,7 +130,7 @@ export function SiteSettingsPage() {
             {(fields, { add, remove }) => (
               <div>
                 {fields.map((field) => (
-                  <div key={field.key} className="ms-field-row" style={{ flexWrap: 'nowrap' }}>
+                  <div key={field.key} className="as-field-row" style={{ flexWrap: 'nowrap' }}>
                     <Form.Item name={field.name} style={{ marginBottom: 8, flex: '1 1 auto', maxWidth: 420 }} rules={[{ required: true, message: 'Phrase is required' }]}>
                       <Input maxLength={60} aria-label={`Phrase ${field.name + 1}`} placeholder="e.g. find a local plumber" />
                     </Form.Item>

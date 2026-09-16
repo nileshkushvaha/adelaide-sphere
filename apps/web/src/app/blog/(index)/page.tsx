@@ -73,8 +73,8 @@ export default async function BlogIndexPage({ searchParams }: PageProps<'/blog'>
 
   return (
     <>
-      <section aria-labelledby="blog-heading" className="ms-on-dark ms-editorial-band text-band-text">
-        <div className="ms-container py-8 sm:py-10">
+      <section aria-labelledby="blog-heading" className="as-on-dark as-editorial-band text-band-text">
+        <div className="as-container py-8 sm:py-10">
           {/* The publisher and the size of the archive on one line: both are
               labels for the heading under them, and stacking them separately
               left the band twice as tall as its content needed. */}
@@ -111,7 +111,7 @@ export default async function BlogIndexPage({ searchParams }: PageProps<'/blog'>
         </div>
       </section>
 
-      <div className="ms-container pt-6 pb-12 sm:pt-8 sm:pb-16">
+      <div className="as-container pt-6 pb-12 sm:pt-8 sm:pb-16">
         {posts.data.length === 0 ? (
           <BlogEmptyState message="No articles have been published yet. The first ones are being written." />
         ) : (

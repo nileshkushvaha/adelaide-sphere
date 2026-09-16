@@ -13,8 +13,8 @@ export function BrandingProvider({ children }: { children: ReactNode }) {
         .catch(() => { /* Bundled branding remains available when the API is offline. */ });
     };
     refresh();
-    window.addEventListener('ms-branding-updated', refresh);
-    return () => { controller.abort(); window.removeEventListener('ms-branding-updated', refresh); };
+    window.addEventListener('as-branding-updated', refresh);
+    return () => { controller.abort(); window.removeEventListener('as-branding-updated', refresh); };
   }, []);
   useEffect(() => {
     let icon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');

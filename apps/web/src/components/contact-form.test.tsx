@@ -38,7 +38,7 @@ function fillIn(overrides: Partial<Record<'name' | 'email' | 'topic' | 'message'
   fireEvent.change(screen.getByLabelText('Name'), { target: { value: overrides.name ?? 'Sarah Wilson' } });
   fireEvent.change(screen.getByLabelText('Email address'), { target: { value: overrides.email ?? 'sarah@example.com' } });
   fireEvent.change(screen.getByLabelText('What can we help with?'), { target: { value: overrides.topic ?? 'Correct a published listing' } });
-  fireEvent.change(screen.getByLabelText('Message'), { target: { value: overrides.message ?? 'The opening hours on the Carlton bakery listing are out of date.' } });
+  fireEvent.change(screen.getByLabelText('Message'), { target: { value: overrides.message ?? 'The opening hours on the Norwood bakery listing are out of date.' } });
   fireEvent.click(screen.getByRole('checkbox'));
 }
 
@@ -132,12 +132,12 @@ describe('ContactForm submission (SRS ENQ 002/003, SEC 002)', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
     expect(url).toBe('/api/v1/contact');
-    expect(init.headers['idempotency-key']).toMatch(/^ms-/);
+    expect(init.headers['idempotency-key']).toMatch(/^as-/);
     expect(JSON.parse(init.body as string)).toEqual({
       name: 'Sarah Wilson',
       email: 'sarah@example.com',
       subject: 'Correct a published listing',
-      message: 'The opening hours on the Carlton bakery listing are out of date.',
+      message: 'The opening hours on the Norwood bakery listing are out of date.',
       acknowledged: true,
       captchaToken: 'token-1',
     });
@@ -173,7 +173,7 @@ describe('ContactForm submission (SRS ENQ 002/003, SEC 002)', () => {
     expect(await screen.findByText('Message must be 20–5000 characters')).toBeInTheDocument();
     expect(screen.getByText('Choose what your message is about.')).toBeInTheDocument();
     expect(screen.queryByText(/internal wording|longer than or equal/)).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Message')).toHaveValue('The opening hours on the Carlton bakery listing are out of date.');
+    expect(screen.getByLabelText('Message')).toHaveValue('The opening hours on the Norwood bakery listing are out of date.');
     expect(turnstile.api.reset).toHaveBeenCalledWith('widget-1');
   });
 
@@ -213,7 +213,7 @@ describe('ContactForm submission (SRS ENQ 002/003, SEC 002)', () => {
     await turnstile.pass();
     submit();
     expect(await screen.findByRole('alert')).toHaveTextContent(/couldn’t reach the server/i);
-    expect(screen.getByLabelText('Message')).toHaveValue('The opening hours on the Carlton bakery listing are out of date.');
+    expect(screen.getByLabelText('Message')).toHaveValue('The opening hours on the Norwood bakery listing are out of date.');
     expect(screen.queryByRole('heading', { name: 'Message received' })).not.toBeInTheDocument();
   });
 });

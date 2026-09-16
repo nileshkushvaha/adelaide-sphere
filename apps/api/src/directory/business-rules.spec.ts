@@ -11,7 +11,7 @@ describe('business rules', () => {
     expect(normalisePhone('+61 3 9000 1234')).toBe('0390001234');
     expect(normalisePhone('(03) 9000-1234')).toBe('0390001234');
     expect(normalisePhone('')).toBeNull();
-    expect(normaliseAddressKey({ line1: '12/34 Collins St.', postcode: '3000' })).toBe('12 34 collins st|3000');
+    expect(normaliseAddressKey({ line1: '12/34 Rundle St.', postcode: '5000' })).toBe('12 34 rundle st|5000');
     expect(normaliseAddressKey(null)).toBeNull();
   });
 

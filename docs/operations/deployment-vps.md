@@ -1,4 +1,4 @@
-# Deploying Melbourne Sphere to a single VPS
+# Deploying Adelaide Sphere to a single VPS
 
 A complete, ordered procedure for putting the whole product on one Ubuntu
 server: first installation, first release, content, TLS, backups, monitoring,
@@ -10,10 +10,10 @@ Read `docs/operations/runbook.md` alongside this guide. It holds the rules this
 procedure implements (environments, health, backups, alerts). This guide is the
 "how, on one machine" version.
 
-> **Conventions.** `melbournesphere.com` is the production domain
+> **Conventions.** `adelaidesphere.com.au` is the production domain
 > (`PUBLIC_SITE_URL` / `SITE_ORIGIN` in the example files). Replace it, and
-> `media.melbournesphere.com`, if yours differ. Commands prefixed with `sudo`
-> run as your administrative user; everything else runs as the `ms` service
+> `media.adelaidesphere.com.au`, if yours differ. Commands prefixed with `sudo`
+> run as your administrative user; everything else runs as the `adelaide-sphere` service
 > user unless the step says otherwise. `<…>` marks a value you supply. Never
 > paste a real secret into a tracked file, a ticket or a chat.
 
@@ -27,23 +27,23 @@ procedure implements (environments, health, backups, alerts). This guide is the
                  ┌──────┴───────┐
                  │  nginx (host) │  TLS (Let's Encrypt), routing, 404 document
                  └──┬───┬───┬───┬┘
-   /api/v1/*  ──────┘   │   │   └────── media.melbournesphere.com
+   /api/v1/*  ──────┘   │   │   └────── media.adelaidesphere.com.au
    /admin/*  (static) ──┘   │                       │
    /*          ─────────────┘                       │
         │           │                               │
-  ms-api :3001  ms-web :3000                 MinIO :9000 (Docker)
+  api :4001     web :4000                    MinIO :9000 (Docker)
   (systemd)     (systemd)                           │
         │                                           │
-  ms-worker (systemd, no port; metrics on 127.0.0.1:9464)
+  adelaide-sphere-worker (systemd, no port; metrics on 127.0.0.1:9474)
         │
   MySQL 8.4 :3306 · Redis 8.4 :6379   (Docker, 127.0.0.1 only)
 ```
 
 | Component | How it runs | Listens on | Notes |
 | --- | --- | --- | --- |
-| Public site (`apps/web`, Next.js 16) | systemd `ms-web` | `127.0.0.1:3000` | Server-rendered; talks to the API over loopback |
-| API (`apps/api`, NestJS 12) | systemd `ms-api` | `:3001` (firewalled) | `/api/v1`, health, `/metrics` |
-| Worker (`apps/worker`, BullMQ) | systemd `ms-worker` | `127.0.0.1:9464` (metrics/health) | **Required.** Without it images never process, enquiries are never sent, scheduled posts never publish and caches never purge |
+| Public site (`apps/web`, Next.js 16) | systemd `adelaide-sphere-web` | `127.0.0.1:4000` | Server-rendered; talks to the API over loopback |
+| API (`apps/api`, NestJS 12) | systemd `adelaide-sphere-api` | `:4001` (firewalled) | `/api/v1`, health, `/metrics` |
+| Worker (`apps/worker`, BullMQ) | systemd `adelaide-sphere-worker` | `127.0.0.1:9474` (metrics/health) | **Required.** Without it images never process, enquiries are never sent, scheduled posts never publish and caches never purge |
 | Admin (`apps/admin`, Vite build) | static files served by nginx | — | Served at `/admin/` |
 | MySQL 8.4.11 | Docker | `127.0.0.1:3306` | TLS, binlogs on |
 | Redis 8.4.6 | Docker | `127.0.0.1:6379` | Password, AOF, `noeviction` (BullMQ requires it) |
@@ -71,13 +71,13 @@ Collect these first; several steps cannot complete without them.
 | --- | --- | --- |
 | Domain with DNS access | TLS, canonical URLs | Section 2 |
 | VPS with Ubuntu Server 24.04 LTS, root or sudo SSH access | Everything | Section 3 |
-| Cloudflare Turnstile widget (site key + secret key), hostname `melbournesphere.com` | Review, contact and enquiry forms | `TURNSTILE_SITE_KEY` (web), `TURNSTILE_SECRET_KEY` (api) |
-| Resend account with a **verified sending domain** (e.g. `mail.melbournesphere.com`), API key, webhook signing secret | Password resets, enquiry delivery | `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `MAIL_FROM_ADDRESS` (see `email-deliverability.md`). An authenticated TLS SMTP relay also works (`MAIL_TRANSPORT=smtp`) |
+| Cloudflare Turnstile widget (site key + secret key), hostname `adelaidesphere.com.au` | Review, contact and enquiry forms | `TURNSTILE_SITE_KEY` (web), `TURNSTILE_SECRET_KEY` (api) |
+| Resend account with a **verified sending domain** (e.g. `mail.adelaidesphere.com.au`), API key, webhook signing secret | Password resets, enquiry delivery | `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `MAIL_FROM_ADDRESS` (see `email-deliverability.md`). An authenticated TLS SMTP relay also works (`MAIL_TRANSPORT=smtp`) |
 | Mailbox that receives general site enquiries | `/contact` | `SITE_ENQUIRY_RECIPIENT` |
 | The first administrator's email and name | Admin bootstrap | Section 11 |
 | An `age` key pair for backup encryption, private key kept **off** the server | Backups | Section 15 |
 | Off-site storage for backups (a second provider/bucket) | Backups | Section 15 |
-| Git access to `github.com:nileshkushvaha/melbourne-sphere` (a read-only deploy key) | Fetching releases | Section 7 |
+| Git access to `github.com:nileshkushvaha/adelaide-sphere` (a read-only deploy key) | Fetching releases | Section 7 |
 
 ---
 
@@ -87,9 +87,9 @@ Create these records at your DNS provider (TTL 300 while setting up):
 
 | Type | Name | Value |
 | --- | --- | --- |
-| A | `melbournesphere.com` | `<VPS IPv4>` |
-| A | `www.melbournesphere.com` | `<VPS IPv4>` |
-| A | `media.melbournesphere.com` | `<VPS IPv4>` |
+| A | `adelaidesphere.com.au` | `<VPS IPv4>` |
+| A | `www.adelaidesphere.com.au` | `<VPS IPv4>` |
+| A | `media.adelaidesphere.com.au` | `<VPS IPv4>` |
 | AAAA | same three names | `<VPS IPv6>` (only if the VPS has one and you open IPv6 in the firewall) |
 
 Plus the email records Resend gives you (SPF, DKIM, DMARC `p=none` to start) on
@@ -98,11 +98,11 @@ the sending subdomain — `email-deliverability.md` §"Domain set-up".
 Check before continuing (from your laptop):
 
 ```bash
-dig +short melbournesphere.com
+dig +short adelaidesphere.com.au
 ```
 
 ```bash
-dig +short media.melbournesphere.com
+dig +short media.adelaidesphere.com.au
 ```
 
 Both must print the VPS address; Let's Encrypt fails otherwise.
@@ -124,11 +124,11 @@ apt update && apt full-upgrade -y && reboot
 Log back in, then:
 
 ```bash
-timedatectl set-timezone Australia/Melbourne
+timedatectl set-timezone Australia/Adelaide
 ```
 
 ```bash
-hostnamectl set-hostname ms-prod-1
+hostnamectl set-hostname as-prod-1
 ```
 
 ### 3.2 An administrative user, key-only SSH
@@ -272,15 +272,15 @@ the MySQL APT repository with the 8.4 LTS track selected.
 ## 5. Service user and directory layout
 
 ```bash
-sudo adduser --system --group --home /srv/adelaide-sphere --shell /bin/bash ms
+sudo adduser --system --group --home /srv/adelaide-sphere --shell /bin/bash adelaide-sphere
 ```
 
 ```bash
-sudo usermod -aG docker ms
+sudo usermod -aG docker adelaide-sphere
 ```
 
 ```bash
-sudo -u ms mkdir -p /srv/adelaide-sphere/{releases,shared,services,backups,logs}
+sudo -u adelaide-sphere mkdir -p /srv/adelaide-sphere/{releases,shared,services,backups,logs}
 ```
 
 ```bash
@@ -298,7 +298,7 @@ sudo chmod 750 /srv/adelaide-sphere && sudo chmod 700 /srv/adelaide-sphere/share
 Become the service user for the next sections:
 
 ```bash
-sudo -iu ms
+sudo -iu adelaide-sphere
 ```
 
 ---
@@ -312,11 +312,11 @@ Generate hex secrets (no characters that need URL-encoding later):
 ```bash
 cd /srv/adelaide-sphere/services && umask 077 && cat > .env <<EOF
 MYSQL_ROOT_PASSWORD=$(openssl rand -hex 32)
-MYSQL_DATABASE=melbourne_sphere
-MYSQL_USER=ms_app
+MYSQL_DATABASE=adelaide_sphere
+MYSQL_USER=as_app
 MYSQL_PASSWORD=$(openssl rand -hex 32)
 REDIS_PASSWORD=$(openssl rand -hex 32)
-MINIO_ROOT_USER=ms-minio-root
+MINIO_ROOT_USER=as-minio-root
 MINIO_ROOT_PASSWORD=$(openssl rand -hex 32)
 EOF
 ```
@@ -332,7 +332,7 @@ by MySQL **only on the first start of an empty volume** (see
 ### 6.2 MySQL configuration (binlogs for point-in-time recovery, collation)
 
 ```bash
-mkdir -p /srv/adelaide-sphere/services/mysql-conf && cat > /srv/adelaide-sphere/services/mysql-conf/ms.cnf <<'EOF'
+mkdir -p /srv/adelaide-sphere/services/mysql-conf && cat > /srv/adelaide-sphere/services/mysql-conf/as.cnf <<'EOF'
 [mysqld]
 character-set-server = utf8mb4
 collation-server = utf8mb4_unicode_ci
@@ -357,7 +357,7 @@ name: adelaide-sphere-prod
 services:
   mysql:
     image: mysql:8.4.11
-    container_name: ms-mysql
+    container_name: as-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?}
@@ -378,7 +378,7 @@ services:
 
   redis:
     image: redis:8.4.6
-    container_name: ms-redis
+    container_name: as-redis
     restart: unless-stopped
     command:
       - redis-server
@@ -406,7 +406,7 @@ services:
 
   minio:
     image: minio/minio:RELEASE.2025-09-07T16-13-09Z
-    container_name: ms-minio
+    container_name: as-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
@@ -414,7 +414,7 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?}
       # Browsers upload straight to the quarantine bucket with a signed URL
       # issued by the API, so the admin origin must be allowed.
-      MINIO_API_CORS_ALLOW_ORIGIN: https://melbournesphere.com
+      MINIO_API_CORS_ALLOW_ORIGIN: https://adelaidesphere.com.au
     volumes:
       - minio-data:/data
     ports:
@@ -459,13 +459,13 @@ start. The API and worker verify the server against that CA
 certificate does not name `127.0.0.1`).
 
 ```bash
-docker cp ms-mysql:/var/lib/mysql/ca.pem /srv/adelaide-sphere/shared/mysql-ca.pem && chmod 644 /srv/adelaide-sphere/shared/mysql-ca.pem
+docker cp as-mysql:/var/lib/mysql/ca.pem /srv/adelaide-sphere/shared/mysql-ca.pem && chmod 644 /srv/adelaide-sphere/shared/mysql-ca.pem
 ```
 
 Confirm TLS is on:
 
 ```bash
-cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec -e MYSQL_PWD="$MYSQL_PASSWORD" ms-mysql mysql -h 127.0.0.1 -u"$MYSQL_USER" --ssl-mode=REQUIRED -e "SHOW STATUS LIKE 'Ssl_cipher'"
+cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec -e MYSQL_PWD="$MYSQL_PASSWORD" as-mysql mysql -h 127.0.0.1 -u"$MYSQL_USER" --ssl-mode=REQUIRED -e "SHOW STATUS LIKE 'Ssl_cipher'"
 ```
 
 A non-empty cipher means the connection is encrypted.
@@ -473,9 +473,9 @@ A non-empty cipher means the connection is encrypted.
 ### 6.6 A separate backup account (least privilege)
 
 ```bash
-cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && BACKUP_PW=$(openssl rand -hex 32) && echo "MYSQL_BACKUP_PASSWORD=$BACKUP_PW" >> /srv/adelaide-sphere/shared/backup.env && chmod 600 /srv/adelaide-sphere/shared/backup.env && docker exec -i -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" ms-mysql mysql -uroot <<SQL
-CREATE USER IF NOT EXISTS 'ms_backup'@'%' IDENTIFIED BY '$BACKUP_PW';
-GRANT SELECT, SHOW VIEW, TRIGGER, LOCK TABLES, EVENT, PROCESS, RELOAD, REPLICATION CLIENT ON *.* TO 'ms_backup'@'%';
+cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && BACKUP_PW=$(openssl rand -hex 32) && echo "MYSQL_BACKUP_PASSWORD=$BACKUP_PW" >> /srv/adelaide-sphere/shared/backup.env && chmod 600 /srv/adelaide-sphere/shared/backup.env && docker exec -i -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" as-mysql mysql -uroot <<SQL
+CREATE USER IF NOT EXISTS 'adelaide_sphere_backup'@'%' IDENTIFIED BY '$BACKUP_PW';
+GRANT SELECT, SHOW VIEW, TRIGGER, LOCK TABLES, EVENT, PROCESS, RELOAD, REPLICATION CLIENT ON *.* TO 'adelaide_sphere_backup'@'%';
 FLUSH PRIVILEGES;
 SQL
 ```
@@ -485,18 +485,18 @@ SQL
 The application must not use the MinIO root credentials.
 
 ```bash
-cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec ms-minio mc alias set local http://127.0.0.1:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec as-minio mc alias set local http://127.0.0.1:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
 ```
 
 ```bash
-docker exec ms-minio mc mb --ignore-existing local/adelaide-sphere-quarantine && docker exec ms-minio mc mb --ignore-existing local/adelaide-sphere-media && docker exec ms-minio mc anonymous set download local/adelaide-sphere-media
+docker exec as-minio mc mb --ignore-existing local/adelaide-sphere-quarantine && docker exec as-minio mc mb --ignore-existing local/adelaide-sphere-media && docker exec as-minio mc anonymous set download local/adelaide-sphere-media
 ```
 
 (The public bucket is anonymously **readable**; the quarantine bucket is never
 public. The API also applies this read policy at start-up if it can.)
 
 ```bash
-docker exec -i ms-minio sh -c 'cat > /tmp/ms-app-policy.json' <<'EOF'
+docker exec -i as-minio sh -c 'cat > /tmp/as-app-policy.json' <<'EOF'
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -510,13 +510,13 @@ EOF
 ```
 
 ```bash
-docker exec ms-minio mc admin policy create local ms-app /tmp/ms-app-policy.json && APP_KEY=ms-app && APP_SECRET=$(openssl rand -hex 32) && docker exec ms-minio mc admin user add local "$APP_KEY" "$APP_SECRET" && docker exec ms-minio mc admin policy attach local ms-app --user "$APP_KEY" && printf 'MEDIA_S3_ACCESS_KEY_ID=%s\nMEDIA_S3_SECRET_ACCESS_KEY=%s\n' "$APP_KEY" "$APP_SECRET" > /srv/adelaide-sphere/shared/minio-app.env && chmod 600 /srv/adelaide-sphere/shared/minio-app.env
+docker exec as-minio mc admin policy create local as-app /tmp/as-app-policy.json && APP_KEY=as-app && APP_SECRET=$(openssl rand -hex 32) && docker exec as-minio mc admin user add local "$APP_KEY" "$APP_SECRET" && docker exec as-minio mc admin policy attach local as-app --user "$APP_KEY" && printf 'MEDIA_S3_ACCESS_KEY_ID=%s\nMEDIA_S3_SECRET_ACCESS_KEY=%s\n' "$APP_KEY" "$APP_SECRET" > /srv/adelaide-sphere/shared/minio-app.env && chmod 600 /srv/adelaide-sphere/shared/minio-app.env
 ```
 
 Turn on versioning for the media bucket (runbook §4, media recovery):
 
 ```bash
-docker exec ms-minio mc version enable local/adelaide-sphere-media
+docker exec as-minio mc version enable local/adelaide-sphere-media
 ```
 
 ---
@@ -526,7 +526,7 @@ docker exec ms-minio mc version enable local/adelaide-sphere-media
 ### 7.1 A read-only deploy key
 
 ```bash
-ssh-keygen -t ed25519 -N '' -C 'ms-prod-1 deploy key' -f ~/.ssh/ms_deploy && cat ~/.ssh/ms_deploy.pub
+ssh-keygen -t ed25519 -N '' -C 'as-prod-1 deploy key' -f ~/.ssh/as_deploy && cat ~/.ssh/as_deploy.pub
 ```
 
 Add the printed public key in GitHub → repository → Settings → Deploy keys,
@@ -535,7 +535,7 @@ Add the printed public key in GitHub → repository → Settings → Deploy keys
 ```bash
 cat >> ~/.ssh/config <<'EOF'
 Host github.com
-  IdentityFile ~/.ssh/ms_deploy
+  IdentityFile ~/.ssh/as_deploy
   IdentitiesOnly yes
 EOF
 ```
@@ -549,7 +549,7 @@ chmod 600 ~/.ssh/config && ssh-keyscan github.com >> ~/.ssh/known_hosts && ssh -
 ### 7.2 A mirror, then one directory per release
 
 ```bash
-git clone --mirror git@github.com:nileshkushvaha/melbourne-sphere.git /srv/adelaide-sphere/repo.git
+git clone --mirror git@github.com:nileshkushvaha/adelaide-sphere.git /srv/adelaide-sphere/repo.git
 ```
 
 ```bash
@@ -567,7 +567,7 @@ command above).
 
 ## 8. Environment files
 
-Three files in `/srv/adelaide-sphere/shared/`, mode 600, owned by `ms`. They
+Three files in `/srv/adelaide-sphere/shared/`, mode 600, owned by `adelaide-sphere`. They
 are the production equivalents of `apps/api/.env.example`,
 `apps/worker/.env.example` and `apps/web/.env.example`; read those for what each
 variable means.
@@ -587,10 +587,10 @@ private fields. Losing it loses that data.
 ```bash
 cd /srv/adelaide-sphere/shared && . ../services/.env && . ./generated.env && . ./minio-app.env && cat > api.env <<EOF
 NODE_ENV=production
-PORT=3001
+PORT=4001
 TRUST_PROXY=1
 
-DATABASE_URL=mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@127.0.0.1:3306/${MYSQL_DATABASE}?sslmode=verify-ca&sslca=%2Fsrv%2Fmelbourne-sphere%2Fshared%2Fmysql-ca.pem
+DATABASE_URL=mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@127.0.0.1:3306/${MYSQL_DATABASE}?sslmode=verify-ca&sslca=%2Fsrv%2Fadelaide-sphere%2Fshared%2Fmysql-ca.pem
 DATABASE_ALLOW_PUBLIC_KEY_RETRIEVAL=false
 DATABASE_CONNECTION_LIMIT=20
 
@@ -599,32 +599,32 @@ REDIS_URL=redis://:${REDIS_PASSWORD}@127.0.0.1:6379/0
 APP_SECRET_KEY=${APP_SECRET_KEY}
 FIELD_ENCRYPTION_KEY=${FIELD_ENCRYPTION_KEY}
 
-TRUSTED_ORIGINS=https://melbournesphere.com
+TRUSTED_ORIGINS=https://adelaidesphere.com.au
 SESSION_COOKIE_SECURE=true
 SESSION_IDLE_MINUTES=30
 SESSION_ABSOLUTE_HOURS=12
-PUBLIC_ADMIN_URL=https://melbournesphere.com/admin
-PUBLIC_SITE_URL=https://melbournesphere.com
+PUBLIC_ADMIN_URL=https://adelaidesphere.com.au/admin
+PUBLIC_SITE_URL=https://adelaidesphere.com.au
 OPENAPI_ENABLED=false
 
 MAIL_TRANSPORT=resend
 RESEND_API_KEY=<re_… from Resend>
 RESEND_WEBHOOK_SECRET=<whsec_… from Resend>
-MAIL_FROM_ADDRESS=<hello@mail.melbournesphere.com>
-MAIL_FROM_NAME=Melbourne Sphere
+MAIL_FROM_ADDRESS=<hello@mail.adelaidesphere.com.au>
+MAIL_FROM_NAME=Adelaide Sphere
 MAIL_REPLY_TO_ADDRESS=<monitored mailbox>
 SITE_ENQUIRY_RECIPIENT=<mailbox that receives /contact enquiries>
 
 TURNSTILE_SECRET_KEY=<Turnstile secret key>
 SUBMISSION_TERMS_VERSION=2026-09-01
 
-MEDIA_S3_ENDPOINT=https://media.melbournesphere.com
+MEDIA_S3_ENDPOINT=https://media.adelaidesphere.com.au
 MEDIA_S3_REGION=us-east-1
 MEDIA_S3_ACCESS_KEY_ID=${MEDIA_S3_ACCESS_KEY_ID}
 MEDIA_S3_SECRET_ACCESS_KEY=${MEDIA_S3_SECRET_ACCESS_KEY}
 MEDIA_QUARANTINE_BUCKET=adelaide-sphere-quarantine
 MEDIA_PUBLIC_BUCKET=adelaide-sphere-media
-MEDIA_PUBLIC_BASE_URL=https://media.melbournesphere.com/adelaide-sphere-media
+MEDIA_PUBLIC_BASE_URL=https://media.adelaidesphere.com.au/adelaide-sphere-media
 
 WORKER_CONCURRENCY=2
 METRICS_TOKEN=${METRICS_TOKEN}
@@ -656,9 +656,9 @@ Replace every remaining `<…>` in the editor. Notes that matter:
 
 ```bash
 cd /srv/adelaide-sphere/shared && . ./generated.env && cat > worker.env <<EOF
-WEB_REVALIDATE_URL=https://melbournesphere.com/api/revalidate
+WEB_REVALIDATE_URL=https://adelaidesphere.com.au/api/revalidate
 WEB_REVALIDATE_TOKEN=${REVALIDATE_TOKEN}
-WORKER_METRICS_PORT=9464
+WORKER_METRICS_PORT=9474
 WORKER_METRICS_BIND=127.0.0.1
 LOG_LEVEL=info
 EOF
@@ -673,11 +673,11 @@ chmod 600 worker.env
 ```bash
 cd /srv/adelaide-sphere/shared && . ./generated.env && cat > web.env <<EOF
 NODE_ENV=production
-PORT=3000
-API_ORIGIN=http://127.0.0.1:3001
-SITE_ORIGIN=https://melbournesphere.com
+PORT=4000
+API_ORIGIN=http://127.0.0.1:4001
+SITE_ORIGIN=https://adelaidesphere.com.au
 TURNSTILE_SITE_KEY=<Turnstile site key>
-MEDIA_PUBLIC_BASE_URL=https://media.melbournesphere.com/adelaide-sphere-media
+MEDIA_PUBLIC_BASE_URL=https://media.adelaidesphere.com.au/adelaide-sphere-media
 REVALIDATE_TOKEN=${REVALIDATE_TOKEN}
 REVIEW_RICH_RESULTS=false
 FAQ_RICH_RESULTS=false
@@ -704,13 +704,13 @@ shred -u /srv/adelaide-sphere/shared/generated.env
 ## 9. nginx and TLS (before the first build)
 
 The worker's revalidation URL and the media endpoint both go through nginx, so
-nginx comes up before the applications. Leave the `ms` shell (`exit`) — these
+nginx comes up before the applications. Leave the `adelaide-sphere` shell (`exit`) — these
 steps need `sudo`.
 
 ### 9.1 Certificates
 
 ```bash
-sudo systemctl stop nginx && sudo certbot certonly --standalone -d melbournesphere.com -d www.melbournesphere.com -d media.melbournesphere.com --agree-tos -m <ops email> --no-eff-email && sudo systemctl start nginx
+sudo systemctl stop nginx && sudo certbot certonly --standalone -d adelaidesphere.com.au -d www.adelaidesphere.com.au -d media.adelaidesphere.com.au --agree-tos -m <ops email> --no-eff-email && sudo systemctl start nginx
 ```
 
 Renewal is installed as a systemd timer by the package. Make it reload nginx:
@@ -731,7 +731,7 @@ This script writes the trusted ranges for nginx and the firewall, and is safe to
 re-run. A weekly timer keeps the ranges current:
 
 ```bash
-sudo tee /usr/local/sbin/ms-cloudflare-ranges >/dev/null <<'EOF'
+sudo tee /usr/local/sbin/as-cloudflare-ranges >/dev/null <<'EOF'
 #!/usr/bin/env bash
 set -Eeuo pipefail
 v4=$(curl -fsS --max-time 20 https://www.cloudflare.com/ips-v4)
@@ -739,11 +739,11 @@ v6=$(curl -fsS --max-time 20 https://www.cloudflare.com/ips-v6)
 [[ -n "$v4" && -n "$v6" ]] || { echo 'Could not fetch Cloudflare ranges; nothing changed.' >&2; exit 1; }
 tmp=$(mktemp)
 {
-  echo '# Generated by ms-cloudflare-ranges. Do not edit.'
+  echo '# Generated by as-cloudflare-ranges. Do not edit.'
   for range in $v4 $v6; do echo "set_real_ip_from $range;"; done
   echo 'real_ip_header CF-Connecting-IP;'
 } > "$tmp"
-install -m 644 "$tmp" /etc/nginx/conf.d/ms-cloudflare-realip.conf && rm -f "$tmp"
+install -m 644 "$tmp" /etc/nginx/conf.d/as-cloudflare-realip.conf && rm -f "$tmp"
 nginx -t && systemctl reload nginx
 # Web ports: Cloudflare only. SSH is untouched.
 for port in 80 443; do
@@ -752,11 +752,11 @@ for port in 80 443; do
 done
 ufw reload >/dev/null
 EOF
-sudo chmod 750 /usr/local/sbin/ms-cloudflare-ranges && sudo /usr/local/sbin/ms-cloudflare-ranges
+sudo chmod 750 /usr/local/sbin/as-cloudflare-ranges && sudo /usr/local/sbin/as-cloudflare-ranges
 ```
 
 ```bash
-printf '[Unit]\nDescription=Refresh Cloudflare ranges\n[Service]\nType=oneshot\nExecStart=/usr/local/sbin/ms-cloudflare-ranges\n' | sudo tee /etc/systemd/system/ms-cloudflare-ranges.service >/dev/null && printf '[Unit]\nDescription=Weekly Cloudflare range refresh\n[Timer]\nOnCalendar=weekly\nPersistent=true\n[Install]\nWantedBy=timers.target\n' | sudo tee /etc/systemd/system/ms-cloudflare-ranges.timer >/dev/null && sudo systemctl daemon-reload && sudo systemctl enable --now ms-cloudflare-ranges.timer
+printf '[Unit]\nDescription=Refresh Cloudflare ranges\n[Service]\nType=oneshot\nExecStart=/usr/local/sbin/as-cloudflare-ranges\n' | sudo tee /etc/systemd/system/as-cloudflare-ranges.service >/dev/null && printf '[Unit]\nDescription=Weekly Cloudflare range refresh\n[Timer]\nOnCalendar=weekly\nPersistent=true\n[Install]\nWantedBy=timers.target\n' | sudo tee /etc/systemd/system/as-cloudflare-ranges.timer >/dev/null && sudo systemctl daemon-reload && sudo systemctl enable --now as-cloudflare-ranges.timer
 ```
 
 Rate limits and compression apply to the whole `http` block. The API has its own
@@ -766,9 +766,9 @@ HTML and JSON uncompressed keeps responses that carry session-bound data out of
 reach of compression side channels (BREACH).
 
 ```bash
-sudo tee /etc/nginx/conf.d/ms-limits.conf >/dev/null <<'EOF'
-limit_req_zone $binary_remote_addr zone=ms_api:10m    rate=10r/s;
-limit_req_zone $binary_remote_addr zone=ms_search:10m rate=2r/s;
+sudo tee /etc/nginx/conf.d/as-limits.conf >/dev/null <<'EOF'
+limit_req_zone $binary_remote_addr zone=as_api:10m    rate=10r/s;
+limit_req_zone $binary_remote_addr zone=as_search:10m rate=2r/s;
 limit_req_status 429;
 limit_req_log_level warn;
 
@@ -784,7 +784,7 @@ Every response gets the same security headers. nginx drops server-level
 included in each of those locations too.
 
 ```bash
-sudo tee /etc/nginx/snippets/ms-security-headers.conf >/dev/null <<'EOF'
+sudo tee /etc/nginx/snippets/as-security-headers.conf >/dev/null <<'EOF'
 add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
 add_header X-Content-Type-Options "nosniff" always;
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
@@ -799,15 +799,15 @@ violations appear in the browser console. Once a week of normal use shows none,
 rename the header to `Content-Security-Policy`.
 
 ```bash
-sudo tee /etc/nginx/snippets/ms-csp-site.conf >/dev/null <<'EOF'
+sudo tee /etc/nginx/snippets/as-csp-site.conf >/dev/null <<'EOF'
 add_header X-Frame-Options "SAMEORIGIN" always;
 add_header Content-Security-Policy "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'" always;
-add_header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://media.melbournesphere.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://i.ytimg.com; font-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://www.facebook.com; frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com https://www.google.com; frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'" always;
+add_header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://media.adelaidesphere.com.au https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://i.ytimg.com; font-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://www.facebook.com; frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com https://www.google.com; frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'" always;
 EOF
-sudo tee /etc/nginx/snippets/ms-csp-admin.conf >/dev/null <<'EOF'
+sudo tee /etc/nginx/snippets/as-csp-admin.conf >/dev/null <<'EOF'
 add_header X-Frame-Options "DENY" always;
 add_header Content-Security-Policy "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'" always;
-add_header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://media.melbournesphere.com; font-src 'self' data:; connect-src 'self' https://media.melbournesphere.com; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'" always;
+add_header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://media.adelaidesphere.com.au; font-src 'self' data:; connect-src 'self' https://media.adelaidesphere.com.au; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'" always;
 EOF
 ```
 
@@ -824,16 +824,16 @@ exactly: a web 404 is answered with Next's prerendered not-found document
 
 ```bash
 sudo tee /etc/nginx/sites-available/adelaide-sphere >/dev/null <<'EOF'
-upstream ms_web { server 127.0.0.1:3000; keepalive 32; }
-upstream ms_api { server 127.0.0.1:3001; keepalive 32; }
-upstream ms_minio { server 127.0.0.1:9000; keepalive 16; }
+upstream as_web { server 127.0.0.1:4000; keepalive 32; }
+upstream as_api { server 127.0.0.1:4001; keepalive 32; }
+upstream as_minio { server 127.0.0.1:9000; keepalive 16; }
 
 map $http_upgrade $connection_upgrade { default upgrade; '' ''; }
 
 server {
   listen 80;
   listen [::]:80;
-  server_name melbournesphere.com www.melbournesphere.com media.melbournesphere.com;
+  server_name adelaidesphere.com.au www.adelaidesphere.com.au media.adelaidesphere.com.au;
   location /.well-known/acme-challenge/ { root /var/www/html; }
   location / { return 301 https://$host$request_uri; }
 }
@@ -842,23 +842,23 @@ server {
   listen 443 ssl;
   listen [::]:443 ssl;
   http2 on;
-  server_name www.melbournesphere.com;
-  ssl_certificate     /etc/letsencrypt/live/melbournesphere.com/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/melbournesphere.com/privkey.pem;
-  return 301 https://melbournesphere.com$request_uri;
+  server_name www.adelaidesphere.com.au;
+  ssl_certificate     /etc/letsencrypt/live/adelaidesphere.com.au/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/adelaidesphere.com.au/privkey.pem;
+  return 301 https://adelaidesphere.com.au$request_uri;
 }
 
 server {
   listen 443 ssl;
   listen [::]:443 ssl;
   http2 on;
-  server_name melbournesphere.com;
+  server_name adelaidesphere.com.au;
 
-  ssl_certificate     /etc/letsencrypt/live/melbournesphere.com/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/melbournesphere.com/privkey.pem;
+  ssl_certificate     /etc/letsencrypt/live/adelaidesphere.com.au/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/adelaidesphere.com.au/privkey.pem;
   ssl_protocols TLSv1.2 TLSv1.3;
-  include snippets/ms-security-headers.conf;
-  include snippets/ms-csp-site.conf;
+  include snippets/as-security-headers.conf;
+  include snippets/as-csp-site.conf;
   server_tokens off;
   client_max_body_size 1m;
 
@@ -875,23 +875,23 @@ server {
 
   # The API owns its 404s (JSON envelopes with a requestId).
   location /api/v1/ {
-    limit_req zone=ms_api burst=40 nodelay;
+    limit_req zone=as_api burst=40 nodelay;
     proxy_intercept_errors off;
-    proxy_pass http://ms_api;
+    proxy_pass http://as_api;
   }
 
   # Search is the most expensive public query: a tighter ceiling, both for the
   # page and for the JSON the hero search calls while someone types.
   location /api/v1/search/ {
-    limit_req zone=ms_search burst=20 nodelay;
+    limit_req zone=as_search burst=20 nodelay;
     proxy_intercept_errors off;
-    proxy_pass http://ms_api;
+    proxy_pass http://as_api;
   }
   location = /business {
-    limit_req zone=ms_search burst=10 nodelay;
+    limit_req zone=as_search burst=10 nodelay;
     proxy_intercept_errors on;
     error_page 404 @not_found;
-    proxy_pass http://ms_web;
+    proxy_pass http://as_web;
   }
 
   # The admin is a static single-page app built with base /admin/.
@@ -899,42 +899,42 @@ server {
   location /admin/ {
     alias /srv/adelaide-sphere/current/apps/admin/dist/;
     try_files $uri $uri/ /admin/index.html;
-    include snippets/ms-security-headers.conf;
-    include snippets/ms-csp-admin.conf;
+    include snippets/as-security-headers.conf;
+    include snippets/as-csp-admin.conf;
     location /admin/assets/ {
       alias /srv/adelaide-sphere/current/apps/admin/dist/assets/;
       expires 1y;
-      include snippets/ms-security-headers.conf;
-      include snippets/ms-csp-admin.conf;
+      include snippets/as-security-headers.conf;
+      include snippets/as-csp-admin.conf;
       add_header Cache-Control "public, max-age=31536000, immutable";
     }
   }
   location = /admin/index.html {
     alias /srv/adelaide-sphere/current/apps/admin/dist/index.html;
-    include snippets/ms-security-headers.conf;
-    include snippets/ms-csp-admin.conf;
+    include snippets/as-security-headers.conf;
+    include snippets/as-csp-admin.conf;
     add_header Cache-Control "no-store";
   }
 
   # A missing asset stays a missing asset.
   location /_next/ {
     proxy_intercept_errors off;
-    proxy_pass http://ms_web;
+    proxy_pass http://as_web;
   }
 
   # The public site; a 404 is answered with the document Next.js prerendered.
   location / {
     proxy_intercept_errors on;
     error_page 404 @not_found;
-    proxy_pass http://ms_web;
+    proxy_pass http://as_web;
   }
 
   location @not_found {
     internal;
     root /srv/adelaide-sphere/current/apps/web/.next/server/app;
     default_type text/html;
-    include snippets/ms-security-headers.conf;
-    include snippets/ms-csp-site.conf;
+    include snippets/as-security-headers.conf;
+    include snippets/as-csp-site.conf;
     add_header Cache-Control "no-store" always;
     add_header X-Robots-Tag "noindex" always;
     try_files /_not-found.html =404;
@@ -946,12 +946,12 @@ server {
   listen 443 ssl;
   listen [::]:443 ssl;
   http2 on;
-  server_name media.melbournesphere.com;
+  server_name media.adelaidesphere.com.au;
 
-  ssl_certificate     /etc/letsencrypt/live/melbournesphere.com/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/melbournesphere.com/privkey.pem;
+  ssl_certificate     /etc/letsencrypt/live/adelaidesphere.com.au/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/adelaidesphere.com.au/privkey.pem;
   ssl_protocols TLSv1.2 TLSv1.3;
-  include snippets/ms-security-headers.conf;
+  include snippets/as-security-headers.conf;
   server_tokens off;
 
   # Images are at most 10 MB and PDF documents 20 MB (MAX_DOCUMENT_BYTES in packages/domain/src/media.ts).
@@ -962,7 +962,7 @@ server {
   # Published PDFs download rather than render, and cannot run anything if a
   # browser opens them anyway (change log 1.16).
   location ~* \.pdf$ {
-    include snippets/ms-security-headers.conf;
+    include snippets/as-security-headers.conf;
     add_header Content-Security-Policy "sandbox" always;
     proxy_set_header Host $http_host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -970,7 +970,7 @@ server {
     proxy_set_header X-Forwarded-Proto $scheme;
     proxy_http_version 1.1;
     proxy_set_header Connection "";
-    proxy_pass http://ms_minio;
+    proxy_pass http://as_minio;
   }
 
   location / {
@@ -983,7 +983,7 @@ server {
     proxy_set_header Connection "";
     proxy_connect_timeout 300;
     chunked_transfer_encoding off;
-    proxy_pass http://ms_minio;
+    proxy_pass http://as_minio;
   }
 }
 EOF
@@ -997,7 +997,7 @@ nginx (user `www-data`) must be able to read the admin build and the not-found
 document:
 
 ```bash
-sudo usermod -aG ms www-data && sudo chmod 750 /srv/adelaide-sphere /srv/adelaide-sphere/releases
+sudo usermod -aG adelaide-sphere www-data && sudo chmod 750 /srv/adelaide-sphere /srv/adelaide-sphere/releases
 ```
 
 Do **not** test or reload yet if `/srv/adelaide-sphere/current` does not exist;
@@ -1011,7 +1011,7 @@ Check the media host now (MinIO answers an anonymous bucket listing with
 `AccessDenied` XML — that is correct):
 
 ```bash
-curl -s https://media.melbournesphere.com/adelaide-sphere-quarantine/ | head -c 200
+curl -s https://media.adelaidesphere.com.au/adelaide-sphere-quarantine/ | head -c 200
 ```
 
 ---
@@ -1021,7 +1021,7 @@ curl -s https://media.melbournesphere.com/adelaide-sphere-quarantine/ | head -c 
 Back as the service user:
 
 ```bash
-sudo -iu ms
+sudo -iu adelaide-sphere
 ```
 
 ```bash
@@ -1085,7 +1085,7 @@ content you prepared locally). Do not run both.
 
 ### 11A. Fresh database
 
-All commands as `ms`, from `/srv/adelaide-sphere/current`, with `api.env`
+All commands as `adelaide-sphere`, from `/srv/adelaide-sphere/current`, with `api.env`
 loaded:
 
 ```bash
@@ -1127,7 +1127,7 @@ Only for the first deployment, before anyone uses production. On your
 **development machine**:
 
 ```bash
-docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqldump -uroot --single-transaction --routines --triggers --set-gtid-purged=OFF --no-tablespaces melbourne_sphere_dev' | gzip > ms-content.sql.gz
+docker compose -f infrastructure/docker-compose.yml --env-file infrastructure/.env exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqldump -uroot --single-transaction --routines --triggers --set-gtid-purged=OFF --no-tablespaces adelaide_sphere_dev' | gzip > as-content.sql.gz
 ```
 
 ```bash
@@ -1141,7 +1141,7 @@ docker cp adelaide-sphere-minio:/tmp/export/media ./media && docker cp adelaide-
 Copy both to the server:
 
 ```bash
-scp ms-content.sql.gz deploy@<VPS IPv4>:/tmp/ && rsync -a media quarantine deploy@<VPS IPv4>:/tmp/ms-objects/
+scp as-content.sql.gz deploy@<VPS IPv4>:/tmp/ && rsync -a media quarantine deploy@<VPS IPv4>:/tmp/as-objects/
 ```
 
 On the **server** (as `deploy`), import into the production database. The
@@ -1149,21 +1149,21 @@ migrations of section 10.3 created the tables, so the import goes into an
 emptied database and then migration status is re-checked:
 
 ```bash
-sudo -iu ms bash -c 'cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" ms-mysql mysql -uroot -e "DROP DATABASE melbourne_sphere; CREATE DATABASE melbourne_sphere CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL PRIVILEGES ON melbourne_sphere.* TO \`ms_app\`@\`%\`;"'
+sudo -iu adelaide-sphere bash -c 'cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" as-mysql mysql -uroot -e "DROP DATABASE adelaide_sphere; CREATE DATABASE adelaide_sphere CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL PRIVILEGES ON adelaide_sphere.* TO \`as_app\`@\`%\`;"'
 ```
 
 ```bash
-gunzip -c /tmp/ms-content.sql.gz | sudo -iu ms bash -c 'cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec -i -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" ms-mysql mysql -uroot melbourne_sphere'
+gunzip -c /tmp/as-content.sql.gz | sudo -iu adelaide-sphere bash -c 'cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec -i -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" as-mysql mysql -uroot adelaide_sphere'
 ```
 
 ```bash
-sudo -iu ms bash -c 'cd /srv/adelaide-sphere/current && set -a && . /srv/adelaide-sphere/shared/api.env && set +a && pnpm db:migrate:status'
+sudo -iu adelaide-sphere bash -c 'cd /srv/adelaide-sphere/current && set -a && . /srv/adelaide-sphere/shared/api.env && set +a && pnpm db:migrate:status'
 ```
 
 Upload the objects:
 
 ```bash
-sudo docker cp /tmp/ms-objects/media ms-minio:/tmp/media && sudo docker cp /tmp/ms-objects/quarantine ms-minio:/tmp/quarantine && sudo docker exec ms-minio sh -c 'mc mirror --overwrite /tmp/media local/adelaide-sphere-media && mc mirror --overwrite /tmp/quarantine local/adelaide-sphere-quarantine && rm -rf /tmp/media /tmp/quarantine'
+sudo docker cp /tmp/as-objects/media as-minio:/tmp/media && sudo docker cp /tmp/as-objects/quarantine as-minio:/tmp/quarantine && sudo docker exec as-minio sh -c 'mc mirror --overwrite /tmp/media local/adelaide-sphere-media && mc mirror --overwrite /tmp/quarantine local/adelaide-sphere-quarantine && rm -rf /tmp/media /tmp/quarantine'
 ```
 
 Then:
@@ -1172,8 +1172,8 @@ Then:
    production administrators (Admins screen), and disable the development
    accounts. Development passwords must not survive into production.
 2. Configuration → General settings: check the public contact details.
-3. Remove the copies: `rm -rf /tmp/ms-content.sql.gz /tmp/ms-objects` on the
-   server and delete `ms-content.sql.gz`, `media/`, `quarantine/` locally.
+3. Remove the copies: `rm -rf /tmp/as-content.sql.gz /tmp/as-objects` on the
+   server and delete `as-content.sql.gz`, `media/`, `quarantine/` locally.
 
 Stored image URLs are built from `MEDIA_PUBLIC_BASE_URL` at read time, so they
 switch to the `media.` host automatically.
@@ -1182,18 +1182,18 @@ switch to the `media.` host automatically.
 
 ## 12. systemd services
 
-As `deploy` (sudo). Three units, all running as `ms` from `current`.
+As `deploy` (sudo). Three units, all running as `adelaide-sphere` from `current`.
 
 ```bash
-sudo tee /etc/systemd/system/ms-api.service >/dev/null <<'EOF'
+sudo tee /etc/systemd/system/adelaide-sphere-api.service >/dev/null <<'EOF'
 [Unit]
-Description=Melbourne Sphere API
+Description=Adelaide Sphere API
 After=network-online.target docker.service
 Wants=network-online.target
 
 [Service]
-User=ms
-Group=ms
+User=adelaide-sphere
+Group=adelaide-sphere
 WorkingDirectory=/srv/adelaide-sphere/current/apps/api
 EnvironmentFile=/srv/adelaide-sphere/shared/api.env
 # Backstop: production checks run even if an env file loses NODE_ENV.
@@ -1214,15 +1214,15 @@ EOF
 ```
 
 ```bash
-sudo tee /etc/systemd/system/ms-worker.service >/dev/null <<'EOF'
+sudo tee /etc/systemd/system/adelaide-sphere-worker.service >/dev/null <<'EOF'
 [Unit]
-Description=Melbourne Sphere worker (media, enquiries, schedules, cache purges)
-After=network-online.target docker.service ms-api.service
+Description=Adelaide Sphere worker (media, enquiries, schedules, cache purges)
+After=network-online.target docker.service adelaide-sphere-api.service
 Wants=network-online.target
 
 [Service]
-User=ms
-Group=ms
+User=adelaide-sphere
+Group=adelaide-sphere
 WorkingDirectory=/srv/adelaide-sphere/current/apps/worker
 EnvironmentFile=/srv/adelaide-sphere/shared/api.env
 EnvironmentFile=/srv/adelaide-sphere/shared/worker.env
@@ -1248,24 +1248,24 @@ It is written into `worker.env` by the deploy script (section 17); for the first
 start set it by hand:
 
 ```bash
-sudo -iu ms bash -c 'echo "APP_VERSION=$(cat /srv/adelaide-sphere/current/REVISION)" >> /srv/adelaide-sphere/shared/worker.env'
+sudo -iu adelaide-sphere bash -c 'echo "APP_VERSION=$(cat /srv/adelaide-sphere/current/REVISION)" >> /srv/adelaide-sphere/shared/worker.env'
 ```
 
 ```bash
-sudo tee /etc/systemd/system/ms-web.service >/dev/null <<'EOF'
+sudo tee /etc/systemd/system/adelaide-sphere-web.service >/dev/null <<'EOF'
 [Unit]
-Description=Melbourne Sphere public site (Next.js)
-After=network-online.target ms-api.service
+Description=Adelaide Sphere public site (Next.js)
+After=network-online.target adelaide-sphere-api.service
 Wants=network-online.target
 
 [Service]
-User=ms
-Group=ms
+User=adelaide-sphere
+Group=adelaide-sphere
 WorkingDirectory=/srv/adelaide-sphere/current/apps/web
 EnvironmentFile=/srv/adelaide-sphere/shared/web.env
 # Backstop: production checks run even if an env file loses NODE_ENV.
 Environment=NODE_ENV=production
-ExecStart=/srv/adelaide-sphere/current/apps/web/node_modules/.bin/next start --hostname 127.0.0.1 --port 3000
+ExecStart=/srv/adelaide-sphere/current/apps/web/node_modules/.bin/next start --hostname 127.0.0.1 --port 4000
 Restart=always
 RestartSec=5
 TimeoutStopSec=30
@@ -1278,25 +1278,25 @@ WantedBy=multi-user.target
 EOF
 ```
 
-Let `ms` restart its own services without a password (used by the deploy
+Let `adelaide-sphere` restart its own services without a password (used by the deploy
 script):
 
 ```bash
-echo 'ms ALL=(root) NOPASSWD: /usr/bin/systemctl restart ms-api, /usr/bin/systemctl restart ms-worker, /usr/bin/systemctl restart ms-web, /usr/bin/systemctl is-active ms-api ms-worker ms-web, /usr/bin/systemctl reload nginx' | sudo tee /etc/sudoers.d/ms-deploy && sudo chmod 440 /etc/sudoers.d/ms-deploy && sudo visudo -c
+echo 'adelaide-sphere ALL=(root) NOPASSWD: /usr/bin/systemctl restart adelaide-sphere-api, /usr/bin/systemctl restart adelaide-sphere-worker, /usr/bin/systemctl restart adelaide-sphere-web, /usr/bin/systemctl is-active adelaide-sphere-api adelaide-sphere-worker adelaide-sphere-web, /usr/bin/systemctl reload nginx' | sudo tee /etc/sudoers.d/adelaide-sphere-deploy && sudo chmod 440 /etc/sudoers.d/adelaide-sphere-deploy && sudo visudo -c
 ```
 
 Start in dependency order — API, then worker, then web:
 
 ```bash
-sudo systemctl daemon-reload && sudo systemctl enable --now ms-api && sleep 5 && curl -fsS http://127.0.0.1:3001/api/v1/health/ready
+sudo systemctl daemon-reload && sudo systemctl enable --now adelaide-sphere-api && sleep 5 && curl -fsS http://127.0.0.1:4001/api/v1/health/ready
 ```
 
 ```bash
-sudo systemctl enable --now ms-worker && sleep 5 && curl -fsS -H "Authorization: Bearer $(sudo grep ^METRICS_TOKEN= /srv/adelaide-sphere/shared/api.env | cut -d= -f2)" http://127.0.0.1:9464/health
+sudo systemctl enable --now adelaide-sphere-worker && sleep 5 && curl -fsS -H "Authorization: Bearer $(sudo grep ^METRICS_TOKEN= /srv/adelaide-sphere/shared/api.env | cut -d= -f2)" http://127.0.0.1:9474/health
 ```
 
 ```bash
-sudo systemctl enable --now ms-web && sleep 8 && curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3000/robots.txt
+sudo systemctl enable --now adelaide-sphere-web && sleep 8 && curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4000/robots.txt
 ```
 
 ```bash
@@ -1307,11 +1307,11 @@ If a service fails, its first log line names the variable at fault (values
 are never printed):
 
 ```bash
-sudo journalctl -u ms-api -n 50 --no-pager
+sudo journalctl -u adelaide-sphere-api -n 50 --no-pager
 ```
 
-The API listens on all interfaces on 3001; ufw (section 3.3) keeps it private.
-Confirm from your laptop that `curl -m 5 http://<VPS IPv4>:3001/api/v1/health`
+The API listens on all interfaces on 4001; ufw (section 3.3) keeps it private.
+Confirm from your laptop that `curl -m 5 http://<VPS IPv4>:4001/api/v1/health`
 **times out**.
 
 ---
@@ -1319,18 +1319,18 @@ Confirm from your laptop that `curl -m 5 http://<VPS IPv4>:3001/api/v1/health`
 ## 13. Connect the third-party services
 
 1. **Turnstile** (Cloudflare dashboard): the widget's hostnames list contains
-   `melbournesphere.com`. The API checks the hostname against `PUBLIC_SITE_URL`.
+   `adelaidesphere.com.au`. The API checks the hostname against `PUBLIC_SITE_URL`.
 2. **Resend**: sending domain shows *Verified*. Add a webhook to
-   `https://melbournesphere.com/api/v1/webhooks/email` for all email events; its
-   signing secret must equal `RESEND_WEBHOOK_SECRET` (restart `ms-api` and
-   `ms-worker` if you changed it).
+   `https://adelaidesphere.com.au/api/v1/webhooks/email` for all email events; its
+   signing secret must equal `RESEND_WEBHOOK_SECRET` (restart `adelaide-sphere-api` and
+   `adelaide-sphere-worker` if you changed it).
 3. **Admin → Configuration**: General settings (support email, phone, social
    links), SEO settings (default title, description, share image), Home page
    settings (banner slides). Media library uploads must reach *Ready* within a
    minute — that proves the signed upload URL, MinIO CORS, the worker and the
    public bucket all work together.
 4. **Google Search Console** (optional but recommended): verify the domain and
-   submit `https://melbournesphere.com/sitemap.xml`.
+   submit `https://adelaidesphere.com.au/sitemap.xml`.
 
 ---
 
@@ -1339,7 +1339,7 @@ Confirm from your laptop that `curl -m 5 http://<VPS IPv4>:3001/api/v1/health`
 Run from your laptop. Every line must match the expectation.
 
 ```bash
-for path in / /business /about /faqs /contact /blog /business/x-not-real /blog/x-not-real /api/v1/health /api/v1/health/ready /api/v1/does-not-exist /admin/ /_next/static/nope.js /metrics /robots.txt /sitemap.xml; do curl -s -o /dev/null -w "%{http_code} %{size_download} %{content_type} $path\n" "https://melbournesphere.com$path"; done
+for path in / /business /about /faqs /contact /blog /business/x-not-real /blog/x-not-real /api/v1/health /api/v1/health/ready /api/v1/does-not-exist /admin/ /_next/static/nope.js /metrics /robots.txt /sitemap.xml; do curl -s -o /dev/null -w "%{http_code} %{size_download} %{content_type} $path\n" "https://adelaidesphere.com.au$path"; done
 ```
 
 | Path | Expected |
@@ -1351,18 +1351,18 @@ for path in / /business /about /faqs /contact /blog /business/x-not-real /blog/x
 | `/admin/` | `200` HTML |
 | `/_next/static/nope.js` | small `404`, not the HTML not-found page |
 | `/metrics` | `404` |
-| `/robots.txt`, `/sitemap.xml` | `200`; robots names the sitemap on `https://melbournesphere.com` |
+| `/robots.txt`, `/sitemap.xml` | `200`; robots names the sitemap on `https://adelaidesphere.com.au` |
 
 Also check:
 
 ```bash
-curl -sI http://melbournesphere.com | head -3 && curl -sI https://www.melbournesphere.com | head -3
+curl -sI http://adelaidesphere.com.au | head -3 && curl -sI https://www.adelaidesphere.com.au | head -3
 ```
 
-(both `301` to `https://melbournesphere.com`)
+(both `301` to `https://adelaidesphere.com.au`)
 
 ```bash
-curl -s https://melbournesphere.com/ | grep -o 'https://media.melbournesphere.com[^"]*' | head -3
+curl -s https://adelaidesphere.com.au/ | grep -o 'https://media.adelaidesphere.com.au[^"]*' | head -3
 ```
 
 (image URLs on the media host; open one — it must load)
@@ -1387,14 +1387,14 @@ In a browser:
 ### 15.1 Encryption key (once, on your laptop — never on the server)
 
 ```bash
-age-keygen -o ms-backup.key
+age-keygen -o as-backup.key
 ```
 
-Keep `ms-backup.key` in your password manager / offline. Copy only the public
+Keep `as-backup.key` in your password manager / offline. Copy only the public
 key line (`age1…`) to the server:
 
 ```bash
-echo 'age1<public key>' | sudo -u ms tee /srv/adelaide-sphere/shared/backup-recipient.txt
+echo 'age1<public key>' | sudo -u adelaide-sphere tee /srv/adelaide-sphere/shared/backup-recipient.txt
 ```
 
 ### 15.2 Daily database backup
@@ -1406,7 +1406,7 @@ always matches the 8.4 server:
 ```bash
 sudo tee /usr/local/bin/mysqldump >/dev/null <<'EOF'
 #!/bin/sh
-exec docker exec -i -e MYSQL_PWD="$MYSQL_PWD" ms-mysql mysqldump "$@"
+exec docker exec -i -e MYSQL_PWD="$MYSQL_PWD" as-mysql mysqldump "$@"
 EOF
 ```
 
@@ -1415,7 +1415,7 @@ The restore drill (15.5) calls `mysql` the same way:
 ```bash
 sudo tee /usr/local/bin/mysql >/dev/null <<'EOF'
 #!/bin/sh
-exec docker exec -i -e MYSQL_PWD="$MYSQL_PWD" ms-mysql mysql "$@"
+exec docker exec -i -e MYSQL_PWD="$MYSQL_PWD" as-mysql mysql "$@"
 EOF
 ```
 
@@ -1426,16 +1426,16 @@ sudo chmod 755 /usr/local/bin/mysqldump /usr/local/bin/mysql
 (A restore drill's backup file is streamed into the container through standard
 input, so the `-i` matters.)
 
-Cron job for `ms` (02:30 every day), keeping 30 days locally:
+Cron job for `adelaide-sphere` (02:30 every day), keeping 30 days locally:
 
 ```bash
-sudo -iu ms bash -c 'cat > /srv/adelaide-sphere/backup-daily.sh <<"EOF"
+sudo -iu adelaide-sphere bash -c 'cat > /srv/adelaide-sphere/backup-daily.sh <<"EOF"
 #!/usr/bin/env bash
 set -Eeuo pipefail
 . /srv/adelaide-sphere/shared/backup.env
 export MYSQL_PWD="$MYSQL_BACKUP_PASSWORD"
 /srv/adelaide-sphere/current/infrastructure/backup/backup-database.sh \
-  --host 127.0.0.1 --user ms_backup --database melbourne_sphere \
+  --host 127.0.0.1 --user adelaide_sphere_backup --database adelaide_sphere \
   --out /srv/adelaide-sphere/backups \
   --recipient "$(cat /srv/adelaide-sphere/shared/backup-recipient.txt)"
 find /srv/adelaide-sphere/backups -type f -mtime +30 -delete
@@ -1447,21 +1447,21 @@ chmod 700 /srv/adelaide-sphere/backup-daily.sh
 Run it once now and confirm an `.sql.gz.age` file and its `.sha256` appear:
 
 ```bash
-sudo -iu ms /srv/adelaide-sphere/backup-daily.sh && sudo ls -lh /srv/adelaide-sphere/backups
+sudo -iu adelaide-sphere /srv/adelaide-sphere/backup-daily.sh && sudo ls -lh /srv/adelaide-sphere/backups
 ```
 
 ### 15.3 Off-site copy (required — a backup on the same disk is not a backup)
 
 Configure an S3-compatible bucket at a **different provider**, with object lock
 or versioning, and credentials that can write but not delete. Then add to the
-`ms` crontab (03:15), for example with `rclone`:
+`adelaide-sphere` crontab (03:15), for example with `rclone`:
 
 ```bash
-sudo apt install -y rclone && sudo -iu ms rclone config
+sudo apt install -y rclone && sudo -iu adelaide-sphere rclone config
 ```
 
 ```bash
-sudo -iu ms bash -c '(crontab -l; echo "15 3 * * * rclone copy /srv/adelaide-sphere/backups offsite:ms-backups/db --max-age 48h >> /srv/adelaide-sphere/logs/backup.log 2>&1") | crontab -'
+sudo -iu adelaide-sphere bash -c '(crontab -l; echo "15 3 * * * rclone copy /srv/adelaide-sphere/backups offsite:as-backups/db --max-age 48h >> /srv/adelaide-sphere/logs/backup.log 2>&1") | crontab -'
 ```
 
 ### 15.4 Media and Redis
@@ -1474,13 +1474,13 @@ sudo -iu ms bash -c '(crontab -l; echo "15 3 * * * rclone copy /srv/adelaide-sph
   credentials are the off-site provider's write-only key):
 
   ```bash
-  read -rs -p 'Off-site secret key: ' OFFSITE_SECRET && echo && docker exec ms-minio mc alias set offsite <https://s3.offsite-provider.example> <offsite access key> "$OFFSITE_SECRET"; unset OFFSITE_SECRET
+  read -rs -p 'Off-site secret key: ' OFFSITE_SECRET && echo && docker exec as-minio mc alias set offsite <https://s3.offsite-provider.example> <offsite access key> "$OFFSITE_SECRET"; unset OFFSITE_SECRET
   ```
 
-  Then mirror hourly from the `ms` crontab:
+  Then mirror hourly from the `adelaide-sphere` crontab:
 
   ```bash
-  sudo -iu ms bash -c '(crontab -l; echo "5 * * * * docker exec ms-minio mc mirror --overwrite local/adelaide-sphere-media offsite/ms-backups-media >> /srv/adelaide-sphere/logs/backup.log 2>&1") | crontab -'
+  sudo -iu adelaide-sphere bash -c '(crontab -l; echo "5 * * * * docker exec as-minio mc mirror --overwrite local/adelaide-sphere-media offsite/as-backups-media >> /srv/adelaide-sphere/logs/backup.log 2>&1") | crontab -'
   ```
 
   The alias lives in the container's filesystem: repeat the `alias set` step if
@@ -1494,10 +1494,10 @@ On the server, into an isolated `_restore` database (the script refuses any
 other name):
 
 ```bash
-cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" ms-mysql mysql -uroot -e "CREATE DATABASE IF NOT EXISTS melbourne_sphere_restore CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS 'ms_restore'@'%' IDENTIFIED BY '$(openssl rand -hex 16)'; GRANT ALL PRIVILEGES ON melbourne_sphere_restore.* TO 'ms_restore'@'%';"
+cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" as-mysql mysql -uroot -e "CREATE DATABASE IF NOT EXISTS adelaide_sphere_restore CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS 'as_restore'@'%' IDENTIFIED BY '$(openssl rand -hex 16)'; GRANT ALL PRIVILEGES ON adelaide_sphere_restore.* TO 'as_restore'@'%';"
 ```
 
-Copy `ms-backup.key` to the server temporarily, run
+Copy `as-backup.key` to the server temporarily, run
 `infrastructure/backup/restore-drill.sh` as its header shows, complete the
 manual checks it prints, record the result in
 `docs/operations/restore-drills.md`, then **shred the key** and drop the
@@ -1509,8 +1509,8 @@ manual checks it prints, record the result in
 
 | What | How |
 | --- | --- |
-| Site up | External uptime monitor (UptimeRobot, Better Stack, …) on `https://melbournesphere.com/` and `https://melbournesphere.com/api/v1/health/ready`, alerting after 3 minutes |
-| Worker alive | Monitor `https://melbournesphere.com/admin/` screens daily, or scrape `http://127.0.0.1:9464/metrics` (`ms_worker_up`, heartbeats) with a local Prometheus — `infrastructure/monitoring/` |
+| Site up | External uptime monitor (UptimeRobot, Better Stack, …) on `https://adelaidesphere.com.au/` and `https://adelaidesphere.com.au/api/v1/health/ready`, alerting after 3 minutes |
+| Worker alive | Monitor `https://adelaidesphere.com.au/admin/` screens daily, or scrape `http://127.0.0.1:9474/metrics` (`as_worker_up`, heartbeats) with a local Prometheus — `infrastructure/monitoring/` |
 | Operational thresholds | `GET /api/v1/admin/operations/status` (queue age, failed enquiries, stuck media…) — runbook §5 |
 | TLS expiry | `sudo certbot certificates`; the uptime monitor's certificate check |
 | Disk | `df -h /` weekly, alert at 80% (images, backups, Docker volumes) |
@@ -1519,19 +1519,19 @@ manual checks it prints, record the result in
 Logs:
 
 ```bash
-sudo journalctl -u ms-api -f
+sudo journalctl -u adelaide-sphere-api -f
 ```
 
 ```bash
-sudo journalctl -u ms-worker -f
+sudo journalctl -u adelaide-sphere-worker -f
 ```
 
 ```bash
-sudo journalctl -u ms-web -f
+sudo journalctl -u adelaide-sphere-web -f
 ```
 
 ```bash
-docker logs --tail 100 -f ms-mysql
+docker logs --tail 100 -f as-mysql
 ```
 
 ```bash
@@ -1578,7 +1578,7 @@ The script locks concurrent deployments, fetches Git, builds in a fresh worktree
 with pinned Node/pnpm, checks migration status, checks Nginx read permissions,
 and creates a compressed database backup. Build or backup failures leave the
 running release unchanged. It atomically switches `current`, restarts the three
-Melbourne Sphere services and checks API, worker, web and Nginx routes. Startup
+Adelaide Sphere services and checks API, worker, web and Nginx routes. Startup
 failures trigger application rollback to the previous release. The restart can
 cause a brief interruption; this is not zero-downtime deployment.
 
@@ -1600,7 +1600,7 @@ needed.
 **Code only (no migration in the bad release):**
 
 ```bash
-sudo -iu ms bash -c 'ln -sfn "$(cat /srv/adelaide-sphere/previous-release)" /srv/adelaide-sphere/current && sed -i "/^APP_VERSION=/d" /srv/adelaide-sphere/shared/worker.env && echo "APP_VERSION=$(cat /srv/adelaide-sphere/current/REVISION)" >> /srv/adelaide-sphere/shared/worker.env && sudo /usr/bin/systemctl restart ms-api && sleep 5 && sudo /usr/bin/systemctl restart ms-worker && sudo /usr/bin/systemctl restart ms-web && sudo /usr/bin/systemctl reload nginx'
+sudo -iu adelaide-sphere bash -c 'ln -sfn "$(cat /srv/adelaide-sphere/previous-release)" /srv/adelaide-sphere/current && sed -i "/^APP_VERSION=/d" /srv/adelaide-sphere/shared/worker.env && echo "APP_VERSION=$(cat /srv/adelaide-sphere/current/REVISION)" >> /srv/adelaide-sphere/shared/worker.env && sudo /usr/bin/systemctl restart adelaide-sphere-api && sleep 5 && sudo /usr/bin/systemctl restart adelaide-sphere-worker && sudo /usr/bin/systemctl restart adelaide-sphere-web && sudo /usr/bin/systemctl reload nginx'
 ```
 
 **The bad release included a migration:** Prisma migrations have no automatic
@@ -1616,26 +1616,26 @@ by hand.
 
 | Symptom | Likely cause | Check / fix |
 | --- | --- | --- |
-| `ms-api` restarts in a loop | Production configuration refused | `journalctl -u ms-api -n 30`; the message lists each bad variable |
-| `DATABASE_URL: must use verified TLS` | Query string missing or path not encoded | `?sslmode=verify-ca&sslca=%2Fsrv%2Fmelbourne-sphere%2Fshared%2Fmysql-ca.pem`; the file must be readable by `ms` |
+| `adelaide-sphere-api` restarts in a loop | Production configuration refused | `journalctl -u adelaide-sphere-api -n 30`; the message lists each bad variable |
+| `DATABASE_URL: must use verified TLS` | Query string missing or path not encoded | `?sslmode=verify-ca&sslca=%2Fsrv%2Fadelaide-sphere%2Fshared%2Fmysql-ca.pem`; the file must be readable by `adelaide-sphere` |
 | Readiness `503 Database unavailable` | MySQL down, wrong password, CA mismatch after a volume re-create | `docker compose ps`; re-copy `ca.pem` (6.5) after any new MySQL volume |
-| Uploads stay *Processing* | Worker stopped, or wrong S3 credentials | `systemctl status ms-worker`; Queue monitor → Workers; runbook "If uploads are stuck" |
+| Uploads stay *Processing* | Worker stopped, or wrong S3 credentials | `systemctl status adelaide-sphere-worker`; Queue monitor → Workers; runbook "If uploads are stuck" |
 | Upload fails in the browser (CORS / 403 `SignatureDoesNotMatch`) | `MEDIA_S3_ENDPOINT` not the public media host, `Host` not passed unchanged, or `MINIO_API_CORS_ALLOW_ORIGIN` wrong | Section 8.2 note, section 9.3 media server, section 6.3 |
-| Images missing, pages 500 | Web built without `MEDIA_PUBLIC_BASE_URL` | Rebuild with `web.env` loaded (10.5), restart `ms-web` |
-| Edits take up to 5 minutes to appear | Revalidation not reaching the web tier | `WEB_REVALIDATE_TOKEN` equals `REVALIDATE_TOKEN`; `curl -X POST https://melbournesphere.com/api/revalidate` answers `401` (not `503`) |
-| Admin sign-in rejected with an origin error | `TRUSTED_ORIGINS` does not match the address in the browser | Must be exactly `https://melbournesphere.com` |
+| Images missing, pages 500 | Web built without `MEDIA_PUBLIC_BASE_URL` | Rebuild with `web.env` loaded (10.5), restart `adelaide-sphere-web` |
+| Edits take up to 5 minutes to appear | Revalidation not reaching the web tier | `WEB_REVALIDATE_TOKEN` equals `REVALIDATE_TOKEN`; `curl -X POST https://adelaidesphere.com.au/api/revalidate` answers `401` (not `503`) |
+| Admin sign-in rejected with an origin error | `TRUSTED_ORIGINS` does not match the address in the browser | Must be exactly `https://adelaidesphere.com.au` |
 | Client IPs all `127.0.0.1` in audit and rate limits | `TRUST_PROXY` not `1` | Set it; restart API |
 | Unknown public URL shows an empty page | Not-found interception missing | Section 9.3 `@not_found`; `_not-found.html` exists under `current/apps/web/.next/server/app/` |
 | Contact form says submissions are closed | `TURNSTILE_SITE_KEY` missing at web runtime, or the secret missing on the API | Both env files; restart both |
 | Enquiry delivery *Failed* | Mail provider rejected | `lastError` in the Enquiries screen; runbook "Failed email" |
-| Build killed | Out of memory | Swap (3.4), or stop `ms-web` during `next build` on a small VPS |
+| Build killed | Out of memory | Swap (3.4), or stop `adelaide-sphere-web` during `next build` on a small VPS |
 
 ---
 
 ## 20. A staging server
 
 Identical procedure on a second VPS with its own domain (e.g.
-`staging.melbournesphere.com`), its own database, buckets and **every secret
+`staging.adelaidesphere.com.au`), its own database, buckets and **every secret
 regenerated** (runbook §1: nothing shared). Additionally:
 
 - Never copy production personal data into staging.

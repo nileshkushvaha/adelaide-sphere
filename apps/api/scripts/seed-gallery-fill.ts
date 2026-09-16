@@ -173,7 +173,7 @@ async function main(): Promise<void> {
 
   const url = process.env.REDIS_URL;
   if (url) {
-    const redis = new Redis(url, { keyPrefix: 'ms:', lazyConnect: true, maxRetriesPerRequest: 1 });
+    const redis = new Redis(url, { keyPrefix: 'as:', lazyConnect: true, maxRetriesPerRequest: 1 });
     try {
       await redis.connect();
       await redis.incr('cache:public:ns');

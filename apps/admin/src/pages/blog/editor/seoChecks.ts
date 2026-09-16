@@ -39,7 +39,7 @@ const plain = (html: string): string =>
     .replace(/\s+/g, ' ')
     .trim();
 
-/** Lower case, accents and punctuation removed, single spaces: "Cafés, Fitzroy!" → "cafes fitzroy". */
+/** Lower case, accents and punctuation removed, single spaces: "Cafés, Prospect!" → "cafes prospect". */
 const normalise = (text: string): string =>
   text
     .toLowerCase()

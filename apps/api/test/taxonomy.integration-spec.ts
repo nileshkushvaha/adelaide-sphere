@@ -49,18 +49,18 @@ describe('Taxonomy and local areas (integration)', () => {
     expect(cycle.body.error.code).toBe('CATEGORY_CYCLE');
     const nestParent = await patch(`/api/v1/admin/categories/${food.id}`).send({ expectedVersion: 1, parentId: cafes.id }).expect(409);
     expect(nestParent.body.error.code).toBe('CATEGORY_DEPTH');
-    const renamed = await patch(`/api/v1/admin/categories/${cafes.id}`).send({ expectedVersion: 1, name: 'Cafés', slug: 'cafes-melbourne' }).expect(200);
-    expect(renamed.body.data).toMatchObject({ name: 'Cafés', slug: 'cafes-melbourne', version: 2 });
+    const renamed = await patch(`/api/v1/admin/categories/${cafes.id}`).send({ expectedVersion: 1, name: 'Cafés', slug: 'cafes-adelaide' }).expect(200);
+    expect(renamed.body.data).toMatchObject({ name: 'Cafés', slug: 'cafes-adelaide', version: 2 });
     await patch(`/api/v1/admin/categories/${cafes.id}`).send({ expectedVersion: 1, name: 'Stale' }).expect(409);
     const tree = await agent().get('/api/v1/categories').expect(200);
     const bare = { description: null, image: null, seoTitle: null, seoDescription: null, seoKeywords: null, shareImage: null };
-    expect(tree.body.data).toEqual([{ id: food.id, name: 'Food & Drink', slug: 'food-and-drink', ...bare, children: [{ id: cafes.id, name: 'Cafés', slug: 'cafes-melbourne', ...bare, children: [] }] }]);
+    expect(tree.body.data).toEqual([{ id: food.id, name: 'Food & Drink', slug: 'food-and-drink', ...bare, children: [{ id: cafes.id, name: 'Cafés', slug: 'cafes-adelaide', ...bare, children: [] }] }]);
   });
 
   it('deactivation rules: children block a parent, inactive parent blocks child activation, inactive items vanish from public reads', async () => {
     const db = testDatabase();
     const food = await db.category.findUniqueOrThrow({ where: { slug: 'food-and-drink' } });
-    const cafes = await db.category.findUniqueOrThrow({ where: { slug: 'cafes-melbourne' } });
+    const cafes = await db.category.findUniqueOrThrow({ where: { slug: 'cafes-adelaide' } });
     const blocked = await post(`/api/v1/admin/categories/${food.id}/deactivate`).send({ expectedVersion: food.version }).expect(409);
     expect(blocked.body.error.code).toBe('TERM_IN_USE');
     const offCafes = await post(`/api/v1/admin/categories/${cafes.id}/deactivate`).send({ expectedVersion: cafes.version, reason: 'test' }).expect(200);
@@ -72,7 +72,7 @@ describe('Taxonomy and local areas (integration)', () => {
     await post(`/api/v1/admin/categories/${food.id}/activate`).send({ expectedVersion: offFood.body.data.version }).expect(200);
     await post(`/api/v1/admin/categories/${cafes.id}/activate`).send({ expectedVersion: offCafes.body.data.version }).expect(200);
     const list = await agent().get('/api/v1/admin/categories?status=active&sort=name&order=asc').set('Cookie', cookie).expect(200);
-    expect(list.body.data.map((c: { slug: string }) => c.slug)).toEqual(['cafes-melbourne', 'food-and-drink']);
+    expect(list.body.data.map((c: { slug: string }) => c.slug)).toEqual(['cafes-adelaide', 'food-and-drink']);
     expect(list.body.meta.total).toBe(2);
     const audits = await db.auditLog.findMany({ where: { action: { startsWith: 'taxonomy.category.' } } });
     expect(new Set(audits.map((a) => a.action))).toEqual(new Set(['taxonomy.category.create', 'taxonomy.category.update', 'taxonomy.category.deactivate', 'taxonomy.category.activate']));
@@ -108,14 +108,14 @@ describe('Taxonomy and local areas (integration)', () => {
     const pending = await db.mediaAsset.create({ data: { sourceName: 'pending.jpg', mimeType: 'image/jpeg', bytes: 10, checksum: 'b'.repeat(64), objectKey: 'q/pending.jpg', status: 'quarantined' } });
     const refused = await post('/api/v1/admin/categories').send({ name: 'Bars', imageMediaId: pending.id }).expect(400);
     expect(refused.body.error.fields.imageMediaId[0]).toMatch(/still being processed/);
-    const bars = (await post('/api/v1/admin/categories').send({ name: 'Bars', imageMediaId: ready.id, seoTitle: 'Bars in Adelaide', seoDescription: 'Where to drink.', seoKeywords: 'bars, melbourne' }).expect(201)).body.data;
-    expect(bars).toMatchObject({ imageMediaId: ready.id, seoTitle: 'Bars in Adelaide', seoKeywords: 'bars, melbourne', ogImageMediaId: null });
+    const bars = (await post('/api/v1/admin/categories').send({ name: 'Bars', imageMediaId: ready.id, seoTitle: 'Bars in Adelaide', seoDescription: 'Where to drink.', seoKeywords: 'bars, adelaide' }).expect(201)).body.data;
+    expect(bars).toMatchObject({ imageMediaId: ready.id, seoTitle: 'Bars in Adelaide', seoKeywords: 'bars, adelaide', ogImageMediaId: null });
     const tree = (await agent().get('/api/v1/categories').expect(200)).body.data.find((c: { slug: string }) => c.slug === 'bars');
     expect(tree).toMatchObject({ seoTitle: 'Bars in Adelaide', seoDescription: 'Where to drink.', shareImage: null });
     // The image resolves only once a rendition exists; with none it is null rather than a broken address.
     expect(tree.image).toBeNull();
-    const area = (await post('/api/v1/admin/areas').send({ name: 'Fitzroy', seoTitle: 'Fitzroy businesses', ogImageMediaId: ready.id }).expect(201)).body.data;
-    expect(area).toMatchObject({ seoTitle: 'Fitzroy businesses', ogImageMediaId: ready.id });
+    const area = (await post('/api/v1/admin/areas').send({ name: 'Unley', seoTitle: 'Unley businesses', ogImageMediaId: ready.id }).expect(201)).body.data;
+    expect(area).toMatchObject({ seoTitle: 'Unley businesses', ogImageMediaId: ready.id });
     // The image is now in use, so the library refuses to delete it (SRS MED 004).
     const usage = await agent().get(`/api/v1/admin/media/${ready.id}`).set('Cookie', cookie).expect(200);
     expect(usage.body.data.usages).toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'category', id: bars.id }), expect.objectContaining({ kind: 'area', id: area.id })]));
@@ -124,18 +124,18 @@ describe('Taxonomy and local areas (integration)', () => {
   });
 
   it('local areas: allowlist entries with eligibility source, ordering and no city entity', async () => {
-    const carlton = (await post('/api/v1/admin/areas').send({ name: 'Carlton', eligibilitySource: 'City of Melbourne council area', sortOrder: 2 }).expect(201)).body.data;
-    expect(carlton.eligibilityVerifiedAt).not.toBeNull();
-    const cbd = (await post('/api/v1/admin/areas').send({ name: 'Melbourne CBD', sortOrder: 1, editorialIntro: 'The city centre.' }).expect(201)).body.data;
+    const norwood = (await post('/api/v1/admin/areas').send({ name: 'Norwood', eligibilitySource: 'City of Adelaide council area', sortOrder: 2 }).expect(201)).body.data;
+    expect(norwood.eligibilityVerifiedAt).not.toBeNull();
+    const cbd = (await post('/api/v1/admin/areas').send({ name: 'Adelaide CBD', sortOrder: 1, editorialIntro: 'The city centre.' }).expect(201)).body.data;
     expect(cbd.eligibilityVerifiedAt).toBeNull();
     const pub = await agent().get('/api/v1/areas').expect(200);
-    expect(pub.body.data.map((a: { slug: string }) => a.slug)).toEqual(['melbourne-cbd', 'carlton']);
+    expect(pub.body.data.map((a: { slug: string }) => a.slug)).toEqual(['adelaide-cbd', 'norwood']);
     expect(JSON.stringify(pub.body)).not.toMatch(/eligibility|version/);
     await post('/api/v1/admin/areas').send({ name: 'Sydney', state: 'NSW' }).expect(400); // unknown field: no expansion controls
     const ctx = await agent().get('/api/v1/site/context').expect(200);
-    expect(ctx.body.data.city).toBe('Melbourne');
+    expect(ctx.body.data.city).toBe('Adelaide');
     const off = await post(`/api/v1/admin/areas/${cbd.id}/deactivate`).send({ expectedVersion: 1 }).expect(200);
     expect(off.body.data.active).toBe(false);
-    expect((await agent().get('/api/v1/areas').expect(200)).body.data.map((a: { slug: string }) => a.slug)).toEqual(['carlton']);
+    expect((await agent().get('/api/v1/areas').expect(200)).body.data.map((a: { slug: string }) => a.slug)).toEqual(['norwood']);
   });
 });

@@ -10541,7 +10541,7 @@
   },
   "info": {
     "title": "Adelaide Sphere API",
-    "description": "REST API for the Adelaide Sphere directory and blog. Admin routes require the ms_admin_session cookie.",
+    "description": "REST API for the Adelaide Sphere directory and blog. Admin routes require the as_admin_session cookie.",
     "version": "1.0",
     "contact": {}
   },
@@ -10552,7 +10552,7 @@
       "adminSession": {
         "type": "apiKey",
         "in": "cookie",
-        "name": "ms_admin_session"
+        "name": "as_admin_session"
       }
     },
     "schemas": {

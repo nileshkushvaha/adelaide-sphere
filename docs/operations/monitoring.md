@@ -67,13 +67,13 @@ asserts that the exposition contains no `@`, no `password`, `token`, `secret`,
 
 | Metric | Type | Labels | Reads as |
 | --- | --- | --- | --- |
-| `ms_http_requests_total` | counter | `method`, `route`, `status_class`, `status` | request volume and error rate |
-| `ms_http_request_duration_seconds` | histogram | `method`, `route`, `status_class` | latency distribution (p50/p95/p99) |
-| `ms_request_rejections_total` | counter | `kind` | throttling, CSRF origin refusals, oversized bodies, 401/403 |
-| `ms_dependency_up` | gauge | `dependency` | MySQL and Redis reachability |
-| `ms_dependency_failures_total` | counter | `dependency`, `reason` | dependency errors by cause |
-| `ms_auth_events_total` | counter | `event` | sign-in success/failure, lockout, reset requested |
-| `ms_authorization_rejections_total` | counter | `permission` | which permission is refusing requests |
+| `as_http_requests_total` | counter | `method`, `route`, `status_class`, `status` | request volume and error rate |
+| `as_http_request_duration_seconds` | histogram | `method`, `route`, `status_class` | latency distribution (p50/p95/p99) |
+| `as_request_rejections_total` | counter | `kind` | throttling, CSRF origin refusals, oversized bodies, 401/403 |
+| `as_dependency_up` | gauge | `dependency` | MySQL and Redis reachability |
+| `as_dependency_failures_total` | counter | `dependency`, `reason` | dependency errors by cause |
+| `as_auth_events_total` | counter | `event` | sign-in success/failure, lockout, reset requested |
+| `as_authorization_rejections_total` | counter | `permission` | which permission is refusing requests |
 
 `route` is the pattern Nest matched (`/api/v1/businesses/:slug`), never the URL. A
 request that matched no route is labelled `unmatched`.
@@ -82,16 +82,16 @@ request that matched no route is labelled `unmatched`.
 
 | Metric | Type | Labels | Reads as |
 | --- | --- | --- | --- |
-| `ms_queue_jobs` | gauge | `queue`, `state` | depth by state |
-| `ms_queue_oldest_waiting_seconds` | gauge | `queue` | how far behind the queue is |
-| `ms_queue_workers` | gauge | `queue` | worker connections Redis reports (an estimate) |
-| `ms_worker_heartbeats` | gauge | — | replicas whose heartbeat has not expired |
-| `ms_worker_heartbeat_age_seconds` | gauge | — | age of the most recent heartbeat |
-| `ms_scheduled_task_last_success_age_seconds` | gauge | `task` | silence per task |
-| `ms_scheduled_task_runs_total` | counter | `task`, `outcome` | run outcomes |
-| `ms_worker_up` | gauge | — | worker process alive (worker registry) |
-| `ms_worker_jobs_total` | counter | `job`, `outcome` | jobs finished per replica |
-| `ms_worker_job_duration_seconds` | histogram | `job` | job runtime |
+| `as_queue_jobs` | gauge | `queue`, `state` | depth by state |
+| `as_queue_oldest_waiting_seconds` | gauge | `queue` | how far behind the queue is |
+| `as_queue_workers` | gauge | `queue` | worker connections Redis reports (an estimate) |
+| `as_worker_heartbeats` | gauge | — | replicas whose heartbeat has not expired |
+| `as_worker_heartbeat_age_seconds` | gauge | — | age of the most recent heartbeat |
+| `as_scheduled_task_last_success_age_seconds` | gauge | `task` | silence per task |
+| `as_scheduled_task_runs_total` | counter | `task`, `outcome` | run outcomes |
+| `as_worker_up` | gauge | — | worker process alive (worker registry) |
+| `as_worker_jobs_total` | counter | `job`, `outcome` | jobs finished per replica |
+| `as_worker_job_duration_seconds` | histogram | `job` | job runtime |
 
 Gauges are read on scrape by `apps/api/src/observability/metrics.collector.ts`,
 behind a five-second cache so that two scrapers cannot turn observability into
@@ -99,9 +99,9 @@ load on MySQL and Redis.
 
 ### Enquiries, email, media
 
-`ms_enquiry_events_total`, `ms_email_deliveries_total`,
-`ms_enquiry_oldest_undelivered_seconds`, `ms_media_events_total`,
-`ms_media_processing_duration_seconds`, `ms_media_stuck_in_quarantine`.
+`as_enquiry_events_total`, `as_email_deliveries_total`,
+`as_enquiry_oldest_undelivered_seconds`, `as_media_events_total`,
+`as_media_processing_duration_seconds`, `as_media_stuck_in_quarantine`.
 
 Labels are `kind`/`outcome`/`provider`/`event` — closed vocabularies. **No
 recipient address, subject or body is ever a label.**
@@ -110,7 +110,7 @@ recipient address, subject or body is ever a label.**
 
 Redis answering, and the queue existing, say nothing about whether anything is
 consuming it. Each worker replica writes a heartbeat to
-`ms:worker:heartbeat:<instanceId>` every 15 seconds with a 45-second expiry:
+`as:worker:heartbeat:<instanceId>` every 15 seconds with a 45-second expiry:
 
 ```json
 {"instanceId":"20671-bbe0ac6e","version":"dev","startedAt":"…","lastBeatAt":"…",
@@ -130,7 +130,7 @@ turns those keys into the five states an operator has to tell apart:
 | Redis unreachable | scan throws | liveness unknown; nothing can be said |
 | No worker ever checked in | no heartbeat keys | nothing is consuming the queue |
 | Every heartbeat expired | keys existed, all stale | a worker was running and has stopped |
-| Alive but not finishing work | heartbeats fresh, `ms_worker_jobs_total` flat while depth rises | a worker is stuck |
+| Alive but not finishing work | heartbeats fresh, `as_worker_jobs_total` flat while depth rises | a worker is stuck |
 | Alive but the schedule has stopped | heartbeats fresh, a required task past its window | repeatable jobs are not being registered — the F-01 shape |
 
 The last one is derived from run history: a task that is `requiredForCorrectness`
@@ -166,7 +166,7 @@ error text before it reaches a log, an admin screen or a stored failure reason.
 
 ## Shutdown
 
-On `SIGTERM`/`SIGINT` the worker sets `ms_worker_up` to 0, closes the queue
+On `SIGTERM`/`SIGINT` the worker sets `as_worker_up` to 0, closes the queue
 consumer, closes the metrics server, removes its heartbeat, closes the scheduler
 and mailer, and disconnects the database — in that order, so a planned shutdown
 is not read as a crash and the last scrape is served before the port closes.
@@ -183,20 +183,20 @@ is not read as a crash and the last scrape is served before the port closes.
 
 ## Deployment verification (2026-09-09)
 
-Verified on a production-shaped local stack: an API on 3011 with `METRICS_TOKEN`
+Verified on a production-shaped local stack: an API on 4011 with `METRICS_TOKEN`
 set, two worker replicas on 9464/9465, and Prometheus **in its own container**
 reading the token from a mounted file.
 
 | Check | Evidence |
 | --- | --- |
-| API metrics, loopback, no token | `200`, 131 `ms_*` series |
+| API metrics, loopback, no token | `200`, 131 `as_*` series |
 | API metrics from the host's LAN address, no token | `404` |
 | API metrics with the token (loopback and LAN) | `200` |
 | API metrics with a wrong token | `404` |
 | Worker metrics, no token | `404`; with token `200`; `/health` `200` |
 | Prometheus targets | api `up`, worker 9464 `up`, worker 9465 `up` |
 | Two replicas | two heartbeat keys, one per instance id |
-| Stale heartbeat expiry | key TTL 45 s; `ms_worker_heartbeats` falls to 0 |
+| Stale heartbeat expiry | key TTL 45 s; `as_worker_heartbeats` falls to 0 |
 | Restart recovery | heartbeat and gauges return on the first scrape |
 | Public exposure | `/metrics` through the public edge returns the site's
   not-found page — the API's endpoint is not routed publicly at all |

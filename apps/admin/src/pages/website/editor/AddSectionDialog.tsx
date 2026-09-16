@@ -20,16 +20,16 @@ export function AddSectionDialog({ open, options, note, onPick, onCancel }: Prop
           {note}
         </Typography.Paragraph>
       )}
-      <ul className="ms-section-gallery">
+      <ul className="as-section-gallery">
         {options.map((option) => (
           <li key={option.type}>
-            <button type="button" className="ms-section-gallery__item" onClick={() => onPick(option.type)}>
-              <span className="ms-section-gallery__icon">
+            <button type="button" className="as-section-gallery__item" onClick={() => onPick(option.type)}>
+              <span className="as-section-gallery__icon">
                 <SectionIcon type={option.type} />
               </span>
               <span>
-                <span className="ms-section-gallery__label">{option.label}</span>
-                <span className="ms-section-gallery__description">{option.description}</span>
+                <span className="as-section-gallery__label">{option.label}</span>
+                <span className="as-section-gallery__description">{option.description}</span>
               </span>
             </button>
           </li>

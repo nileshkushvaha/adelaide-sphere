@@ -21,7 +21,7 @@ const now = new Date();
 
 try {
   const category = await db.category.create({ data: { name: 'Cafes', slug: 'cafes', description: 'Coffee and food.', sortOrder: 1, active: true } });
-  const area = await db.localArea.create({ data: { name: 'Carlton', slug: 'carlton', active: true, sortOrder: 1, eligibilitySource: 'Browser suite fixture', eligibilityVerifiedAt: now } });
+  const area = await db.localArea.create({ data: { name: 'Norwood', slug: 'norwood', active: true, sortOrder: 1, eligibilitySource: 'Browser suite fixture', eligibilityVerifiedAt: now } });
 
   const business = await db.business.create({
     data: {

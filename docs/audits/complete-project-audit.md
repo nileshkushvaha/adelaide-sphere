@@ -1,8 +1,8 @@
 # Complete production-readiness audit
 
 - **Audit date:** 8 September 2026
-- **Auditee:** the whole Melbourne Sphere system — pnpm monorepo, Next.js public site, Refine admin, NestJS API, Prisma/MySQL, Redis, BullMQ worker, media storage, transactional email, and the supporting documentation.
-- **Authority:** `docs/Melbourne_Sphere_Technical_SRS_v1.md` revision 1.7. Existing documentation was treated as evidence to check, not as proof; every previous completion report was treated as unverified.
+- **Auditee:** the whole Adelaide Sphere system — pnpm monorepo, Next.js public site, Refine admin, NestJS API, Prisma/MySQL, Redis, BullMQ worker, media storage, transactional email, and the supporting documentation.
+- **Authority:** `docs/Adelaide_Sphere_Technical_SRS_v1.md` revision 1.7. Existing documentation was treated as evidence to check, not as proof; every previous completion report was treated as unverified.
 - **Repository state at the start:** `master` at `9bc30a6`, clean working tree (the audit began by committing and pushing the outstanding programme work at the client's instruction).
 - **Method:** read the code, then run it. Every conclusion below rests on a command run in this audit, a request made against a running system in this audit, or code read in this audit — and says which.
 
@@ -10,14 +10,14 @@
 
 | Environment | What it was |
 | --- | --- |
-| Isolated audit database | `melbourne_sphere_audit`, created for this audit, migrated from empty, dropped afterwards. The retained `_dev` database was never reset. |
-| Isolated e2e database | `melbourne_sphere_e2e`, created for the admin journeys, dropped afterwards. |
+| Isolated audit database | `adelaide_sphere_audit`, created for this audit, migrated from empty, dropped afterwards. The retained `_dev` database was never reset. |
+| Isolated e2e database | `adelaide_sphere_e2e`, created for the admin journeys, dropped afterwards. |
 | Audit API | `node apps/api/dist/main.js` on **3020** against those databases and **Redis database 5**, so nothing this audit enqueued could reach the queue the client's own stack uses. |
 | Audit admin | `vite preview` on **3012**, proxied to the audit API. |
-| Public web | production build (`next build && next start`) on **3010** against the client's dev API on 3001. |
-| Load API | the same build on **3021** against `melbourne_sphere_load` (10,000 listings, 2,000 posts) for the performance figures. |
+| Public web | production build (`next build && next start`) on **3010** against the client's dev API on 4001. |
+| Load API | the same build on **3021** against `adelaide_sphere_load` (10,000 listings, 2,000 posts) for the performance figures. |
 | Worker | run for real, twice, against the isolated queue. |
-| Untouched | the client's own API (3001) and admin (3002); the Homebrew MySQL on 3306; every other project's containers. |
+| Untouched | the client's own API (4001) and admin (4002); the Homebrew MySQL on 3306; every other project's containers. |
 
 Test artefacts created by this audit (one administrator, two sessions, four media assets, the audit databases) were removed; see §8.
 
@@ -34,7 +34,7 @@ Ten findings. Four were defects in the product, three of those are fixed and ver
 - **Impact:** the worker is the only thing that delivers enquiries, processes media and applies retention. With it dead on start-up, an accepted enquiry is stored and never delivered, uploads never leave quarantine, publication scheduling never fires and no retention policy runs. In production this is a silent, total failure of every asynchronous behaviour.
 - **Root cause:** a job id was composed with the queue library's own key separator. The API's manual-run dispatch had the same bug (`scheduled.task:manual:<code>:<requestId>`), so "Run now" would have thrown too. Neither was caught because **the only tests that exercised dispatch replaced the queue with a recorder** — the code under test never reached BullMQ.
 - **Fix:** `scheduledTaskJobId()` in `packages/domain/src/scheduled-tasks.ts` builds ids from a separator the queue accepts and strips any colon it is handed; both call sites use it.
-- **Verification:** the worker now starts and runs (`[worker] listening on melbourne-sphere`, then `scheduled.task repeat:content.publish-scheduled:… succeeded: Nothing was due`). Regression tests: `packages/domain/src/scheduled-tasks.spec.ts` (5, asserts no id for any registered task can contain `:`) and a new case in `apps/api/test/schedules.integration-spec.ts` that dispatches through the **real** queue against real Redis and reads the job back.
+- **Verification:** the worker now starts and runs (`[worker] listening on adelaide-sphere`, then `scheduled.task repeat:content.publish-scheduled:… succeeded: Nothing was due`). Regression tests: `packages/domain/src/scheduled-tasks.spec.ts` (5, asserts no id for any registered task can contain `:`) and a new case in `apps/api/test/schedules.integration-spec.ts` that dispatches through the **real** queue against real Redis and reads the job back.
 - **Remaining risk:** none for this defect. The wider lesson — that a stubbed boundary can hide a total failure — is recorded as F-10.
 
 ### F-02 — The worker refuses the email provider the project has chosen — **High** — fixed
@@ -62,10 +62,10 @@ Ten findings. Four were defects in the product, three of those are fixed and ver
 ### F-04 — A WCAG 2.2 AA contrast failure on the home page — **Medium** — fixed
 
 - **SRS:** NFR 006 (WCAG 2.2 AA), UX 001.
-- **Component:** `packages/ui/src/styles.css`, token `--ms-glass-dark`.
-- **Evidence:** axe, run against the production build in this audit, reported `color-contrast` on the home page: 2 nodes, first `.min-h-44 > .mt-2.leading-relaxed`. Measured in the browser: text `rgb(189,205,224)` on a composited background of `rgb(79,95,117)` — **4.02:1**, below the 4.5:1 required for 14 px body text. The element is the "Every Melbourne listing" glass card in the categories band.
+- **Component:** `packages/ui/src/styles.css`, token `--as-glass-dark`.
+- **Evidence:** axe, run against the production build in this audit, reported `color-contrast` on the home page: 2 nodes, first `.min-h-44 > .mt-2.leading-relaxed`. Measured in the browser: text `rgb(189,205,224)` on a composited background of `rgb(79,95,117)` — **4.02:1**, below the 4.5:1 required for 14 px body text. The element is the "Every Adelaide listing" glass card in the categories band.
 - **Root cause:** the dark glass panel is translucent (`rgba(13,35,64,0.72)`). On the dark bands the composite is dark and passes; on the **light** bands the surface behind it lightens the composite until the muted text no longer has contrast. The palette test compared the muted token against the *opaque* band token, which passes — so the test agreed with the design while the browser disagreed with both.
-- **Fix:** `--ms-glass-dark` raised from `0.72` to `0.8` alpha, which measures 5.24:1 on the lightest surface while keeping the panel translucent.
+- **Fix:** `--as-glass-dark` raised from `0.72` to `0.8` alpha, which measures 5.24:1 on the lightest surface while keeping the panel translucent.
 - **Verification:** axe now reports zero violations on `/`, `/business`, `/blog`, `/contact` and a listing page at desktop and 320 px (8/8 accessibility journeys pass). A new palette test composites each glass token over every surface it can sit on and asserts 4.5:1 — the check that would have caught this.
 - **Remaining risk:** none for this token. Contrast over *photography* (the hero panel) still cannot be computed automatically and is covered by the panel tokens instead.
 
@@ -107,7 +107,7 @@ Ten findings. Four were defects in the product, three of those are fixed and ver
 > | `/admin/` | 200 | 200, untouched |
 > | `/_next/static/nope.js` | 404 text | 404 text — assets are never rewritten |
 >
-> The served document carries `<title>Page not found · Melbourne Sphere</title>`,
+> The served document carries `<title>Page not found · Adelaide Sphere</title>`,
 > `robots: noindex` (meta and `X-Robots-Tag`), the site header, 37 navigation
 > links and the "Error 404 / Page not found" copy, with no JavaScript required
 > and no redirect. The finding is **closed for the reference configuration**;
@@ -128,7 +128,7 @@ The Playwright suite was red, and had been red since renames earlier in the prog
 
 ### F-09 — The aggregate gate does not run the browser suite — **Medium** — recorded, not changed
 
-- **Evidence:** `pnpm check` runs db build, migration lint, lint, typecheck, unit, API e2e, builds, bundle budget and contracts. It does not run `@melbourne-sphere/e2e`. The suite needs a running stack, which is why it is separate — but the consequence is that the only tests that drive the real browser, the real admin application and the axe scan are outside the gate, and they were failing.
+- **Evidence:** `pnpm check` runs db build, migration lint, lint, typecheck, unit, API e2e, builds, bundle budget and contracts. It does not run `@adelaide-sphere/e2e`. The suite needs a running stack, which is why it is separate — but the consequence is that the only tests that drive the real browser, the real admin application and the axe scan are outside the gate, and they were failing.
 - **Impact:** the contrast defect F-04 was detectable by a check the project already owns, and was not detected because nothing ran it.
 - **Recommendation (deliberately not applied in this audit — it changes the team's release process):** add a `check:e2e` script that boots the stack and runs Playwright, and make it a required step in CI before release. Left as a decision for the team rather than a unilateral change to the gate.
 
@@ -158,7 +158,7 @@ Nine public routes × five widths (1440, 1024, 768, 390, 320), on the production
 
 **45/45 combinations: HTTP 200, exactly one `h1`, exactly one `main`, zero horizontal overflow, zero console errors.**
 
-Routes covered: `/`, `/business`, `/business/category/cafes`, `/business/area/melbourne-cbd`, `/blog`, `/about`, `/contact`, `/faqs`, `/business/carlton-corner-bakery`.
+Routes covered: `/`, `/business`, `/business/category/cafes`, `/business/area/adelaide-cbd`, `/blog`, `/about`, `/contact`, `/faqs`, a published business page (`/business/{slug}`).
 
 axe (`wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa`) reports **zero violations** across the scanned pages at desktop and 320 px after F-04 was fixed. Keyboard journeys pass: the skip link is the first stop and moves focus; the hero search is operable and submittable by keyboard alone; the mobile disclosure opens on click and on Enter/Space and is labelled.
 
@@ -166,7 +166,7 @@ axe (`wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa`) reports **zero violations**
 
 ## 5. Performance
 
-Measured on production builds. Public pages against the client's dev API (3 listings); API against `melbourne_sphere_load` (**10,000 listings, 2,000 posts**), median of 7–9 requests, with a unique query string per request where a cache would otherwise answer.
+Measured on production builds. Public pages against the client's dev API (3 listings); API against `adelaide_sphere_load` (**10,000 listings, 2,000 posts**), median of 7–9 requests, with a unique query string per request where a cache would otherwise answer.
 
 | Surface | Median | Notes |
 | --- | --- | --- |
@@ -201,7 +201,7 @@ Stated plainly, because a report that omits these is misleading:
 
 ## 8. Audit artefact cleanup
 
-Created and removed: the `melbourne_sphere_audit` and `melbourne_sphere_e2e` databases; one administrator (`audit.probe@melbournesphere.test`) and its sessions; four media assets and their MinIO objects; queue jobs on Redis database 5. One media-processing job leaked into the client's development queue (database 0) early in the audit, before isolation was tightened, and was removed — the development queue was verified empty afterwards.
+Created and removed: the `adelaide_sphere_audit` and `adelaide_sphere_e2e` databases; one administrator (`audit.probe@adelaidesphere.test`) and its sessions; four media assets and their MinIO objects; queue jobs on Redis database 5. One media-processing job leaked into the client's development queue (database 0) early in the audit, before isolation was tightened, and was removed — the development queue was verified empty afterwards.
 
 `apps/api/.env` (git-ignored, never committed) gained the MinIO configuration described in F-10 and keeps it, because the alternative is leaving the media pipeline unexercised locally.
 
@@ -217,7 +217,7 @@ Created and removed: the `melbourne_sphere_audit` and `melbourne_sphere_e2e` dat
 | `apps/worker/src/config.ts`, `apps/worker/src/main.ts` | accept and select the Resend transport (F-02) |
 | `apps/worker/src/config.spec.ts` | new case: the transport the API accepts, its validation, and no key in the error (F-02) |
 | `apps/api/src/common/captcha/turnstile.verifier.spec.ts` | new: 7 cases for the public-write CAPTCHA (F-03) |
-| `packages/ui/src/styles.css` | `--ms-glass-dark` 0.72 → 0.8 (F-04) |
+| `packages/ui/src/styles.css` | `--as-glass-dark` 0.72 → 0.8 (F-04) |
 | `apps/web/src/lib/palette.test.ts` | composite-contrast checks for translucent panels (F-04) |
 | `e2e/specs/discovery.spec.ts`, `e2e/specs/accessibility.spec.ts`, `e2e/specs/authorization.spec.ts` | three stale expectations corrected (F-06/07/08) |
 | `apps/api/test/authorization-audit.integration-spec.ts` | allowlist integrity asserted against the reflector; a stale entry removed |
@@ -266,7 +266,7 @@ by Prometheus or an OpenTelemetry collector. Full description in
 * API `/metrics`, outside `/api/v1`, absent from the OpenAPI document, loopback-only
   unless `METRICS_TOKEN` is set, 404 (not 401) to anything else.
 * Worker `/metrics` and `/health`, off unless `WORKER_METRICS_PORT` is set.
-* Worker heartbeats in `ms:worker:heartbeat:<instanceId>` (15 s interval, 45 s
+* Worker heartbeats in `as:worker:heartbeat:<instanceId>` (15 s interval, 45 s
   expiry, one key per replica) carrying instance id, version, start time, last
   beat, queues and counters — no host detail, no environment values, no secrets.
 * `WorkerLivenessService` separates Redis-unreachable, never-started,
@@ -280,13 +280,13 @@ by Prometheus or an OpenTelemetry collector. Full description in
   `apps/api/src/observability/metrics.endpoint.spec.ts`.
 
 Verified end to end on 8 September 2026: a worker started locally published a
-heartbeat, the API's `/metrics` reported `ms_worker_heartbeats 1` with real queue
+heartbeat, the API's `/metrics` reported `as_worker_heartbeats 1` with real queue
 depths, and stopping the worker moved it to `0`.
 
 ## Release gate (F-09)
 
 `pnpm test:browser` runs the Playwright suite against production builds on
-free ports, creates and drops its own `melbourne_sphere_e2e_<random>` database,
+free ports, creates and drops its own `adelaide_sphere_e2e_<random>` database,
 provisions a temporary administrator with a generated password (no hard-coded
 credentials), verifies MySQL and Redis before starting, treats **any** skipped or
 missing test as a failure, stops only the processes it started, and cleans up on

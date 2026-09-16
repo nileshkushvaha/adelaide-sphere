@@ -31,9 +31,9 @@ interface Props {
  */
 export function TableCard({ title, description, toolbar, actions, children, summary, footer, style }: Props) {
   return (
-    <Card className="ms-table-card" style={{ marginBottom: 20, overflow: 'hidden', ...style }}>
+    <Card className="as-table-card" style={{ marginBottom: 20, overflow: 'hidden', ...style }}>
       {title && (
-        <div className="ms-table-toolbar" style={{ display: 'block' }}>
+        <div className="as-table-toolbar" style={{ display: 'block' }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, margin: 0, letterSpacing: '-0.01em' }}>{title}</h2>
           {description && (
             <Typography.Text type="secondary" style={{ display: 'block', marginTop: 3, fontSize: 13, lineHeight: 1.5 }}>
@@ -43,7 +43,7 @@ export function TableCard({ title, description, toolbar, actions, children, summ
         </div>
       )}
       {(toolbar || actions) && (
-        <div className="ms-table-toolbar" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div className="as-table-toolbar" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <Space wrap size={10} style={{ flex: 1, minWidth: 0 }}>
             {toolbar}
           </Space>
@@ -52,7 +52,7 @@ export function TableCard({ title, description, toolbar, actions, children, summ
       )}
       {children}
       {(summary || footer) && (
-        <div className="ms-table-footer">
+        <div className="as-table-footer">
           <Typography.Text type="secondary" style={{ fontSize: 13 }}>
             {summary}
           </Typography.Text>

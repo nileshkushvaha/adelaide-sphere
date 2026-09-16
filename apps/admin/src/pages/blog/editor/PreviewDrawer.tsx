@@ -122,7 +122,7 @@ export function PreviewDrawer({ snapshot, post, dirty, onClose, onRefresh, onSav
           )}
           {state.data.sanitizedBody ? (
             // Sanitised by the API with the same allowlist a save uses (SRS SEC 001).
-            <div className="ms-prose" data-testid="post-preview" dangerouslySetInnerHTML={{ __html: state.data.sanitizedBody }} />
+            <div className="as-prose" data-testid="post-preview" dangerouslySetInnerHTML={{ __html: state.data.sanitizedBody }} />
           ) : (
             <Typography.Text type="secondary">Nothing written yet.</Typography.Text>
           )}

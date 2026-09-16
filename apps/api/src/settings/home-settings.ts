@@ -4,7 +4,7 @@
  * secrets or the fixed Adelaide context.
  */
 /**
- * One hero banner slide (SRS HERO 001): a Melbourne photograph with a focal
+ * One hero banner slide (SRS HERO 001): an Adelaide photograph with a focal
  * point and an optional caption. Slides rotate; the headline and search panel
  * stay fixed above them, so the accessible meaning never changes.
  */

@@ -44,10 +44,10 @@ describe('SEO: sitemaps and redirects (integration)', () => {
     limitedCookie = await loginAs('limited@example.com', 'limited-password-12345', '203.0.113.191');
 
     const mk = async (path: string, body: object) => (await post(path).send(body).expect(201)).body.data.id as string;
-    const cafes = await mk('/api/v1/admin/categories', { name: 'Cafes', description: 'Curated Melbourne cafes with an editorial introduction.' });
+    const cafes = await mk('/api/v1/admin/categories', { name: 'Cafes', description: 'Curated Adelaide cafes with an editorial introduction.' });
     const emptyCategory = await mk('/api/v1/admin/categories', { name: 'Empty Category', description: 'Has editorial text but no published listing.' });
     expect(emptyCategory).toBeTruthy();
-    const cbd = await mk('/api/v1/admin/areas', { name: 'Melbourne CBD', eligibilitySource: 'council list', editorialIntro: 'The central business district.' });
+    const cbd = await mk('/api/v1/admin/areas', { name: 'Adelaide CBD', eligibilitySource: 'council list', editorialIntro: 'The central business district.' });
     const created = await post('/api/v1/admin/businesses')
       .send({
         name: 'Little Collins Espresso',
@@ -56,7 +56,7 @@ describe('SEO: sitemaps and redirects (integration)', () => {
         localAreaId: cbd,
         publicPhone: '+61 3 9000 1234',
         address: { line1: '12 Peel St', suburb: 'Adelaide', postcode: '5000', latitude: -34.9235, longitude: 138.5979 },
-        eligibilitySource: 'City of Melbourne suburb list',
+        eligibilitySource: 'City of Adelaide suburb list',
         contentRightsReviewed: true,
       })
       .expect(201);
@@ -64,10 +64,10 @@ describe('SEO: sitemaps and redirects (integration)', () => {
     const published = await post(`/api/v1/admin/businesses/${businessId}/publish`).send({ expectedVersion: created.body.data.version }).expect(200);
     businessVersion = published.body.data.version;
 
-    const authorId = await mk('/api/v1/admin/authors', { displayName: 'Editor', bio: 'Writes about Melbourne.' });
+    const authorId = await mk('/api/v1/admin/authors', { displayName: 'Editor', bio: 'Writes about Adelaide.' });
     const categoryId = await mk('/api/v1/admin/blog-categories', { name: 'Guides', landingContent: 'Guides to the city.' });
     const draft = await post('/api/v1/admin/posts')
-      .send({ title: 'Where to find filter coffee', bodyMarkdown: '# Filter coffee\n\nMelbourne roasters pour more filter coffee every year, and this guide walks through the cafes worth a detour, the brewing methods they favour, and the seasonal beans that reward an unhurried morning in the city.\n\nEach entry lists the roaster, the brew method and the best time to visit, so the guide comfortably clears the minimum length for a published article.', excerpt: 'A short guide to filter coffee in Adelaide.', authorId, categoryId })
+      .send({ title: 'Where to find filter coffee', bodyMarkdown: '# Filter coffee\n\nAdelaide roasters pour more filter coffee every year, and this guide walks through the cafes worth a detour, the brewing methods they favour, and the seasonal beans that reward an unhurried morning in the city.\n\nEach entry lists the roaster, the brew method and the best time to visit, so the guide comfortably clears the minimum length for a published article.', excerpt: 'A short guide to filter coffee in Adelaide.', authorId, categoryId })
       .expect(201);
     postId = draft.body.data.id;
     const livePost = await post(`/api/v1/admin/posts/${postId}/publish`).send({ expectedVersion: draft.body.data.version }).expect(200);
@@ -92,7 +92,7 @@ describe('SEO: sitemaps and redirects (integration)', () => {
     const taxonomies = await agent().get('/api/v1/seo/sitemap/taxonomies').expect(200);
     const paths = taxonomies.body.data.map((e: { path: string }) => e.path);
     expect(paths).toContain('/business/category/cafes');
-    expect(paths).toContain('/business/area/melbourne-cbd');
+    expect(paths).toContain('/business/area/adelaide-cbd');
     expect(paths).toContain('/blog/category/guides');
     // Editorial text alone is not enough: an empty taxonomy stays out (SEO 003).
     expect(paths).not.toContain('/business/category/empty-category');
@@ -131,7 +131,7 @@ describe('SEO: sitemaps and redirects (integration)', () => {
     const feed = await agent().get('/api/v1/seo/sitemap/businesses').expect(200);
     expect(feed.body.data).toEqual([]);
     const taxonomies = await agent().get('/api/v1/seo/sitemap/taxonomies').expect(200);
-    expect(taxonomies.body.data.map((e: { path: string }) => e.path)).not.toContain('/business/area/melbourne-cbd');
+    expect(taxonomies.body.data.map((e: { path: string }) => e.path)).not.toContain('/business/area/adelaide-cbd');
     const republished = await post(`/api/v1/admin/businesses/${businessId}/publish`).send({ expectedVersion: unpublished.body.data.version }).expect(200);
     businessVersion = republished.body.data.version;
   });

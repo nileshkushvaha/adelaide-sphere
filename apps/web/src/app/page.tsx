@@ -171,7 +171,7 @@ export default async function HomePage() {
               <li key={category.id}>
                 <Link
                   href={`/business/category/${category.slug}`}
-                  className="ms-card-lift group flex h-full flex-col overflow-hidden rounded-card-lg border border-white/80 bg-white/75 p-7 shadow-md backdrop-blur-md"
+                  className="as-card-lift group flex h-full flex-col overflow-hidden rounded-card-lg border border-white/80 bg-white/75 p-7 shadow-md backdrop-blur-md"
                 >
                   {category.image ? (
                     // The category's own picture, where an editor has chosen one;
@@ -199,7 +199,7 @@ export default async function HomePage() {
             ))}
             {/* Completes the grid and gives the section its own way out. */}
             <li>
-              <Link href="/business" className="ms-on-dark ms-card-lift ms-glass-dark group flex h-full min-h-44 flex-col justify-end rounded-card-lg p-7 text-band-text">
+              <Link href="/business" className="as-on-dark as-card-lift as-glass-dark group flex h-full min-h-44 flex-col justify-end rounded-card-lg p-7 text-band-text">
                 <h3 className="font-display text-2xl">Every Adelaide listing</h3>
                 <p className="mt-2 text-sm leading-relaxed text-band-muted">Search the full directory by keyword, category, local area or rating.</p>
                 <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-band-link">
@@ -291,9 +291,9 @@ export default async function HomePage() {
               <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {areasWithIntro.slice(0, 6).map((area) => (
                   <li key={area.id}>
-                    <Link href={`/business/area/${area.slug}`} className="ms-area-card ms-card-lift group flex h-full flex-col overflow-hidden rounded-card-lg p-7">
+                    <Link href={`/business/area/${area.slug}`} className="as-area-card as-card-lift group flex h-full flex-col overflow-hidden rounded-card-lg p-7">
                       {area.image && (
-                        <span className="ms-media-shine relative -mx-7 -mt-7 mb-5 block aspect-[16/9] overflow-hidden bg-navy-950">
+                        <span className="as-media-shine relative -mx-7 -mt-7 mb-5 block aspect-[16/9] overflow-hidden bg-navy-950">
                           <Image src={area.image.url} alt="" fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
                         </span>
                       )}
@@ -313,7 +313,7 @@ export default async function HomePage() {
                 <li key={area.id}>
                   <Link
                     href={`/business/area/${area.slug}`}
-                    className="ms-area-card ms-area-chip flex min-h-16 items-center gap-3 rounded-2xl px-5 text-sm font-semibold"
+                    className="as-area-card as-area-chip flex min-h-16 items-center gap-3 rounded-2xl px-5 text-sm font-semibold"
                   >
                     <MapPinIcon aria-hidden="true" className="size-4 shrink-0 text-band-link" />
                     <span className="truncate">{area.name}</span>
@@ -390,7 +390,7 @@ export default async function HomePage() {
             {channel.listingMailto ? (
               <a
                 href={channel.listingMailto}
-                className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full ms-primary-action bg-sky-700 px-7 text-base font-semibold text-white transition-colors hover:bg-sky-600"
+                className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-full as-primary-action bg-sky-700 px-7 text-base font-semibold text-white transition-colors hover:bg-sky-600"
               >
                 Add or update a business
                 <ArrowRightIcon aria-hidden="true" className="size-5" />
@@ -409,7 +409,7 @@ export default async function HomePage() {
               { icon: ShieldCheckIcon, title: 'Checked before publishing', body: 'Our editors verify the details and the Adelaide location before a listing goes live.' },
               { icon: MapPinIcon, title: 'Adelaide only', body: 'We cover one city properly instead of thousands of generated location pages.' },
             ].map((item) => (
-              <li key={item.title} className="ms-glass-dark flex gap-4 rounded-card-lg p-6">
+              <li key={item.title} className="as-glass-dark flex gap-4 rounded-card-lg p-6">
                 <item.icon aria-hidden="true" className="size-6 shrink-0 text-sky-400" />
                 <div>
                   <h3 className="text-base font-semibold text-white">{item.title}</h3>

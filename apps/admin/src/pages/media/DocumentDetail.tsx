@@ -72,8 +72,8 @@ export function DocumentDetail({ asset }: { asset: MediaAsset }) {
       aside={
         <div style={{ display: 'grid', gap: 20 }}>
           <SectionCard title="This document" description="What was uploaded, and whether it passed the checks.">
-            <div className="ms-doc-summary">
-              <span className="ms-doc-row__icon" aria-hidden="true">
+            <div className="as-doc-summary">
+              <span className="as-doc-row__icon" aria-hidden="true">
                 <FilePdfOutlined />
               </span>
               <div>

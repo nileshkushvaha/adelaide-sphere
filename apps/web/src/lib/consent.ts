@@ -11,10 +11,10 @@
  * page stays cacheable for everyone (SRS CACHE 001).
  */
 
-export const CONSENT_KEY = 'ms.consent.analytics';
-export const CONSENT_EVENT = 'ms:consent-changed';
+export const CONSENT_KEY = 'as.consent.analytics';
+export const CONSENT_EVENT = 'as:consent-changed';
 /** Asks the banner to come back after the question has already been answered. */
-export const CONSENT_REOPEN_EVENT = 'ms:consent-reopen';
+export const CONSENT_REOPEN_EVENT = 'as:consent-reopen';
 
 export type ConsentChoice = 'accepted' | 'declined';
 

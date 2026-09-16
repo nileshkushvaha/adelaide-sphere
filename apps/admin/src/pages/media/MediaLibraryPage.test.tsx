@@ -9,7 +9,7 @@ import { localFileProblem, variantUrl } from '@/api/media';
 const now = '2026-09-06T00:00:00.000Z';
 const ready = {
   id: 'm1', sourceName: 'laneway.png', mimeType: 'image/png', bytes: 120_000, width: 1200, height: 800, status: 'ready',
-  rejectionReason: null, altText: 'A Melbourne laneway', credit: null, rightsNote: null, focalX: null, focalY: null,
+  rejectionReason: null, altText: 'An Adelaide laneway', credit: null, rightsNote: null, focalX: null, focalY: null,
   variants: [{ kind: 'card' as const, url: 'https://cdn.test/media/card.webp', width: 800, height: 533 }, { kind: 'thumbnail' as const, url: 'https://cdn.test/media/thumb.webp', width: 320, height: 213 }],
   usages: [{ kind: 'business', id: 'b1', label: 'Gallery Cafe' }], version: 2, createdAt: now,
 };
@@ -43,7 +43,7 @@ describe('media library', () => {
     expect(within(tile).getByText('ready')).toBeInTheDocument();
     expect(within(tile).getByText('1200 × 800')).toBeInTheDocument();
     expect(within(tile).getByText('Used in 1 place')).toBeInTheDocument();
-    expect(screen.getByAltText('A Melbourne laneway')).toHaveAttribute('src', 'https://cdn.test/media/thumb.webp');
+    expect(screen.getByAltText('An Adelaide laneway')).toHaveAttribute('src', 'https://cdn.test/media/thumb.webp');
     // The images view asks for images only (change log 1.16: documents have their own view).
     expect(calls[0]?.url).toBe('/api/v1/admin/media?kind=image&status=ready&page=1&pageSize=24');
   });
@@ -60,11 +60,11 @@ describe('media library', () => {
     renderWithProviders(<MediaDetailPage />, { initialEntries: ['/admin/media/m1'], routePath: '/media/:id' });
     expect(await screen.findByRole('heading', { level: 1, name: 'laneway.png' })).toBeInTheDocument();
     // The picture is on screen while the description is written.
-    expect(screen.getByAltText('A Melbourne laneway')).toBeInTheDocument();
+    expect(screen.getByAltText('An Adelaide laneway')).toBeInTheDocument();
     await ue.type(screen.getByLabelText(/credit/i), 'Photo: Alex');
     await ue.click(screen.getByRole('button', { name: /^save$/i }));
     const patch = calls.find((c) => c.method === 'PATCH')!;
-    expect(JSON.parse(patch.body!)).toMatchObject({ expectedVersion: 2, altText: 'A Melbourne laneway', credit: 'Photo: Alex' });
+    expect(JSON.parse(patch.body!)).toMatchObject({ expectedVersion: 2, altText: 'An Adelaide laneway', credit: 'Photo: Alex' });
   });
 
   it('names what is using an image instead of counting it, and links to each one', async () => {
@@ -93,7 +93,7 @@ describe('media library', () => {
     renderWithProviders(<MediaDetailPage />, { initialEntries: ['/admin/media/m1'], routePath: '/media/:id' });
     await screen.findByRole('heading', { level: 1, name: 'laneway.png' });
 
-    const picker = await screen.findByRole('button', { name: /focal point for A Melbourne laneway/i });
+    const picker = await screen.findByRole('button', { name: /focal point for An Adelaide laneway/i });
     expect(screen.getByText(/the middle of the image is kept in frame/i)).toBeInTheDocument();
 
     // Arrow keys are the keyboard path; a drag-only control would be unusable.

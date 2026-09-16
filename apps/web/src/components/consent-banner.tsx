@@ -73,7 +73,7 @@ export function ConsentBanner({
       aria-label="Cookies"
       className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85 dark:border-slate-700 dark:bg-slate-900/95"
     >
-      <div className="ms-container flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="as-container flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="max-w-2xl text-sm text-slate-700 dark:text-slate-200">
           We’d like to use {purpose}
           {from ? ` from ${from}` : ''} to understand how people use this site and improve it. These cookies are only set if you accept, and you can change your choice at any time

@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { track } from '@/lib/track';
 
 /** A reader's choice to load videos and maps without asking each time; this browser only. */
-export const EMBED_CONSENT_KEY = 'ms.consent.embeds';
-const EMBED_CONSENT_EVENT = 'ms:embed-consent-changed';
+export const EMBED_CONSENT_KEY = 'as.consent.embeds';
+const EMBED_CONSENT_EVENT = 'as:embed-consent-changed';
 
 function readAlways(): boolean {
   try {
@@ -59,8 +59,8 @@ export function EmbedPlaceholder(props: Props) {
   };
 
   return (
-    <figure className={`ms-embed-frame ${isVideo ? 'ms-embed-frame--video' : 'ms-embed-frame--map'}`}>
-      <div className="ms-embed-frame__box">
+    <figure className={`as-embed-frame ${isVideo ? 'as-embed-frame--video' : 'as-embed-frame--map'}`}>
+      <div className="as-embed-frame__box">
         {show ? (
           <iframe
             ref={frameRef}
@@ -72,14 +72,14 @@ export function EmbedPlaceholder(props: Props) {
             allowFullScreen
           />
         ) : (
-          <div className="ms-embed-placeholder" role="group" aria-label={title}>
-            <p className="ms-embed-placeholder__title">{title}</p>
-            <p className="ms-embed-placeholder__note">
+          <div className="as-embed-placeholder" role="group" aria-label={title}>
+            <p className="as-embed-placeholder__title">{title}</p>
+            <p className="as-embed-placeholder__note">
               {isVideo ? 'Playing this video loads it from YouTube (Google), which may set cookies.' : 'Showing this map loads it from Google, which may set cookies.'}
             </p>
             <button
               type="button"
-              className="ms-primary-action inline-flex min-h-11 items-center rounded-full px-5 text-sm font-semibold text-white"
+              className="as-primary-action inline-flex min-h-11 items-center rounded-full px-5 text-sm font-semibold text-white"
               onClick={() => {
                 requested.current = true;
                 setLoaded(true);
@@ -88,7 +88,7 @@ export function EmbedPlaceholder(props: Props) {
             >
               {isVideo ? 'Play video' : 'Show map'}
             </button>
-            <label className="ms-embed-placeholder__always">
+            <label className="as-embed-placeholder__always">
               <input type="checkbox" onChange={(event) => rememberAlways(event.target.checked)} /> Always load videos and maps on this site
             </label>
           </div>
@@ -99,7 +99,7 @@ export function EmbedPlaceholder(props: Props) {
         {isVideo && (
           <>
             {' · '}
-            <a href={`https://www.youtube.com/watch?v=${props.videoId}`} target="_blank" rel="noopener noreferrer" className="ms-text-link">
+            <a href={`https://www.youtube.com/watch?v=${props.videoId}`} target="_blank" rel="noopener noreferrer" className="as-text-link">
               Watch on YouTube<span className="sr-only"> (opens in a new tab)</span>
             </a>
           </>

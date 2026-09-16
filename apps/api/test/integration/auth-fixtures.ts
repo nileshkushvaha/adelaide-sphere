@@ -63,7 +63,7 @@ export async function seedSuperAdmin(app: INestApplication, overrides: Partial<{
 }
 
 /**
- * Clears throttle keys written by this test run (prefix ms:throttle:*), which
+ * Clears throttle keys written by this test run (prefix as:throttle:*), which
  * covers login/reset and the privileged-mutation ceiling. Suites that make many
  * access changes in quick succession call this between tests: a real deployment
  * spreads them over time, and the ceiling has its own dedicated test.
@@ -72,8 +72,8 @@ export async function clearThrottleKeys(app: INestApplication): Promise<void> {
   const redis = app.get(RedisService);
   await redis.ensureConnected();
   // keyPrefix applies to commands but not to KEYS patterns/results, so scan with the raw prefix.
-  const keys = await redis.client.keys('ms:throttle:*');
-  if (keys.length) await redis.client.del(...keys.map((k) => k.replace(/^ms:/, '')));
+  const keys = await redis.client.keys('as:throttle:*');
+  if (keys.length) await redis.client.del(...keys.map((k) => k.replace(/^as:/, '')));
 }
 
 export const ORIGIN = 'http://127.0.0.1:4002';

@@ -23,7 +23,7 @@ export function SocialLinks({ links, label, tone = 'dark' }: { links: SiteSettin
             target="_blank"
             rel="noopener noreferrer nofollow"
             // 36 px target inside the slim contact strip; 44 px everywhere the strip is not the constraint.
-            className={`ms-social-link inline-flex size-9 items-center justify-center rounded-full transition-colors ${colour}`}
+            className={`as-social-link inline-flex size-9 items-center justify-center rounded-full transition-colors ${colour}`}
           >
             <BrandIcon kind={link.platform} size={16} />
             <span className="sr-only">{brandLabel(link.platform)}</span>

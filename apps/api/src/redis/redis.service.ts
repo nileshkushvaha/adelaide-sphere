@@ -24,7 +24,7 @@ export class RedisService implements OnModuleDestroy {
       connectTimeout: 2_000,
       commandTimeout: 1_500,
       retryStrategy: (attempt) => Math.min(30_000, 500 * 2 ** Math.min(attempt, 6)),
-      keyPrefix: 'ms:',
+      keyPrefix: 'as:',
     });
     this.client.on('error', (error: Error & { code?: string }) => {
       // Codes only; never the URL (which carries the password).

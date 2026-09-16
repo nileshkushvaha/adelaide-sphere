@@ -24,7 +24,7 @@ describe('summarise', () => {
 
 describe('keywordList', () => {
   it('splits, trims, de-duplicates case-insensitively and caps the list', () => {
-    expect(keywordList(['Cafés, Carlton', 'cafés', null, ' Melbourne '])).toEqual(['Cafés', 'Carlton', 'Melbourne']);
+    expect(keywordList(['Cafés, Norwood', 'cafés', null, ' Adelaide '])).toEqual(['Cafés', 'Norwood', 'Adelaide']);
     expect(keywordList(Array.from({ length: 20 }, (_, i) => `k${i}`))).toHaveLength(12);
   });
 });

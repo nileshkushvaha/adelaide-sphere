@@ -3,14 +3,14 @@ import { buildChips, isFiltered, landingRobots, pageHref, parseSearchParams, toQ
 
 describe('search params', () => {
   it('parses tolerant URL state and drops invalid values', () => {
-    expect(parseSearchParams({ q: '  little   collins ', category: 'cafes', area: 'Bad Slug', minRating: '4', sort: 'rating', page: '3' })).toEqual({ q: 'little collins', category: 'cafes', area: null, minRating: 4, openNow: false, sort: 'rating', page: 3 });
+    expect(parseSearchParams({ q: '  peel   street ', category: 'cafes', area: 'Bad Slug', minRating: '4', sort: 'rating', page: '3' })).toEqual({ q: 'peel street', category: 'cafes', area: null, minRating: 4, openNow: false, sort: 'rating', page: 3 });
     expect(parseSearchParams({ q: ['a', 'b'], minRating: '9', sort: 'nope', page: '0' })).toEqual({ q: 'a', category: null, area: null, minRating: null, openNow: false, sort: null, page: 1 });
     expect(parseSearchParams({ q: 'x'.repeat(200) }).q).toHaveLength(120);
   });
 
   it('serialises without defaults and round-trips', () => {
-    const state = parseSearchParams({ q: 'cafe', area: 'carlton', page: '2' });
-    expect(toQueryString(state)).toBe('?q=cafe&area=carlton&page=2');
+    const state = parseSearchParams({ q: 'cafe', area: 'norwood', page: '2' });
+    expect(toQueryString(state)).toBe('?q=cafe&area=norwood&page=2');
     expect(toQueryString({ page: 1 })).toBe('');
     expect(parseSearchParams(Object.fromEntries(new URLSearchParams(toQueryString(state))))).toEqual(state);
   });
@@ -56,10 +56,10 @@ describe('search params', () => {
 
 describe('landingRobots (SRS SEO 003)', () => {
   it('indexes only a landing with editorial text and at least one listing, never a filtered view', () => {
-    expect(landingRobots('Carlton is…', 12, false)).toBeUndefined();
+    expect(landingRobots('Norwood is…', 12, false)).toBeUndefined();
     expect(landingRobots('', 12, false)).toEqual({ index: false, follow: true });
     expect(landingRobots(null, 12, false)).toEqual({ index: false, follow: true });
-    expect(landingRobots('Carlton is…', 0, false)).toEqual({ index: false, follow: true });
-    expect(landingRobots('Carlton is…', 12, true)).toEqual({ index: false, follow: true });
+    expect(landingRobots('Norwood is…', 0, false)).toEqual({ index: false, follow: true });
+    expect(landingRobots('Norwood is…', 12, true)).toEqual({ index: false, follow: true });
   });
 });

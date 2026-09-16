@@ -19,7 +19,7 @@ describe('analytics consent', () => {
     );
     expect(await screen.findByRole('region', { name: 'Cookies' })).toBeInTheDocument();
     // Nothing is mounted while the question is unanswered.
-    expect(document.getElementById('ms-ga4')).toBeNull();
+    expect(document.getElementById('as-ga4')).toBeNull();
   });
 
   it('loads nothing when the visitor declines, and remembers that', async () => {
@@ -32,7 +32,7 @@ describe('analytics consent', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Decline' }));
     await waitFor(() => expect(screen.queryByRole('region', { name: 'Cookies' })).not.toBeInTheDocument());
     expect(window.localStorage.getItem(CONSENT_KEY)).toBe('declined');
-    expect(document.getElementById('ms-ga4')).toBeNull();
+    expect(document.getElementById('as-ga4')).toBeNull();
   });
 
   it('loads analytics once, and only once, the visitor accepts', async () => {

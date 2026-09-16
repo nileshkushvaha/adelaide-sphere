@@ -63,8 +63,8 @@ describe('home banner slides', () => {
   const settings = {
     heroHeadline: 'Discover Adelaide businesses',
     heroPhrases: ['local services', 'places to eat'],
-    heroSlides: [{ mediaId: 'm1', caption: 'Flinders Street', focalX: 0.4, focalY: 0.6 }],
-    heroSlidePreviews: [{ url: 'https://cdn.example/hero.webp', previewUrl: 'https://cdn.example/card.webp', alt: 'Flinders Street station', caption: 'Flinders Street', focalX: 0.4, focalY: 0.6, width: 1600, height: 900 }],
+    heroSlides: [{ mediaId: 'm1', caption: 'Rundle Mall', focalX: 0.4, focalY: 0.6 }],
+    heroSlidePreviews: [{ url: 'https://cdn.example/hero.webp', previewUrl: 'https://cdn.example/card.webp', alt: 'Adelaide Railway Station', caption: 'Rundle Mall', focalX: 0.4, focalY: 0.6, width: 1600, height: 900 }],
     countersEnabled: false,
     version: 2,
     updatedAt: '2026-09-06T00:00:00.000Z',
@@ -78,7 +78,7 @@ describe('home banner slides', () => {
     width: 2000,
     height: 1200,
     status: 'ready',
-    altText: 'A Melbourne laneway',
+    altText: 'An Adelaide laneway',
     credit: null,
     rightsNote: null,
     focalX: 0.5,
@@ -111,7 +111,7 @@ describe('home banner slides', () => {
     const ue = user();
     renderWithProviders(<SiteSettingsPage />, { initialEntries: ['/admin/settings'] });
     expect(await screen.findByRole('heading', { level: 1, name: 'Home page settings' })).toBeInTheDocument();
-    expect(await screen.findByDisplayValue('Flinders Street')).toBeInTheDocument();
+    expect(await screen.findByDisplayValue('Rundle Mall')).toBeInTheDocument();
 
     await ue.click(screen.getByRole('button', { name: /add image/i }));
     const dialog = await screen.findByRole('dialog');
@@ -121,7 +121,7 @@ describe('home banner slides', () => {
     await ue.click(screen.getByRole('button', { name: /save settings/i }));
     const put = calls.filter((call) => call.method === 'PUT').at(-1)!;
     expect(JSON.parse(put.body!).heroSlides).toEqual([
-      { mediaId: 'm1', caption: 'Flinders Street', focalX: 0.4, focalY: 0.6 },
+      { mediaId: 'm1', caption: 'Rundle Mall', focalX: 0.4, focalY: 0.6 },
       { mediaId: 'm2', caption: null, focalX: 0.5, focalY: 0.5 },
     ]);
   });

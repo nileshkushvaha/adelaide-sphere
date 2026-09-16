@@ -2,8 +2,8 @@
 
 - **Audit date:** 7 September 2026
 - **Auditee:** administrator authentication, roles, permissions and the permission-aware admin interface
-- **Working-tree state:** uncommitted work on `master` (last commit `2a679a4`), phases 26–29 plus this audit's remediation. Database: Compose MySQL 8.4 on 127.0.0.1:3307 (`melbourne_sphere_dev`, `melbourne_sphere_test`), Redis 8.4 on 6380. The Homebrew MySQL on 3306 was not touched.
-- **Authority:** `docs/Melbourne_Sphere_Technical_SRS_v1.md` revision 1.1 — ADM 001–003, AUTH 001–003, RBAC 001–012, SEC 003, PRIV 001, DAT 001, MOD 002, NFR 006/011/012.
+- **Working-tree state:** uncommitted work on `master` (last commit `2a679a4`), phases 26–29 plus this audit's remediation. Database: Compose MySQL 8.4 on 127.0.0.1:3317 (`adelaide_sphere_dev`, `adelaide_sphere_test`), Redis 8.4 on 6390. The Homebrew MySQL on 3306 was not touched.
+- **Authority:** `docs/Adelaide_Sphere_Technical_SRS_v1.md` revision 1.1 — ADM 001–003, AUTH 001–003, RBAC 001–012, SEC 003, PRIV 001, DAT 001, MOD 002, NFR 006/011/012.
 - **Method:** previous completion claims were treated as unverified. Every conclusion below rests on code read in this audit, a test run in this audit, or a request made against the running stack in this audit.
 
 ## 1. Scope
@@ -17,7 +17,7 @@ Out of scope: public-site authorization (there is none — no public accounts ex
 ```
 POST /admin/auth/login ─ Argon2id + optional TOTP ─▶ opaque session (MySQL, hashed token)
         │
-        ▼  cookie ms_admin_session (HttpOnly, SameSite=Strict, Path=/api/v1/admin)
+        ▼  cookie as_admin_session (HttpOnly, SameSite=Strict, Path=/api/v1/admin)
 CsrfOriginGuard ─▶ SessionAuthGuard ─▶ PermissionsGuard          (global, in this order)
         │                  │                    │
         │                  │                    └─ AbilityFactory (@casl/ability 7.0.1)
@@ -183,7 +183,7 @@ Run after remediation:
 
 Live revocation: with the editor's session open, the role lost `posts.write`; the same session went `200 → 401` in **49 ms**.
 
-Browser (admin at 127.0.0.1:3002, editor persona): navigation showed only Overview and Editorial — no Directory, Community, Configuration, Roles, Permissions, Administrators or Audit; `/admin/roles` typed directly rendered the accessible forbidden page while the underlying API answered 403 with a request id; signing out returned to the sign-in screen and `/auth/me` answered 401.
+Browser (admin at 127.0.0.1:4002, editor persona): navigation showed only Overview and Editorial — no Directory, Community, Configuration, Roles, Permissions, Administrators or Audit; `/admin/roles` typed directly rendered the accessible forbidden page while the underlying API answered 403 with a request id; signing out returned to the sign-in screen and `/auth/me` answered 401.
 
 Test credentials for the personas were random, single-use, held only in the session scratchpad, and the accounts are removed at the end of this audit. No credential appears in any tracked file.
 

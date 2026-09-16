@@ -38,7 +38,7 @@ const requests = apiMode
       { path: '/api/v1/businesses?pageSize=20', weight: 3 },
       { path: '/api/v1/businesses?q=fixture&pageSize=20', weight: 3 },
       { path: '/api/v1/businesses?category=cafes&sort=rating&pageSize=20', weight: 2 },
-      { path: '/api/v1/businesses?area=carlton&minRating=4&pageSize=20', weight: 1 },
+      { path: '/api/v1/businesses?area=norwood&minRating=4&pageSize=20', weight: 1 },
       { path: '/api/v1/businesses/load-fixture-42', weight: 2 },
       { path: '/api/v1/posts?pageSize=12', weight: 2 },
       // Suggestions are deliberately rate-limited per IP (SRS API 004), so they

@@ -57,7 +57,7 @@ export const ACTION_LABELS: Record<PostAction, { label: string; title: string; h
   schedule: {
     label: 'Schedule article',
     title: 'Schedule publication',
-    hint: 'Choose a date and time in Melbourne. The article goes live within a minute of that time, even if nobody is signed in.',
+    hint: 'Choose a date and time in Adelaide. The article goes live within a minute of that time, even if nobody is signed in.',
   },
   unpublish: {
     label: 'Unpublish article',

@@ -3,7 +3,7 @@ import { isReservedBusinessSlug, isValidSlug, slugify } from './slug.js';
 describe('slugify', () => {
   it.each([
     ['Cafés & Bars', 'cafes-and-bars'],
-    ['  North   Melbourne ', 'north-melbourne'],
+    ['  North   Adelaide ', 'north-adelaide'],
     ["Joe's Plumbing!", 'joe-s-plumbing'],
     ['Health & Wellness', 'health-and-wellness'],
     ['---', ''],
@@ -22,7 +22,7 @@ describe('slugify', () => {
 
 describe('isValidSlug', () => {
   it('accepts lowercase-hyphen slugs and rejects everything else', () => {
-    expect(isValidSlug('melbourne-cbd')).toBe(true);
+    expect(isValidSlug('adelaide-cbd')).toBe(true);
     expect(isValidSlug('cafes')).toBe(true);
     for (const bad of ['', 'Cafes', 'cafes-', '-cafes', 'ca--fes', 'ca fes', 'café', 'a'.repeat(101)]) expect(isValidSlug(bad)).toBe(false);
   });
@@ -35,7 +35,7 @@ describe('reserved business slugs (SRS UX 003, revision 1.3)', () => {
   });
 
   it('reserves nothing else, so ordinary listing slugs are unaffected', () => {
-    for (const slug of ['categories', 'areas', 'carlton-corner-bakery', 'business']) {
+    for (const slug of ['categories', 'areas', 'norwood-corner-bakery', 'business']) {
       expect(isReservedBusinessSlug(slug), slug).toBe(false);
     }
   });

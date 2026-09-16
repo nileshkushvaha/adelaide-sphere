@@ -32,18 +32,18 @@ export function ActivityMemberRow({ entry, shared, onShowRequest }: { entry: Act
   const code = entry.targetId && entry.targetId !== entry.targetLabel && /\./.test(entry.targetId) ? entry.targetId : null;
 
   return (
-    <li className={`ms-activity-member${failure ? ' is-failure' : ''}`}>
-      <div className="ms-activity-member__line">
+    <li className={`as-activity-member${failure ? ' is-failure' : ''}`}>
+      <div className="as-activity-member__line">
         <Tooltip title={`${formatDateTime(entry.createdAt)}, Adelaide time`}>
-          <time dateTime={entry.createdAt} className="ms-activity-member__time">
+          <time dateTime={entry.createdAt} className="as-activity-member__time">
             {adelaideTime(entry.createdAt)}
           </time>
         </Tooltip>
-        <span className="ms-activity-member__name">
+        <span className="as-activity-member__name">
           {href && mayOpen(href) ? <Link to={href}>{name}</Link> : <span>{name}</span>}
-          {code && <code className="ms-activity-code">{code}</code>}
+          {code && <code className="as-activity-code">{code}</code>}
           {own.length > 0 && !open && (
-            <span className="ms-activity-member__own">
+            <span className="as-activity-member__own">
               {own
                 .slice(0, 2)
                 .map(([key, value]) => `${metadataLabel(key)}: ${metadataText(value)}`)
@@ -56,7 +56,7 @@ export function ActivityMemberRow({ entry, shared, onShowRequest }: { entry: Act
           <Button
             type="text"
             size="small"
-            className={`ms-activity-row__toggle${open ? ' is-open' : ''}`}
+            className={`as-activity-row__toggle${open ? ' is-open' : ''}`}
             aria-expanded={open}
             aria-controls={detailId}
             aria-label={`${open ? 'Hide' : 'Show'} details for ${name}`}
@@ -64,11 +64,11 @@ export function ActivityMemberRow({ entry, shared, onShowRequest }: { entry: Act
             onClick={() => setOpen((value) => !value)}
           />
         ) : (
-          <span className="ms-activity-member__spacer" aria-hidden="true" />
+          <span className="as-activity-member__spacer" aria-hidden="true" />
         )}
       </div>
       {open && (
-        <div id={detailId} className="ms-activity-member__detail">
+        <div id={detailId} className="as-activity-member__detail">
           <ActivityDetail entry={entry} shared={shared} onShowRequest={onShowRequest} />
         </div>
       )}

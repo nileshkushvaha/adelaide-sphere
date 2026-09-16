@@ -20,14 +20,14 @@ banner slide is configured. They are not in the media library.
 
 ## The configured banner (database)
 
-The banner the home page shows comes from the Home banner slides in Configuration → Home page settings, stored in the `website/home` settings document. The Adelaide database has no configured slides, so the two fallback images below are what the home page shows. (The Melbourne project seeded five Melbourne slides with `apps/api/scripts/seed-hero-slides.ts`; that script has not been run here.)
+The banner the home page shows comes from the Home banner slides in Configuration → Home page settings, stored in the `website/home` settings document. The Adelaide database has no configured slides, so the two fallback images below are what the home page shows. (`apps/api/scripts/seed-hero-slides.ts` has not been run.)
 
 | File | Subject | Author | Licence | Source |
 | --- | --- | --- | --- | --- |
 | `adelaide-river-torrens.webp` | The city skyline and Festival Centre reflected in the River Torrens | Yu Chu Chin | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0) | [Wikimedia Commons: "Adelaide CBD skyline across the River Torrens, July 2026 (028A8462)"](https://commons.wikimedia.org/wiki/File:Adelaide_CBD_skyline_across_the_River_Torrens,_July_2026_(028A8462).jpg) |
 | `adelaide-oval-footbridge.webp` | The Adelaide Oval footbridge lit at night | Luke Anderson | [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0) | [Wikimedia Commons: "Adelaide Oval Footbridge"](https://commons.wikimedia.org/wiki/File:Adelaide_Oval_Footbridge.jpg) |
 
-Both replace the Melbourne fallback images on 15 September 2026 (user approval of the downloads, same day). Crops: the skyline keeps the full Deloitte tower and the reflections (16:9 from the 3:2 original); the footbridge trims both edges evenly to keep the bridge pylon and the Oval.
+Both became the fallback images on 15 September 2026 (user approval of the downloads, same day). Crops: the skyline keeps the full Deloitte tower and the reflections (16:9 from the 3:2 original); the footbridge trims both edges evenly to keep the bridge pylon and the Oval.
 
 ## Where else these images are used
 

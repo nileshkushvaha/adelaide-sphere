@@ -58,7 +58,7 @@ export function CategoryCombobox({ categories }: { categories: CategoryOption[] 
     );
   };
   return (
-    <div ref={root} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false); }} className="ms-search-field relative flex min-h-20 min-w-0 flex-col justify-center rounded-2xl border border-panel-border bg-panel-muted/60 px-4 py-3 lg:w-64">
+    <div ref={root} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false); }} className="as-search-field relative flex min-h-20 min-w-0 flex-col justify-center rounded-2xl border border-panel-border bg-panel-muted/60 px-4 py-3 lg:w-64">
       <label htmlFor={id} className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-panel-text-muted">Category (optional)</label>
       {!enhanced ? (
         <select id={id} name="category" defaultValue="" className="mt-1 w-full border-0 bg-transparent p-0 text-base text-panel-text">

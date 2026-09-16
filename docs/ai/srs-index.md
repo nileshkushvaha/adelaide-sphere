@@ -1,11 +1,11 @@
 # SRS navigation index
 
-Index into `docs/Melbourne_Sphere_Technical_SRS_v1.md` (919 lines, MD5 `5f8f853e9fcaa44983b5eba214c0bec9` on 2026-09-15; SRS revision 1.17). It maps implementation areas to the SRS's own headings and requirement IDs so a session reads the complete relevant sections instead of the whole document. It is not a specification: when in doubt, open the section. Line numbers are approximate anchors for `sed -n`; headings are exact.
+Index into `docs/Adelaide_Sphere_Technical_SRS_v1.md` (919 lines, MD5 `7bf0464e568dbe237fc5a5d1eb748c2e` on 2026-09-16 after the city-name update; SRS revision 1.17; heading positions unchanged). It maps implementation areas to the SRS's own headings and requirement IDs so a session reads the complete relevant sections instead of the whole document. It is not a specification: when in doubt, open the section. Line numbers are approximate anchors for `sed -n`; headings are exact.
 
 | Area | SRS heading (exact) | IDs | Approx. lines |
 | --- | --- | --- | --- |
 | Governance, precedence, actors | `# 1 Scope and requirement governance` (`## Mandatory scope`, `## Interpretation and precedence`, `## Actors and responsibility`) | SCP 001–005 | 80–108 |
-| Melbourne geographic scope | `# 1 Scope and requirement governance` (SCP 001–005) and `# 6 Business listings and local areas` (BUS 008) | SCP, BUS 008 | 80–108, 204–223 |
+| Adelaide geographic scope | `# 1 Scope and requirement governance` (SCP 001–005) and `# 6 Business listings and local areas` (BUS 008) | SCP, BUS 008 | 80–108, 204–223 |
 | Public experience, branding, routes | `# 2 Reference and public experience` (`## Reference interpretation`, `## Public route contract`) | UX 001–003 | 109–139 |
 | Architecture, repository, boundaries | `# 3 Agreed architecture and repository` | ARC 001–005 | 140–165 |
 | Hero banner and search box | `# 4 Hero banner and search interaction` | HERO 001–007 | 166–183 |

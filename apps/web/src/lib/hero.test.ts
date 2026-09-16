@@ -19,7 +19,7 @@ describe('hero headline and rotation', () => {
 
 describe('suggestion list behaviour', () => {
   const groups = {
-    businesses: [{ kind: 'business' as const, label: 'Cafe Lumen', slug: 'cafe-lumen', hint: 'Carlton' }],
+    businesses: [{ kind: 'business' as const, label: 'Cafe Lumen', slug: 'cafe-lumen', hint: 'Norwood' }],
     categories: [{ kind: 'category' as const, label: 'Cafes', slug: 'cafes', hint: null }],
     services: [{ kind: 'service' as const, label: 'Specialty coffee', slug: 'specialty-coffee', hint: 'cafe latte' }],
   };

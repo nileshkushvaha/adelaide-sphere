@@ -4,18 +4,18 @@ import { Counter, Gauge, Histogram, Registry, collectDefaultMetrics } from 'prom
 
 export const workerRegistry = new Registry();
 workerRegistry.setDefaultLabels({ service: 'worker' });
-collectDefaultMetrics({ register: workerRegistry, prefix: 'ms_' });
+collectDefaultMetrics({ register: workerRegistry, prefix: 'as_' });
 
 /** Job name is a registry value and outcome is a closed set, so both are bounded labels. */
 export const jobsProcessed = new Counter({
-  name: 'ms_worker_jobs_total',
+  name: 'as_worker_jobs_total',
   help: 'Jobs finished by this worker, by job name and outcome.',
   labelNames: ['job', 'outcome'] as const, // completed | failed
   registers: [workerRegistry],
 });
 
 export const jobDuration = new Histogram({
-  name: 'ms_worker_job_duration_seconds',
+  name: 'as_worker_job_duration_seconds',
   help: 'Time to run one job, by job name.',
   labelNames: ['job'] as const,
   buckets: [0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60],
@@ -27,14 +27,14 @@ export const jobDuration = new Histogram({
  * registry values, so the series count is fixed by the code.
  */
 export const scheduledTaskRuns = new Counter({
-  name: 'ms_scheduled_task_runs_total',
+  name: 'as_scheduled_task_runs_total',
   help: 'Scheduled task runs by task code and outcome.',
   labelNames: ['task', 'outcome'] as const,
   registers: [workerRegistry],
 });
 
 export const workerUp = new Gauge({
-  name: 'ms_worker_up',
+  name: 'as_worker_up',
   help: '1 while this worker process is running and consuming its queue.',
   registers: [workerRegistry],
 });

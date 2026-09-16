@@ -9,7 +9,7 @@ import { SESSION_COOKIE_NAME } from '../src/auth/session.service.js';
 import { AuthFixtureController, CapturingMailer, ORIGIN, TEST_ADMIN, clearThrottleKeys, seedSuperAdmin } from './integration/auth-fixtures.js';
 import { closeTestDatabase, listenForTests, testDatabase, truncateApplicationTables } from './integration/harness.js';
 
-const COOKIE_RE = /^ms_admin_session=([^;]+);(.*)$/;
+const COOKIE_RE = /^as_admin_session=([^;]+);(.*)$/;
 
 function cookieOf(res: request.Response): { value: string; attributes: string } {
   const raw = ([] as string[]).concat(res.headers['set-cookie'] ?? []).find((c) => c.startsWith(`${SESSION_COOKIE_NAME}=`));
@@ -170,7 +170,7 @@ describe('Administrator authentication and RBAC (integration)', () => {
       await db.adminSession.updateMany({ where: { revokedAt: null, idleExpiresAt: { gt: before } }, data: { idleExpiresAt: before } });
       // Only the session we just touched is affected below? All active sessions now have idle deadlines in the past.
       const expired = await agent().get('/api/v1/admin/auth/me').set('Cookie', c).expect(401);
-      expect(expired.headers['set-cookie']?.[0]).toMatch(/ms_admin_session=;/);
+      expect(expired.headers['set-cookie']?.[0]).toMatch(/as_admin_session=;/);
       const record = await db.adminSession.findMany({ where: { revokedReason: 'idle_timeout' } });
       expect(record.length).toBeGreaterThanOrEqual(1);
       cookie = `${SESSION_COOKIE_NAME}=${cookieOf(await login().expect(200)).value}`;
@@ -188,7 +188,7 @@ describe('Administrator authentication and RBAC (integration)', () => {
 
     it('logout revokes the server record and clears the cookie; the cookie is then useless', async () => {
       const res = await agent().post('/api/v1/admin/auth/logout').set('Cookie', cookie).set('Origin', ORIGIN).expect(204);
-      expect(res.headers['set-cookie']?.[0]).toMatch(/ms_admin_session=;/);
+      expect(res.headers['set-cookie']?.[0]).toMatch(/as_admin_session=;/);
       await agent().get('/api/v1/admin/auth/me').set('Cookie', cookie).expect(401);
       const db = testDatabase();
       expect(await db.auditLog.count({ where: { action: 'auth.logout' } })).toBe(1);

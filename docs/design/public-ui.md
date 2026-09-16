@@ -1,10 +1,10 @@
-# Melbourne Sphere public UI direction
+# Adelaide Sphere public UI direction
 
 Status: active design foundation, homepage applied first. The SRS remains authoritative.
 
 ## Brand character
 
-Melbourne Sphere should feel like a premium local discovery publication: assured, contemporary, useful and distinctly Melbourne. The interface combines wide editorial composition with restrained glass information panels. Glass is an emphasis tool, not a default card style.
+Adelaide Sphere should feel like a premium local discovery publication: assured, contemporary, useful and distinctly Adelaide. The interface combines wide editorial composition with restrained glass information panels. Glass is an emphasis tool, not a default card style.
 
 ## Palette
 
@@ -35,9 +35,9 @@ Both families are supplied through `next/font`, so font files are self-hosted by
 
 ## Glass and information graphics
 
-- `.ms-glass-light`: hero search and high-value light overlays.
-- `.ms-glass-dark`: locality, trust and operational information over dark bands.
-- `.ms-dot-grid`: low-contrast infographic texture for data/discovery bands.
+- `.as-glass-light`: hero search and high-value light overlays.
+- `.as-glass-dark`: locality, trust and operational information over dark bands.
+- `.as-dot-grid`: low-contrast infographic texture for data/discovery bands.
 - Blur is progressive enhancement. Every glass surface has an opaque fallback and a visible border.
 - Do not use glass for long reading surfaces, every card, or form error messages.
 
@@ -57,8 +57,8 @@ WCAG 2.2 AA remains mandatory. Palette tests cover text, links and focus contras
   stated truthfully, and a process track that is a horizontal five-step row on
   desktop, a vertical list on mobile, and an ordered list in both. Section rhythm
   is light → dark → soft → light → deep → page → soft → dark, so no two adjacent
-  bands share a surface. Section 5 uses `.ms-dot-grid` over the deep band for the
-  Melbourne composition; no map embed, no parallax, no client JavaScript.
+  bands share a surface. Section 5 uses `.as-dot-grid` over the deep band for the
+  Adelaide composition; no map embed, no parallax, no client JavaScript.
 
 ## Rollout
 

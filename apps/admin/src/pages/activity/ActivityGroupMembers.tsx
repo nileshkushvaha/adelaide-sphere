@@ -43,8 +43,8 @@ export function ActivityGroupMembers({ group, onShowRequest }: { group: Activity
   const loaded = Math.min(meta.total, PAGE_SIZE * (1 + extraPages));
 
   return (
-    <div className="ms-activity-group">
-      <dl className="ms-activity-group__summary" aria-label="What every event in this group has in common">
+    <div className="as-activity-group">
+      <dl className="as-activity-group__summary" aria-label="What every event in this group has in common">
         <div>
           <dt>Events</dt>
           <dd>{meta.total}</dd>
@@ -52,7 +52,7 @@ export function ActivityGroupMembers({ group, onShowRequest }: { group: Activity
         <div>
           <dt>Recorded as</dt>
           <dd>
-            <code className="ms-activity-code">{group.action}</code>
+            <code className="as-activity-code">{group.action}</code>
           </dd>
         </div>
         <div>
@@ -62,11 +62,11 @@ export function ActivityGroupMembers({ group, onShowRequest }: { group: Activity
         {Object.entries(shared).map(([key, value]) => (
           <div key={key}>
             <dt>{metadataLabel(key)}</dt>
-            <dd>{/^([a-z0-9_]+\.)+[a-z0-9_*]+$/i.test(value) ? <code className="ms-activity-code">{value}</code> : value}</dd>
+            <dd>{/^([a-z0-9_]+\.)+[a-z0-9_*]+$/i.test(value) ? <code className="as-activity-code">{value}</code> : value}</dd>
           </div>
         ))}
       </dl>
-      <ol className="ms-activity-members" aria-label={`The ${meta.total} events in this group`}>
+      <ol className="as-activity-members" aria-label={`The ${meta.total} events in this group`}>
         {data.map((entry) => (
           <ActivityMemberRow key={entry.id} entry={fromAuditEntry(entry)} shared={shared} onShowRequest={onShowRequest} />
         ))}
@@ -75,11 +75,11 @@ export function ActivityGroupMembers({ group, onShowRequest }: { group: Activity
         ))}
       </ol>
       {loaded < meta.total && (
-        <div className="ms-activity-group__more">
+        <div className="as-activity-group__more">
           <Button size="small" onClick={() => setExtraPages((value) => value + 1)}>
             Show {Math.min(PAGE_SIZE, meta.total - loaded)} more
           </Button>
-          <span className="ms-activity-group__count">
+          <span className="as-activity-group__count">
             {loaded} of {meta.total} shown
           </span>
         </div>
@@ -92,14 +92,14 @@ function MembersPage({ groupKey, page, shared, onShowRequest }: { groupKey: stri
   const [state, reload] = useAsync((signal) => auditApi.list({ groupKey, page, pageSize: PAGE_SIZE }, signal), [groupKey, page]);
   if (state.status === 'loading') {
     return (
-      <li className="ms-activity-members__state">
+      <li className="as-activity-members__state">
         <Skeleton active title={false} paragraph={{ rows: 2 }} />
       </li>
     );
   }
   if (state.status === 'error') {
     return (
-      <li className="ms-activity-members__state">
+      <li className="as-activity-members__state">
         <ErrorState message={state.message} reference={state.reference} onRetry={reload} />
       </li>
     );

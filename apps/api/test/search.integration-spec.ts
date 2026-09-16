@@ -30,12 +30,12 @@ describe('Public directory search and detail (integration)', () => {
     ids.bars = await mk('/api/v1/admin/categories', { name: 'Bars', parentId: ids.food });
     ids.plumbers = await mk('/api/v1/admin/categories', { name: 'Plumbers' });
     ids.coffee = await mk('/api/v1/admin/services', { name: 'Specialty coffee', synonyms: ['espresso', 'flat white'] });
-    ids.cbd = await mk('/api/v1/admin/areas', { name: 'Melbourne CBD', eligibilitySource: 'council list' });
-    ids.carlton = await mk('/api/v1/admin/areas', { name: 'Carlton', eligibilitySource: 'council list' });
+    ids.cbd = await mk('/api/v1/admin/areas', { name: 'Adelaide CBD', eligibilitySource: 'council list' });
+    ids.collegePark = await mk('/api/v1/admin/areas', { name: 'College Park', eligibilitySource: 'council list' });
 
     ids.espresso = await createBusiness({ name: 'Espresso Lane', slug: 'espresso-lane', primaryCategoryId: ids.cafes, localAreaId: ids.cbd, serviceIds: [ids.coffee], address: { line1: '1 Leigh St', suburb: 'Adelaide', postcode: '5000', latitude: -34.9239, longitude: 138.5988 }, publicUrl: 'https://espresso.example/', links: [{ kind: 'instagram', url: 'https://instagram.com/espressolane' }], privateEnquiryEmail: 'secret@espresso.example' });
-    ids.laneway = await createBusiness({ name: 'Laneway Espresso Bar', slug: 'laneway-espresso-bar', primaryCategoryId: ids.cafes, localAreaId: ids.carlton, secondaryCategoryIds: [ids.bars] });
-    ids.pipes = await createBusiness({ name: 'Carlton Pipes', slug: 'carlton-pipes', primaryCategoryId: ids.plumbers, localAreaId: ids.carlton, description: 'Emergency plumbing. We also fix the espresso machine at the local cafe when asked.', addressVisibility: 'areaOnly', address: { line1: '9 Private St', suburb: 'Carlton', postcode: '5067' } });
+    ids.laneway = await createBusiness({ name: 'Laneway Espresso Bar', slug: 'laneway-espresso-bar', primaryCategoryId: ids.cafes, localAreaId: ids.collegePark, secondaryCategoryIds: [ids.bars] });
+    ids.pipes = await createBusiness({ name: 'College Park Pipes', slug: 'college-park-pipes', primaryCategoryId: ids.plumbers, localAreaId: ids.collegePark, description: 'Emergency plumbing. We also fix the espresso machine at the local cafe when asked.', addressVisibility: 'areaOnly', address: { line1: '9 Private St', suburb: 'College Park', postcode: '5069' } });
     ids.beans = await createBusiness({ name: 'Beans & Co', slug: 'beans-and-co', primaryCategoryId: ids.cafes, localAreaId: ids.cbd });
     ids.draft = await createBusiness({ name: 'Espresso Draft', slug: 'espresso-draft', primaryCategoryId: ids.cafes, localAreaId: ids.cbd }, false);
     ids.nightcap = await createBusiness({ name: 'Nightcap', slug: 'nightcap', primaryCategoryId: ids.bars, localAreaId: ids.cbd });
@@ -60,12 +60,12 @@ describe('Public directory search and detail (integration)', () => {
   it('lists published businesses only, name A–Z by default, with facets and cache headers', async () => {
     const res = await agent().get('/api/v1/businesses').expect(200);
     expect(res.headers['cache-control']).toBe('public, max-age=60');
-    expect(names(res)).toEqual(['Beans & Co', 'Carlton Pipes', 'Espresso Lane', 'Laneway Espresso Bar', 'Nightcap']);
+    expect(names(res)).toEqual(['Beans & Co', 'College Park Pipes', 'Espresso Lane', 'Laneway Espresso Bar', 'Nightcap']);
     expect(res.body.meta).toMatchObject({ page: 1, pageSize: 20, total: 5, pageCount: 1, sort: 'name' });
     expect(res.body.meta.facets.categories).toEqual([{ slug: 'cafes', name: 'Cafes', count: 3 }, { slug: 'bars', name: 'Bars', count: 2 }, { slug: 'plumbers', name: 'Plumbers', count: 1 }]);
-    expect(res.body.meta.facets.areas).toEqual([{ slug: 'melbourne-cbd', name: 'Melbourne CBD', count: 3 }, { slug: 'carlton', name: 'Carlton', count: 2 }]);
+    expect(res.body.meta.facets.areas).toEqual([{ slug: 'adelaide-cbd', name: 'Adelaide CBD', count: 3 }, { slug: 'college-park', name: 'College Park', count: 2 }]);
     const card = res.body.data[0];
-    expect(card).toEqual({ id: ids.beans, name: 'Beans & Co', slug: 'beans-and-co', primaryCategory: { name: 'Cafes', slug: 'cafes' }, localArea: { name: 'Melbourne CBD', slug: 'melbourne-cbd' }, rating: { average: 4.2, count: 10 }, image: null });
+    expect(card).toEqual({ id: ids.beans, name: 'Beans & Co', slug: 'beans-and-co', primaryCategory: { name: 'Cafes', slug: 'cafes' }, localArea: { name: 'Adelaide CBD', slug: 'adelaide-cbd' }, rating: { average: 4.2, count: 10 }, image: null });
     expect(JSON.stringify(res.body)).not.toMatch(/secret@|privateEnquiry|Espresso Draft/);
   });
 
@@ -73,13 +73,13 @@ describe('Public directory search and detail (integration)', () => {
     const res = await agent().get('/api/v1/businesses?q=  ESPRESSO ').expect(200);
     expect(res.body.meta.sort).toBe('relevance');
     // "Espresso Lane" (prefix) < "Laneway Espresso Bar" (contains) < "Beans & Co" (synonym "espresso" via Specialty coffee? no — only Espresso Lane has the service) …
-    expect(names(res)).toEqual(['Espresso Lane', 'Laneway Espresso Bar', 'Carlton Pipes']);
+    expect(names(res)).toEqual(['Espresso Lane', 'Laneway Espresso Bar', 'College Park Pipes']);
     const exact = await agent().get('/api/v1/businesses?q=nightcap').expect(200);
     expect(names(exact)).toEqual(['Nightcap']);
     const synonym = await agent().get('/api/v1/businesses?q=flat white').expect(200);
     expect(names(synonym)).toEqual(['Espresso Lane']);
     const category = await agent().get('/api/v1/businesses?q=plumb').expect(200);
-    expect(names(category)).toEqual(['Carlton Pipes']);
+    expect(names(category)).toEqual(['College Park Pipes']);
     const none = await agent().get('/api/v1/businesses?q=zzzz').expect(200);
     expect(none.body.data).toEqual([]);
     expect(none.body.meta.total).toBe(0);
@@ -90,22 +90,22 @@ describe('Public directory search and detail (integration)', () => {
   it('combines category (with descendants), area and minRating filters with AND', async () => {
     expect(names(await agent().get('/api/v1/businesses?category=food-and-drink').expect(200))).toEqual(['Beans & Co', 'Espresso Lane', 'Laneway Espresso Bar', 'Nightcap']);
     expect(names(await agent().get('/api/v1/businesses?category=bars').expect(200))).toEqual(['Laneway Espresso Bar', 'Nightcap']); // secondary category counts
-    expect(names(await agent().get('/api/v1/businesses?category=cafes&area=carlton').expect(200))).toEqual(['Laneway Espresso Bar']);
+    expect(names(await agent().get('/api/v1/businesses?category=cafes&area=college-park').expect(200))).toEqual(['Laneway Espresso Bar']);
     expect(names(await agent().get('/api/v1/businesses?minRating=4').expect(200))).toEqual(['Beans & Co', 'Laneway Espresso Bar']);
-    expect(names(await agent().get('/api/v1/businesses?minRating=4&area=carlton&q=espresso').expect(200))).toEqual(['Laneway Espresso Bar']);
+    expect(names(await agent().get('/api/v1/businesses?minRating=4&area=college-park&q=espresso').expect(200))).toEqual(['Laneway Espresso Bar']);
     const unknown = await agent().get('/api/v1/businesses?category=does-not-exist').expect(200);
     expect(unknown.body).toMatchObject({ data: [], meta: { total: 0 } });
-    const facets = (await agent().get('/api/v1/businesses?area=carlton').expect(200)).body.meta.facets;
+    const facets = (await agent().get('/api/v1/businesses?area=college-park').expect(200)).body.meta.facets;
     // A facet counts primary and secondary categories, as the category filter matches them: Laneway Espresso Bar is a cafe that is also listed under Bars.
     expect(facets.categories).toEqual([{ slug: 'bars', name: 'Bars', count: 1 }, { slug: 'cafes', name: 'Cafes', count: 1 }, { slug: 'plumbers', name: 'Plumbers', count: 1 }]);
-    const barsInCarlton = await agent().get('/api/v1/businesses?area=carlton&category=bars').expect(200);
-    expect(barsInCarlton.body.meta.total).toBe(1);
-    expect(facets.areas.map((a: { slug: string }) => a.slug)).toEqual(['melbourne-cbd', 'carlton']); // area facet ignores the area filter itself
+    const barsInCollegePark = await agent().get('/api/v1/businesses?area=college-park&category=bars').expect(200);
+    expect(barsInCollegePark.body.meta.total).toBe(1);
+    expect(facets.areas.map((a: { slug: string }) => a.slug)).toEqual(['adelaide-cbd', 'college-park']); // area facet ignores the area filter itself
   });
 
   it('sorts by rating (rated first), newest and name with stable ties', async () => {
-    expect(names(await agent().get('/api/v1/businesses?sort=rating').expect(200))).toEqual(['Laneway Espresso Bar', 'Beans & Co', 'Carlton Pipes', 'Espresso Lane', 'Nightcap']);
-    expect(names(await agent().get('/api/v1/businesses?sort=newest').expect(200))).toEqual(['Nightcap', 'Beans & Co', 'Carlton Pipes', 'Laneway Espresso Bar', 'Espresso Lane']);
+    expect(names(await agent().get('/api/v1/businesses?sort=rating').expect(200))).toEqual(['Laneway Espresso Bar', 'Beans & Co', 'College Park Pipes', 'Espresso Lane', 'Nightcap']);
+    expect(names(await agent().get('/api/v1/businesses?sort=newest').expect(200))).toEqual(['Nightcap', 'Beans & Co', 'College Park Pipes', 'Laneway Espresso Bar', 'Espresso Lane']);
     expect((await agent().get('/api/v1/businesses?sort=relevance').expect(200)).body.meta.sort).toBe('name');
   });
 
@@ -139,7 +139,7 @@ describe('Public directory search and detail (integration)', () => {
     expect(b.related.map((r: { name: string }) => r.name)).toEqual(['Beans & Co', 'Laneway Espresso Bar']); // same area first, then other areas; drafts excluded
     expect(JSON.stringify(b)).not.toMatch(/secret@|privateEnquiry|eligibility|contentRights|normalized/);
 
-    const hidden = (await agent().get('/api/v1/businesses/carlton-pipes').expect(200)).body.data;
+    const hidden = (await agent().get('/api/v1/businesses/college-park-pipes').expect(200)).body.data;
     expect(hidden.addressVisibility).toBe('areaOnly');
     expect(hidden.address).toBeNull();
     expect(JSON.stringify(hidden)).not.toContain('Private St');

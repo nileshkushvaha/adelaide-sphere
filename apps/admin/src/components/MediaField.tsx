@@ -55,7 +55,7 @@ export function MediaField({ value, onChange, current = null, emptyLabel = 'No i
 
   return (
     <>
-      <Space align="start" wrap size={16} className="ms-media-field">
+      <Space align="start" wrap size={16} className="as-media-field">
         {shown ? (
           <img src={shown.url} alt={shown.alt} style={{ width: 220, aspectRatio, objectFit: uploadAlt ? 'contain' : 'cover', borderRadius: 8, border: `1px solid ${brand.border}`, display: 'block' }} />
         ) : (

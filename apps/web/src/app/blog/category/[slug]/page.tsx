@@ -56,7 +56,7 @@ export default async function BlogCategoryPage({ params, searchParams }: PagePro
         meta={posts.meta.total > 0 ? `${posts.meta.total} article${posts.meta.total === 1 ? '' : 's'}` : undefined}
         footer={<BlogCategoryNav categories={stocked} active={category.slug} />}
       />
-      <div className="ms-container py-12 sm:py-16">
+      <div className="as-container py-12 sm:py-16">
         {posts.data.length === 0 ? (
           <BlogEmptyState message="No stories have been published in this category yet." action={{ href: '/blog', label: 'Browse all stories' }} />
         ) : (

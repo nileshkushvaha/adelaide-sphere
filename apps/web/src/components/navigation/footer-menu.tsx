@@ -13,7 +13,7 @@ export const FOOTER_GRID: Record<number, string> = {
   4: 'lg:grid-cols-[1.4fr_repeat(4,minmax(0,1fr))]',
 };
 
-const LINK = 'ms-footer-link inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-base font-medium';
+const LINK = 'as-footer-link inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-base font-medium';
 
 /**
  * The footer menu's columns (MENU 003): each top-level item is a column
@@ -26,8 +26,8 @@ export function FooterMenuColumns({ items }: { items: PublicMenuItem[] }) {
       {items.slice(0, 4).map((column) => {
         const headingId = `footer-menu-${column.id}`;
         return (
-          <nav key={column.id} aria-labelledby={headingId} className="ms-footer-section min-w-0">
-            <h2 id={headingId} className="ms-footer-heading font-display text-lg font-bold text-white">
+          <nav key={column.id} aria-labelledby={headingId} className="as-footer-section min-w-0">
+            <h2 id={headingId} className="as-footer-heading font-display text-lg font-bold text-white">
               {column.href ? <MenuLink item={column} className="inline-flex items-center gap-2 hover:underline" /> : column.label}
             </h2>
             {column.children.length > 0 && (

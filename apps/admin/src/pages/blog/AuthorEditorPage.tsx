@@ -168,7 +168,7 @@ export function AuthorEditorPage() {
                 </Col>
                 <Col xs={24} md={6}>
                   <Form.Item label="Based in" name="location" extra="An Adelaide suburb or area.">
-                    <Input maxLength={120} placeholder="e.g. Fitzroy" />
+                    <Input maxLength={120} placeholder="e.g. Prospect" />
                   </Form.Item>
                 </Col>
               </Row>
@@ -230,7 +230,7 @@ export function AuthorEditorPage() {
           {/* The side column follows the reader down a long form, the same
               way the business editor's does. */}
           <Col xs={24} xl={8}>
-            <div className="ms-editor-sidebar ms-editor-sidebar--xl">
+            <div className="as-editor-sidebar as-editor-sidebar--xl">
             <SectionCard title="Photo" description="Choose a processed image from the media library.">
               <Space direction="vertical" size={12} style={{ width: '100%' }}>
                 <Avatar size={112} src={photo?.url} icon={<UserOutlined aria-hidden="true" />} alt="" />

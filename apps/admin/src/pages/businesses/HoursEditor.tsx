@@ -130,7 +130,7 @@ export function HoursEditor({ businessId, businessVersion, readOnly, onSaved }: 
             {WEEKDAYS.map((day) => (
               // Columns in the stylesheet: on a phone the day and its state share
               // a row and the opening times take the next one.
-              <div key={day} className="ms-hours-day">
+              <div key={day} className="as-hours-day">
                 <Typography.Text strong style={{ paddingTop: 6 }}>{capitalise(day)}</Typography.Text>
                 <Form.Item name={['weekly', day, 'state']} style={{ marginBottom: 8 }}>
                   <Select aria-label={`${capitalise(day)} hours`} options={DAY_STATES} />
@@ -145,7 +145,7 @@ export function HoursEditor({ businessId, businessVersion, readOnly, onSaved }: 
                 <div>
                   {fields.map((field, index) => (
                     <div key={field.key} style={{ border: `1px solid ${brand.border}`, borderRadius: 8, padding: 12, marginBottom: 12 }}>
-                      <div className="ms-field-row">
+                      <div className="as-field-row">
                         <Form.Item name={[field.name, 'date']} label="Date" rules={[{ required: true, message: 'Date is required' }]} style={{ width: 170 }}>
                           <Input type="date" />
                         </Form.Item>

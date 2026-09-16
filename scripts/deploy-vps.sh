@@ -16,7 +16,7 @@ for env in api web worker backup; do test -r "$ROOT/shared/$env.env"; done
 test -r "$ROOT/shared/backup-recipient.txt"
 sudo -v
 sudo nginx -t
-for service in ms-api ms-worker ms-web; do sudo systemctl is-active --quiet "$service"; done
+for service in adelaide-sphere-api adelaide-sphere-worker adelaide-sphere-web; do sudo systemctl is-active --quiet "$service"; done
 
 git --git-dir="$ROOT/repo.git" fetch origin
 SHA=$(git --git-dir="$ROOT/repo.git" rev-parse --verify "$REF^{commit}")
@@ -102,13 +102,13 @@ BACKUP_LOG=$(mktemp)
   set +a
   export MYSQL_PWD="$MYSQL_BACKUP_PASSWORD"
   "$DIR/infrastructure/backup/backup-database.sh" \
-    --host 127.0.0.1 --user ms_backup --database adelaide_sphere \
+    --host 127.0.0.1 --user adelaide_sphere_backup --database adelaide_sphere \
     --out "$BACKUP_DIR" --recipient "$(cat "$ROOT/shared/backup-recipient.txt")"
 ) | tee "$BACKUP_LOG"
 BACKUP=$(ls -t "$BACKUP_DIR"/*.age "$BACKUP_DIR"/*.gpg 2>/dev/null | head -1 || true)
 rm -f "$BACKUP_LOG"
 [[ -n "$BACKUP" && -s "$BACKUP" ]] || { echo 'Pre-deploy backup was not written; nothing was migrated.' >&2; exit 1; }
-# Keep the ten most recent pre-deploy backups (the daily job keeps its own 30 days).
+# Keep the twenty most recent pre-deploy backups (the daily job keeps its own 30 days).
 ls -t "$BACKUP_DIR"/* 2>/dev/null | tail -n +21 | xargs -r rm -f
 
 # Apply reviewed migrations while the previous release is still serving.
@@ -142,14 +142,14 @@ switch_link() {
   mv -Tf "$ROOT/.current-deploy-$$" "$ROOT/current"
 }
 restart_apps() {
-  sudo systemctl restart ms-api
-  wait_url http://127.0.0.1:3001/api/v1/health/ready
-  sudo systemctl restart ms-worker
-  wait_url http://127.0.0.1:9464/health
-  sudo systemctl restart ms-web
-  wait_url http://127.0.0.1:3000/robots.txt
-  wait_url http://127.0.0.1:3000/
-  for service in ms-api ms-worker ms-web; do sudo systemctl is-active --quiet "$service"; done
+  sudo systemctl restart adelaide-sphere-api
+  wait_url http://127.0.0.1:4001/api/v1/health/ready
+  sudo systemctl restart adelaide-sphere-worker
+  wait_url http://127.0.0.1:9474/health
+  sudo systemctl restart adelaide-sphere-web
+  wait_url http://127.0.0.1:4000/robots.txt
+  wait_url http://127.0.0.1:4000/
+  for service in adelaide-sphere-api adelaide-sphere-worker adelaide-sphere-web; do sudo systemctl is-active --quiet "$service"; done
 }
 rollback() {
   trap - ERR INT TERM
@@ -161,21 +161,21 @@ rollback() {
   if [[ $? == 0 ]]; then
     echo "Previous release restored: $PREVIOUS" >&2
   else
-    echo 'Recovery needs attention. Check systemctl status ms-api ms-worker ms-web.' >&2
+    echo 'Recovery needs attention. Check systemctl status adelaide-sphere-api adelaide-sphere-worker adelaide-sphere-web.' >&2
   fi
   exit 1
 }
 printf '%s\n' "$PREVIOUS" > "$ROOT/previous-release"
 # The version the Workers card and error reports show.
-sudo -u ms sed -i '/^APP_VERSION=/d' "$ROOT/shared/worker.env"
-printf 'APP_VERSION=%s\n' "$SHA" | sudo -u ms tee -a "$ROOT/shared/worker.env" >/dev/null
+sudo -u adelaide-sphere sed -i '/^APP_VERSION=/d' "$ROOT/shared/worker.env"
+printf 'APP_VERSION=%s\n' "$SHA" | sudo -u adelaide-sphere tee -a "$ROOT/shared/worker.env" >/dev/null
 trap rollback ERR INT TERM
 switch_link "$DIR"
 restart_apps
 # Verify this VPS directly, even when Cloudflare proxies the public hostname.
 for path in / /admin/ /api/v1/health/ready; do
-  curl --resolve melbournesphere.com:443:127.0.0.1 \
-    --connect-timeout 3 --max-time 15 -fsS -o /dev/null "https://melbournesphere.com$path"
+  curl --resolve adelaidesphere.com.au:443:127.0.0.1 \
+    --connect-timeout 3 --max-time 15 -fsS -o /dev/null "https://adelaidesphere.com.au$path"
 done
 trap - ERR INT TERM
 printf '\nDeployment successful: %s\nPrevious release: %s\nDatabase backup: %s\n' "$SHA" "$PREVIOUS" "$BACKUP"

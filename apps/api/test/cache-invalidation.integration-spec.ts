@@ -24,7 +24,7 @@ describe('Cache invalidation (integration)', () => {
     cookie = ([] as string[]).concat(login.headers['set-cookie'] ?? []).find((c) => c.startsWith(`${SESSION_COOKIE_NAME}=`))!.split(';')[0]!;
 
     const categoryId = (await post('/api/v1/admin/categories').send({ name: 'Cafes' }).expect(201)).body.data.id;
-    const areaId = (await post('/api/v1/admin/areas').send({ name: 'Melbourne CBD', eligibilitySource: 'council list' }).expect(201)).body.data.id;
+    const areaId = (await post('/api/v1/admin/areas').send({ name: 'Adelaide CBD', eligibilitySource: 'council list' }).expect(201)).body.data.id;
     const created = await post('/api/v1/admin/businesses')
       .send({
         name: 'Cache Test Cafe',
@@ -33,7 +33,7 @@ describe('Cache invalidation (integration)', () => {
         localAreaId: areaId,
         publicPhone: '+61 3 9000 1234',
         address: { line1: '1 Test St', suburb: 'Adelaide', postcode: '5000', latitude: -34.9285, longitude: 138.6007 },
-        eligibilitySource: 'City of Melbourne suburb list',
+        eligibilitySource: 'City of Adelaide suburb list',
         contentRightsReviewed: true,
       })
       .expect(201);

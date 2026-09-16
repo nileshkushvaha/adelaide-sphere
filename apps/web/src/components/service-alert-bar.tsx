@@ -13,7 +13,7 @@ export async function ServiceAlertBar() {
   const alerts = await fetchServiceAlerts();
   if (alerts.length === 0) return null;
   return (
-    <div className="ms-alert-region">
+    <div className="as-alert-region">
       {alerts.map((alert) => (
         <ServiceAlertBanner key={`${alert.id}:${alert.contentVersion}`} alert={alert} />
       ))}

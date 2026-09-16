@@ -29,11 +29,11 @@ function embedMarker(attribs: sanitizeHtml.Attributes): sanitizeHtml.Attributes 
   const title = (attribs['data-embed-title'] ?? '').replace(/[<>"]/g, '').slice(0, EMBED_TITLE_MAX);
   switch (attribs['data-embed']) {
     case 'youtube':
-      return isYoutubeId(attribs['data-embed-id']) && title ? { class: 'ms-embed', 'data-embed': 'youtube', 'data-embed-id': attribs['data-embed-id'], 'data-embed-title': title } : null;
+      return isYoutubeId(attribs['data-embed-id']) && title ? { class: 'as-embed', 'data-embed': 'youtube', 'data-embed-id': attribs['data-embed-id'], 'data-embed-title': title } : null;
     case 'map':
-      return isMapEmbedSrc(attribs['data-embed-src']) && title ? { class: 'ms-embed', 'data-embed': 'map', 'data-embed-src': attribs['data-embed-src'], 'data-embed-title': title } : null;
+      return isMapEmbedSrc(attribs['data-embed-src']) && title ? { class: 'as-embed', 'data-embed': 'map', 'data-embed-src': attribs['data-embed-src'], 'data-embed-title': title } : null;
     case 'business':
-      return isRecordId(attribs['data-business-id']) ? { class: 'ms-embed', 'data-embed': 'business', 'data-business-id': attribs['data-business-id'], 'data-embed-title': title } : null;
+      return isRecordId(attribs['data-business-id']) ? { class: 'as-embed', 'data-embed': 'business', 'data-business-id': attribs['data-business-id'], 'data-embed-title': title } : null;
     default:
       return null;
   }
@@ -53,7 +53,7 @@ const SANITISE_OPTIONS: sanitizeHtml.IOptions = {
     figure: ['class'],
     div: ['class', 'data-embed', 'data-embed-id', 'data-embed-src', 'data-embed-title', 'data-business-id'],
   },
-  allowedClasses: { figure: ['ms-figure', 'ms-figure--wide'], div: ['ms-embed'], a: ['ms-doc-link'] },
+  allowedClasses: { figure: ['as-figure', 'as-figure--wide'], div: ['as-embed'], a: ['as-doc-link'] },
   // Only these protocols survive; javascript:, data: and vbscript: never do.
   allowedSchemes: ['http', 'https', 'mailto', 'tel'],
   allowedSchemesAppliedToAttributes: ['href', 'src'],
@@ -74,7 +74,7 @@ const SANITISE_OPTIONS: sanitizeHtml.IOptions = {
     // A div survives only as a valid marker; any other div is unwrapped and its text kept.
     div: (tagName, attribs) => {
       const marker = embedMarker(attribs);
-      return marker ? { tagName: 'div', attribs: marker } : { tagName: 'ms-unwrap', attribs: {} };
+      return marker ? { tagName: 'div', attribs: marker } : { tagName: 'as-unwrap', attribs: {} };
     },
     // External links open safely; internal ones keep default behaviour (SRS BUS 003 style rules).
     a: (tagName, attribs) => {

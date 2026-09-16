@@ -107,7 +107,7 @@ export function RecordEditorPage<Values>({
             in the stylesheet, not inline, because they change at a breakpoint:
             an inline `1fr 320px` held at every width squeezed the form to zero
             on a phone while the side column pushed the page sideways. */}
-        <div className={aside ? 'ms-editor-grid ms-editor-grid--aside' : 'ms-editor-grid'}>
+        <div className={aside ? 'as-editor-grid as-editor-grid--aside' : 'as-editor-grid'}>
           <SectionCard>
             <Form<Values>
               form={form}
@@ -118,7 +118,7 @@ export function RecordEditorPage<Values>({
               onFinish={() => void onSubmit()}
               onValuesChange={() => setTouched(true)}
             >
-              <div className={columns ? 'ms-form-grid' : undefined}>{children}</div>
+              <div className={columns ? 'as-form-grid' : undefined}>{children}</div>
             </Form>
           </SectionCard>
           {/* The side column follows the reader down a long form, the way the
@@ -126,7 +126,7 @@ export function RecordEditorPage<Values>({
               of sight is a panel you have to scroll back up to use. It sticks
               only where there are two columns; stacked on a narrow screen it is
               part of the page. */}
-          {aside && <div className="ms-editor-sidebar">{aside}</div>}
+          {aside && <div className="as-editor-sidebar">{aside}</div>}
         </div>
 
         {!readOnlyReason && (

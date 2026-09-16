@@ -35,9 +35,9 @@ describe('categoryVisual', () => {
 
 describe('initials', () => {
   it.each([
-    ['Carlton Corner Bakery', 'CC'],
+    ['Norwood Corner Bakery', 'NC'],
     ['Runtime Check Cafe', 'RC'],
-    ['Kew', 'K'],
+    ['Unley', 'U'],
     ['  spaced   out  name ', 'SO'],
     ['—', '?'],
   ])('reduces %s to %s', (name, expected) => {

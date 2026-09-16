@@ -58,7 +58,7 @@ export default async function ArticlePage({ params }: PageProps<'/blog/[slug]'>)
       */}
       {related.length > 0 && (
         <section aria-labelledby="related-heading" className="border-y border-border bg-surface-sunken py-12 sm:py-16">
-          <div className="ms-container">
+          <div className="as-container">
             <h2 id="related-heading" className="font-display text-2xl tracking-tight sm:text-3xl">
               More from Adelaide Sphere
             </h2>

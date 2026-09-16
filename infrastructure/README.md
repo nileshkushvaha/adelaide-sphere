@@ -67,7 +67,7 @@ The `MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE`, `MYSQL_USER` and `MYSQL_PASSWORD` v
 
 ## Shadow and test databases
 
-`prisma migrate dev` needs a scratch database and the integration tests need an isolated one. `mysql-init/10-shadow-database.sh` runs automatically on a **fresh** volume and creates `<MYSQL_DATABASE>_shadow` and `<name>_test` (e.g. `melbourne_sphere_test`) with `GRANT ALL PRIVILEGES ON <that db>.*` to the application user; no global privileges are granted and the app user still cannot create other databases. For a volume initialised before this script existed, apply the same statements once as root (values come from `.env`, never type them inline):
+`prisma migrate dev` needs a scratch database and the integration tests need an isolated one. `mysql-init/10-shadow-database.sh` runs automatically on a **fresh** volume and creates `<MYSQL_DATABASE>_shadow` and `<name>_test` (e.g. `adelaide_sphere_test`) with `GRANT ALL PRIVILEGES ON <that db>.*` to the application user; no global privileges are granted and the app user still cannot create other databases. For a volume initialised before this script existed, apply the same statements once as root (values come from `.env`, never type them inline):
 
 ```bash
 set -a; . ./infrastructure/.env; set +a
@@ -102,9 +102,9 @@ and answers it with the document Next.js itself prerendered.
 ```bash
 # Build the web app first: the not-found document is a build artefact.
 pnpm --filter web build
-MS_WEB_UPSTREAM=host.docker.internal:4000 \
-MS_API_UPSTREAM=host.docker.internal:4001 \
-MS_ADMIN_UPSTREAM=host.docker.internal:4002 \
+AS_WEB_UPSTREAM=host.docker.internal:4000 \
+AS_API_UPSTREAM=host.docker.internal:4001 \
+AS_ADMIN_UPSTREAM=host.docker.internal:4002 \
 docker compose -f infrastructure/edge/docker-compose.edge.yml --profile edge up -d
 ```
 

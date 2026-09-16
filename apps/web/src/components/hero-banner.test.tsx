@@ -6,8 +6,8 @@ import { HeroBanner, type HeroSlide } from './hero-banner';
 const slide = (n: number): HeroSlide => ({
   url: `https://cdn.example/hero-${n}.webp`,
   previewUrl: `https://cdn.example/card-${n}.webp`,
-  alt: `Melbourne scene ${n}`,
-  caption: n === 1 ? 'Flinders Street' : null,
+  alt: `Adelaide scene ${n}`,
+  caption: n === 1 ? 'Rundle Mall' : null,
   focalX: 0.5,
   focalY: 0.4,
   width: 1600,
@@ -53,7 +53,7 @@ describe('HeroBanner', () => {
     const dots = screen.getAllByRole('button', { name: /show banner image \d of 3/i });
     expect(dots).toHaveLength(3);
     expect(dots[0]).toHaveAttribute('aria-current', 'true');
-    expect(screen.getByText('Flinders Street')).toBeInTheDocument();
+    expect(screen.getByText('Rundle Mall')).toBeInTheDocument();
     expect(await runAxe(container)).toBe('');
   });
 

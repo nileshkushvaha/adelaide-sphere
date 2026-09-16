@@ -2,15 +2,15 @@
 
 Status date: 2026-09-07. Proposals for the product owner (wording) and the technical lead (policy) to approve before launch. Everything below reflects what the build does today unless marked **proposal**; the SRS references are 12 SEO 001–007 and UX 003. Nothing depends on a third-party account.
 
-Sign-off table at the end. Titles are shown with the automatic suffix the site appends on every page except the home page: `· <short name>` (the short name defaults to the application name, "Melbourne Sphere").
+Sign-off table at the end. Titles are shown with the automatic suffix the site appends on every page except the home page: `· <short name>` (the short name defaults to the application name, "Adelaide Sphere").
 
 ## 1. Homepage
 
 | Element | Current | Proposal | Notes |
 | --- | --- | --- | --- |
-| Title | "Melbourne Sphere — Find local businesses across Melbourne" (application name — tagline, from General settings) | Approve, or supply a tagline under 60 characters | The tagline is the only editable part; the pattern is fixed |
-| Meta description | "An independent directory of businesses across Melbourne, Victoria: cafes, trades, services and more, with opening hours and contact details." (152 characters) | Approve or replace, 120–155 characters | Editable in General settings |
-| H1 | The hero headline ("Discover Melbourne businesses") plus the rotating phrases as one accessible sentence | Approve or replace, under 80 characters | Editable in Site settings |
+| Title | "Adelaide Sphere — Find local businesses across Adelaide" (application name — tagline, from General settings) | Approve, or supply a tagline under 60 characters | The tagline is the only editable part; the pattern is fixed |
+| Meta description | "An independent directory of businesses across Adelaide, South Australia: cafes, trades, services and more, with opening hours and contact details." (152 characters) | Approve or replace, 120–155 characters | Editable in General settings |
+| H1 | The hero headline ("Discover Adelaide businesses") plus the rotating phrases as one accessible sentence | Approve or replace, under 80 characters | Editable in Site settings |
 | Structured data | `Organization` (name, URL, logo when set, social profiles when set) and `WebSite` | **Proposal P5 (technical lead):** add a `SearchAction` to `WebSite` pointing at `/business?q={query}` so search engines can offer a sitelinks search box; small change, no client input | |
 | Index policy | Index | No change | |
 
@@ -20,24 +20,24 @@ Sign-off table at the end. Titles are shown with the automatic suffix the site a
 
 | Page | Route | Title pattern | Description pattern | Index policy |
 | --- | --- | --- | --- | --- |
-| Directory | `/business` | "Directory" | "Every published business across Melbourne. Filter by category, local area and rating." | Index; self-canonical per page (`?page=n`) with crawlable previous/next |
+| Directory | `/business` | "Directory" | "Every published business across Adelaide. Filter by category, local area and rating." | Index; self-canonical per page (`?page=n`) with crawlable previous/next |
 | Directory, filtered | `/business?q=…`, `?category=`, `?area=`, `?rating=`, `?openNow=` | "Search results for “{query}”" or "Search results" | Same as directory | `noindex, follow`; canonical is the normalised query URL itself, never the unfiltered page |
-| Category | `/business/category/{slug}` | "{Category} in Melbourne" | Editor's category description, else "Published {Category} businesses across Melbourne with opening hours and contact details." | Index when the category has an introduction and at least one published listing; `noindex, follow` otherwise |
-| Local area | `/business/area/{slug}` | "Businesses in {Area}" | Editor's area introduction (first 160 characters), else "Published businesses in {Area}, Melbourne, with opening hours and contact details." | Same rule as categories |
+| Category | `/business/category/{slug}` | "{Category} in Adelaide" | Editor's category description, else "Published {Category} businesses across Adelaide with opening hours and contact details." | Index when the category has an introduction and at least one published listing; `noindex, follow` otherwise |
+| Local area | `/business/area/{slug}` | "Businesses in {Area}" | Editor's area introduction (first 160 characters), else "Published businesses in {Area}, Adelaide, with opening hours and contact details." | Same rule as categories |
 | Business | `/business/{slug}` | "{Business} — {Primary category} in {Area}" | First 160 characters of the listing description | Index when published; 404 when draft or archived; 301 after a slug change; 410 when deliberately removed |
-| Blog index | `/blog` | "Blog" | "Guides, interviews and news about Melbourne businesses and neighbourhoods." | Index |
+| Blog index | `/blog` | "Blog" | "Guides, interviews and news about Adelaide businesses and neighbourhoods." | Index |
 | Article | `/blog/{slug}` | Editor's SEO title, else the article title | Editor's SEO description, else the excerpt | Index when published; drafts 404 |
-| Blog category | `/blog/category/{slug}` | "{Category} articles" | "Articles about {category} from the Melbourne Sphere blog." | Index only with landing content or articles |
-| Blog tag | `/blog/tag/{slug}` | "{Tag}" | "Articles tagged {tag} from the Melbourne Sphere blog." | Same rule as blog categories |
+| Blog category | `/blog/category/{slug}` | "{Category} articles" | "Articles about {category} from the Adelaide Sphere blog." | Index only with landing content or articles |
+| Blog tag | `/blog/tag/{slug}` | "{Tag}" | "Articles tagged {tag} from the Adelaide Sphere blog." | Same rule as blog categories |
 | Information pages | `/about`, `/privacy`, `/terms`, `/review-guidelines` | Page SEO title, else page title | Page SEO description, else none | Index when published; absent (404, unlinked) before |
-| Contact | `/contact` | Page SEO title, else "Contact us" | Page SEO description, else "How to reach the Melbourne Sphere editors about a listing, a correction or a review." | `noindex, follow` until the approved page is published, then index |
+| Contact | `/contact` | Page SEO title, else "Contact us" | Page SEO description, else "How to reach the Adelaide Sphere editors about a listing, a correction or a review." | `noindex, follow` until the approved page is published, then index |
 | Not found | any | "Page not found" | none | `noindex`, HTTP 404 |
 
 **Proposals for the product owner to decide (no code change required either way):**
 
-- P1. Title suffix: keep "· Melbourne Sphere" or set a shorter *short name* in General settings for mobile tabs.
+- P1. Title suffix: keep "· Adelaide Sphere" or set a shorter *short name* in General settings for mobile tabs.
 - P2. Business title order: "{Business} — {Category} in {Area}" (current, recommended: the name leads) versus "{Business} · {Area}" (shorter, drops the category).
-- P3. Category title: "{Category} in Melbourne" (current) versus "Melbourne {Category}" (reads better for some plural nouns, worse for others). Recommended: keep the current pattern; editors can override any page through its SEO fields.
+- P3. Category title: "{Category} in Adelaide" (current) versus "Adelaide {Category}" (reads better for some plural nouns, worse for others). Recommended: keep the current pattern; editors can override any page through its SEO fields.
 
 ## 3. Canonical URL policy
 

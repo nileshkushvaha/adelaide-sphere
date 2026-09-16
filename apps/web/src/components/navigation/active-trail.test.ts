@@ -18,9 +18,9 @@ const link = (id: string, href: string | null, children: PublicMenuItem[] = [], 
 
 const menu = [
   link('home', '/'),
-  link('businesses', '/business', [link('cbd', '/business/area/melbourne-cbd'), link('cafes', '/business/category/cafes', [link('coffee', '/business?q=coffee')])]),
+  link('businesses', '/business', [link('cbd', '/business/area/adelaide-cbd'), link('cafes', '/business/category/cafes', [link('coffee', '/business?q=coffee')])]),
   link('blog', '/blog'),
-  link('explore', null, [link('about', '/about'), link('council', 'https://www.melbourne.vic.gov.au', [], true)]),
+  link('explore', null, [link('about', '/about'), link('council', 'https://www.cityofadelaide.com.au', [], true)]),
 ];
 
 describe('activeTrail', () => {

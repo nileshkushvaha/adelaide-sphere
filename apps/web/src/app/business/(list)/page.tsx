@@ -31,8 +31,8 @@ export default async function BusinessListPage({ searchParams }: PageProps<'/bus
   const state = parseSearchParams(await searchParams);
   return (
     <>
-      <div className="ms-on-dark bg-band text-band-text">
-        <div className="ms-container py-10 sm:py-14">
+      <div className="as-on-dark bg-band text-band-text">
+        <div className="as-container py-10 sm:py-14">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-400">Adelaide, South Australia</p>
           <h1 className="font-display mt-3 max-w-3xl text-[clamp(2.25rem,4.5vw,3.5rem)] leading-[1.06] tracking-tight">Adelaide business directory</h1>
           <p className="mt-4 max-w-2xl text-lg leading-relaxed text-band-muted">
@@ -40,7 +40,7 @@ export default async function BusinessListPage({ searchParams }: PageProps<'/bus
           </p>
         </div>
       </div>
-      <div className="ms-container py-10 sm:py-12">
+      <div className="as-container py-10 sm:py-12">
         <BusinessResults basePath="/business" state={state} />
       </div>
     </>

@@ -54,7 +54,7 @@ test.describe('Operations screens', () => {
     await page.getByRole('heading', { level: 1, name: /queue monitor/i }).waitFor();
     const body = (await page.locator('body').innerText()).toLowerCase();
 
-    for (const forbidden of ['bull:', 'ms:worker:heartbeat', 'redis://', 'mysql://', 'authorization:', 'bearer ', 'at object.', '.ts:', 'password']) {
+    for (const forbidden of ['bull:', 'as:worker:heartbeat', 'redis://', 'mysql://', 'authorization:', 'bearer ', 'at object.', '.ts:', 'password']) {
       expect(body, `the queue monitor must not show ${JSON.stringify(forbidden)}`).not.toContain(forbidden);
     }
     // An address would mean a payload had leaked into the display.

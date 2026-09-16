@@ -19,10 +19,10 @@ describe('Testimonials and partners (integration)', () => {
       .post('/api/v1/admin/testimonials')
       .set('Origin', ORIGIN)
       .set('Cookie', cookie)
-      .send({ displayName: 'Jo Nguyen', relationship: 'Owner, Carlton Corner Bakery', quote: 'Being listed brought us regulars from three suburbs away.', ...body });
+      .send({ displayName: 'Jo Nguyen', relationship: 'Owner, Norwood Corner Bakery', quote: 'Being listed brought us regulars from three suburbs away.', ...body });
 
   const createPartner = (body: Record<string, unknown> = {}) =>
-    agent().post('/api/v1/admin/partners').set('Origin', ORIGIN).set('Cookie', cookie).send({ name: 'City of Melbourne', relationshipLabel: 'Community partner', ...body });
+    agent().post('/api/v1/admin/partners').set('Origin', ORIGIN).set('Cookie', cookie).send({ name: 'City of Adelaide', relationshipLabel: 'Community partner', ...body });
 
   beforeAll(async () => {
     await truncateApplicationTables();
@@ -68,7 +68,7 @@ describe('Testimonials and partners (integration)', () => {
     await agent().post(`/api/v1/admin/testimonials/${id}/publish`).set('Origin', ORIGIN).set('Cookie', cookie).send({ expectedVersion: 1 }).expect(201);
     const publicList = await agent().get('/api/v1/testimonials').expect(200);
     expect(publicList.body.data).toHaveLength(1);
-    expect(publicList.body.data[0]).toMatchObject({ displayName: 'Jo Nguyen', relationship: 'Owner, Carlton Corner Bakery' });
+    expect(publicList.body.data[0]).toMatchObject({ displayName: 'Jo Nguyen', relationship: 'Owner, Norwood Corner Bakery' });
     // A quote carries the rating the administrator recorded with it, and null
     // when they recorded none — the home-page slider shows stars only for the
     // ones that have it (client instruction, 13 Sep 2026). It is still not a
@@ -131,7 +131,7 @@ describe('Testimonials and partners (integration)', () => {
     for (const websiteUrl of ['javascript:alert(1)', 'not a url', 'ftp://example.com']) {
       expect((await createPartner({ websiteUrl }).expect(400)).body.error.fields.websiteUrl, websiteUrl).toBeTruthy();
     }
-    await createPartner({ websiteUrl: 'https://www.melbourne.vic.gov.au' }).expect(201);
+    await createPartner({ websiteUrl: 'https://www.cityofadelaide.com.au' }).expect(201);
   });
 
   it('never shows an unpublished organisation publicly', async () => {

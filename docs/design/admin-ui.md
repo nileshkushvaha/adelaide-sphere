@@ -38,12 +38,12 @@ single hairline border and one soft shadow; controls are 36 px tall (32 px when
 ## Themes
 
 Light is the default; dark is a per-browser choice from the sun/moon button in
-the top bar (stored under `ms.admin.theme`; a refused store just means light).
+the top bar (stored under `as.admin.theme`; a refused store just means light).
 
 * **One source.** `src/config/theme.ts` holds a light and a dark palette with the
   same keys. Ant Design gets real colours from the active palette (its dark
   algorithm needs them); everything else uses `brand.*`, which are CSS variables
-  (`var(--ms-text)`) written onto the document by `applyThemeVariables`. Never
+  (`var(--as-text)`) written onto the document by `applyThemeVariables`. Never
   hard-code a hex value in a component — add a palette key instead.
 * **Fixed on purpose:** the navy navigation, `primarySolid` (fills that carry
   white text), the search-result preview (imitates a light results page), and
@@ -148,9 +148,9 @@ Breakpoints follow Ant Design: `xs` <576, `sm` ≥576, `md` ≥768, `lg` ≥992,
 
 * The sidebar is fixed at `lg` and above, a drawer below it.
 * Settings and forms are two columns at `lg`, one below.
-* Tables scroll inside their own card (`className="ms-scroll-table"` plus
+* Tables scroll inside their own card (`className="as-scroll-table"` plus
   `scroll={{ x: … }}`); the page never scrolls sideways.
-* A row of short fields uses `ms-field-row`, not `Space`: a `Space` item sizes to
+* A row of short fields uses `as-field-row`, not `Space`: a `Space` item sizes to
   its content, so a 300 px field in one cannot shrink on a 320 px screen. Give
   each `Form.Item` its preferred width and let the row cap it.
 * Fixed grid columns (`110px 170px 1fr`) need a narrow-screen form in the

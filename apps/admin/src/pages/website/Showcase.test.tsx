@@ -7,7 +7,7 @@ import { jsonResponse } from '@/test/fetch-fakes';
 const testimonial = {
   id: 't-1',
   displayName: 'Jo Nguyen',
-  relationship: 'Owner, Carlton Corner Bakery',
+  relationship: 'Owner, Norwood Corner Bakery',
   quote: 'Being listed brought us regulars from three suburbs away.',
   businessId: null,
   mediaId: null,
@@ -23,7 +23,7 @@ const testimonial = {
 
 const partner = {
   id: 'p-1',
-  name: 'City of Melbourne',
+  name: 'City of Adelaide',
   relationshipLabel: 'Community partner',
   mediaId: null,
   logoAlt: null,
@@ -108,7 +108,7 @@ describe('Testimonials and partners screens', () => {
   });
 
   it('publishes a partner once it has both a logo and alternative text', async () => {
-    globalThis.fetch = (async () => jsonResponse(200, { data: [{ ...partner, mediaId: 'media-1', logoAlt: 'City of Melbourne' }], meta })) as typeof fetch;
+    globalThis.fetch = (async () => jsonResponse(200, { data: [{ ...partner, mediaId: 'media-1', logoAlt: 'City of Adelaide' }], meta })) as typeof fetch;
     renderWithProviders(<PartnersPage />, {
       initialEntries: ['/admin/website/partners'],
       authProvider: providerWithPermissions(['website.clients.view', 'website.clients.publish']),

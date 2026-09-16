@@ -71,8 +71,8 @@ export function HeroHeadline({ headline, phrases }: Props) {
                 <span className="invisible col-start-1 row-start-1 whitespace-nowrap">{phrases.reduce((a, b) => (b.length > a.length ? b : a), '')}</span>
                 <span
                   key={index}
-                  className="col-start-1 row-start-1 bg-gradient-to-r from-sky-400 to-[#9dc7ff] bg-clip-text text-transparent motion-safe:animate-[ms-fade_var(--ms-phrase-transition)_ease-out]"
-                  style={{ ['--ms-phrase-transition' as string]: `${PHRASE_TRANSITION_MS}ms` }}
+                  className="col-start-1 row-start-1 bg-gradient-to-r from-sky-400 to-[#9dc7ff] bg-clip-text text-transparent motion-safe:animate-[as-fade_var(--as-phrase-transition)_ease-out]"
+                  style={{ ['--as-phrase-transition' as string]: `${PHRASE_TRANSITION_MS}ms` }}
                 >
                   {current}
                 </span>

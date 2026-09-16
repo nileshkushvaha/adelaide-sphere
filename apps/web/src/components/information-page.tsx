@@ -36,8 +36,8 @@ export function InformationHero({ title, eyebrow, intro, updatedAt, className = 
   return (
     <>
       <JsonLdScript data={breadcrumbJsonLd(crumbs)} />
-      <div className={`ms-on-dark text-band-text ${className}`}>
-        <div className="ms-container py-10 sm:py-14">
+      <div className={`as-on-dark text-band-text ${className}`}>
+        <div className="as-container py-10 sm:py-14">
           <Breadcrumbs items={crumbs} tone="dark" />
           {eyebrow && <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-sky-400">{eyebrow}</p>}
           <h1 className={`font-display ${eyebrow ? 'mt-3' : 'mt-6'} max-w-3xl text-[clamp(2.25rem,4.5vw,3.5rem)] leading-[1.08] tracking-tight`}><MotionHeading text={title} /></h1>
@@ -68,7 +68,7 @@ export function InformationPage({ title, eyebrow, intro, updatedAt, children, as
     <article>
       <InformationHero title={title} eyebrow={eyebrow} intro={intro} updatedAt={updatedAt} />
       <div
-        className={`ms-container grid gap-12 py-12 sm:py-16 lg:gap-14 ${
+        className={`as-container grid gap-12 py-12 sm:py-16 lg:gap-14 ${
           column === 'rightSidebar' ? 'lg:grid-cols-[minmax(0,1fr)_28rem]' : column === 'leftSidebar' ? 'lg:grid-cols-[28rem_minmax(0,1fr)]' : ''
         }`}
       >
@@ -76,7 +76,7 @@ export function InformationPage({ title, eyebrow, intro, updatedAt, children, as
             so a phone and a screen reader get the page itself before the panel
             beside it; a left sidebar is placed by the grid, not by the order
             things are read in. */}
-        <div className={`ms-prose ${column ? 'ms-prose-fill' : ''} ${column === 'leftSidebar' ? 'lg:col-start-2 lg:row-start-1' : ''} ${bodyClassName}`.trim()}>{children}</div>
+        <div className={`as-prose ${column ? 'as-prose-fill' : ''} ${column === 'leftSidebar' ? 'lg:col-start-2 lg:row-start-1' : ''} ${bodyClassName}`.trim()}>{children}</div>
         {column && <aside className={`lg:pt-1 ${column === 'leftSidebar' ? 'lg:col-start-1 lg:row-start-1' : ''}`.trim()}>{aside}</aside>}
       </div>
       {footer}

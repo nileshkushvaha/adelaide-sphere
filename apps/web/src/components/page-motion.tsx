@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
-const GROUP = '.ms-card-lift, .ms-icon-point, .ms-product-aside, .ms-content-panel';
+const GROUP = '.as-card-lift, .as-icon-point, .as-product-aside, .as-content-panel';
 const TARGETS = `${GROUP}, main h1, main h2, main p, footer nav`;
 const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
 
@@ -31,7 +31,7 @@ export function PageMotion() {
         const element = entry.target;
         observer.unobserve(element);
         if (media.matches || element.contains(document.activeElement)) continue;
-        const characters = element.querySelectorAll('.ms-heading-character');
+        const characters = element.querySelectorAll('.as-heading-character');
         if (characters.length) {
           characters.forEach((character, index) => play(character, [
             { opacity: 0, translate: '40px 0' }, { opacity: 1, translate: '0 0' },

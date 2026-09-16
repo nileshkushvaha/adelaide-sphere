@@ -32,10 +32,10 @@ describe('Author profiles (integration)', () => {
       .send({
         displayName: 'Alex Editor',
         role: 'Food editor',
-        shortBio: 'Writes about Melbourne food.',
+        shortBio: 'Writes about Adelaide food.',
         bio: '<h2>About</h2><p>Ten years covering the city.</p><script>alert(1)</script><p style="color:red">Styled</p>',
         pronouns: 'they/them',
-        location: 'Fitzroy',
+        location: 'Unley',
         publicEmail: '  Alex@Example.COM ',
         websiteUrl: 'https://alex.example/profile',
         expertise: ['  Coffee ', 'coffee', 'Markets'],
@@ -52,7 +52,7 @@ describe('Author profiles (integration)', () => {
       slug: 'alex-editor',
       role: 'Food editor',
       pronouns: 'they/them',
-      location: 'Fitzroy',
+      location: 'Unley',
       publicEmail: 'alex@example.com',
       websiteUrl: 'https://alex.example/profile',
       expertise: ['Coffee', 'Markets'],
@@ -97,7 +97,7 @@ describe('Author profiles (integration)', () => {
     // An author credited on a live article cannot be deactivated (SRS BLOG 002).
     const categoryId = (await post('/api/v1/admin/blog-categories').send({ name: 'Guides' }).expect(201)).body.data.id;
     await post('/api/v1/admin/posts')
-      .send({ title: 'A guide to the city', bodyMarkdown: 'Body text for the guide.', excerpt: 'A short guide to the city of Melbourne.', authorId: id, categoryId })
+      .send({ title: 'A guide to the city', bodyMarkdown: 'Body text for the guide.', excerpt: 'A short guide to the city of Adelaide.', authorId: id, categoryId })
       .expect(201);
     const blocked = await post(`/api/v1/admin/authors/${id}/deactivate`).send({ expectedVersion: updated.body.data.version }).expect(409);
     expect(blocked.body.error.code).toBe('TERM_IN_USE');

@@ -47,11 +47,11 @@ export function ActivityDetail({ entry, shared, onShowRequest }: { entry: Activi
 
   return (
     <div>
-      <dl className="ms-activity-facts">
+      <dl className="as-activity-facts">
         {facts.map(([label, value]) => (
-          <div key={label} className="ms-activity-facts__item">
+          <div key={label} className="as-activity-facts__item">
             <dt>{label}</dt>
-            <dd>{CODE.test(value) ? <code className="ms-activity-code">{value}</code> : value}</dd>
+            <dd>{CODE.test(value) ? <code className="as-activity-code">{value}</code> : value}</dd>
           </div>
         ))}
       </dl>

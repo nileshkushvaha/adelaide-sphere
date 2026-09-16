@@ -73,7 +73,7 @@ export async function StaticPageView({ page }: { page: StaticPageContent }) {
       <ol className="mt-4 flex flex-col gap-1 text-sm">
         {headings.map((heading) => (
           <li key={heading.id}>
-            <a href={`#${heading.id}`} className="inline-flex min-h-9 items-center text-text-muted underline-offset-4 hover:text-link ms-text-link">
+            <a href={`#${heading.id}`} className="inline-flex min-h-9 items-center text-text-muted underline-offset-4 hover:text-link as-text-link">
               {heading.text}
             </a>
           </li>
@@ -94,7 +94,7 @@ export async function StaticPageView({ page }: { page: StaticPageContent }) {
       <div className="rounded-card-lg border border-border bg-surface-raised p-6 shadow-sm">
         <h2 className="text-base font-semibold tracking-tight">Questions about this page?</h2>
         <p className="mt-3 text-sm leading-relaxed text-text-muted">The editors answer questions about our policies, and can correct anything on the site that is wrong.</p>
-        <Link href="/contact" className="mt-3 inline-flex min-h-11 items-center text-link underline-offset-4 ms-text-link">
+        <Link href="/contact" className="mt-3 inline-flex min-h-11 items-center text-link underline-offset-4 as-text-link">
           Contact the editors
         </Link>
       </div>
@@ -104,7 +104,7 @@ export async function StaticPageView({ page }: { page: StaticPageContent }) {
 
   const footer = siblings.length > 0 && (
     <div className="border-t border-border bg-surface-muted">
-      <div className="ms-container py-12 sm:py-14">
+      <div className="as-container py-12 sm:py-14">
         <h2 className="font-display text-2xl tracking-tight">The other policies</h2>
         <p className="mt-2 text-text-muted">These three together describe what we do with your information, what you agree to by using the site, and what we publish.</p>
         <ul className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -112,7 +112,7 @@ export async function StaticPageView({ page }: { page: StaticPageContent }) {
             <li key={other.slug}>
               <Link
                 href={`/${other.slug}`}
-                className="ms-card-lift flex min-h-20 items-center justify-between gap-4 rounded-card-lg border border-border bg-surface p-5 font-semibold shadow-sm"
+                className="as-card-lift flex min-h-20 items-center justify-between gap-4 rounded-card-lg border border-border bg-surface p-5 font-semibold shadow-sm"
               >
                 {other.title}
                 <span aria-hidden="true" className="text-sky-700">
@@ -137,11 +137,11 @@ export async function StaticPageView({ page }: { page: StaticPageContent }) {
       layout={page.layout}
       // The first paragraph of a policy is its summary; the class sets it in a
       // larger face so the page opens with something a reader can stop at.
-      bodyClassName={policy ? 'ms-prose-lead' : ''}
+      bodyClassName={policy ? 'as-prose-lead' : ''}
       aside={aside}
       footer={footer || undefined}
     >
-      <div className="ms-prose-html" dangerouslySetInnerHTML={{ __html: html }} />
+      <div className="as-prose-html" dangerouslySetInnerHTML={{ __html: html }} />
     </InformationPage>
     </>
   );

@@ -29,11 +29,11 @@ export async function SiteFooter() {
 
   return (
     // The target of the menu button when JavaScript is unavailable: the footer holds the same destinations.
-    <footer id="footer-navigation" className="ms-site-footer ms-on-dark bg-band-deep text-band-text">
-      <div className="ms-container py-16 sm:py-20">
+    <footer id="footer-navigation" className="as-site-footer as-on-dark bg-band-deep text-band-text">
+      <div className="as-container py-16 sm:py-20">
         <div className={`grid gap-10 sm:grid-cols-2 lg:gap-10 ${FOOTER_GRID[columns]}`}>
-          <div className="ms-footer-brand ms-footer-section min-w-0 max-w-sm">
-            <p className="ms-footer-heading flex flex-wrap items-center gap-2.5">
+          <div className="as-footer-brand as-footer-section min-w-0 max-w-sm">
+            <p className="as-footer-heading flex flex-wrap items-center gap-2.5">
               <span className={settings.branding.darkLogo ? "block w-[230px] max-w-full sm:w-[280px]" : "relative block aspect-[7.5/1] w-[230px] max-w-full overflow-hidden sm:w-[280px]"}>
               <Image
                 src={settings.branding.darkLogo?.url ?? '/Adelaide_Sphere_Dark_Logo.png'}
@@ -56,7 +56,7 @@ export async function SiteFooter() {
                 site refuses one on a development domain, so this is never a
                 mailto that goes nowhere. */}
             {channel.email && (
-              <a href={`mailto:${channel.email}`} className="ms-footer-email ms-primary-action mt-5 inline-flex min-h-12 max-w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold text-white">
+              <a href={`mailto:${channel.email}`} className="as-footer-email as-primary-action mt-5 inline-flex min-h-12 max-w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold text-white">
                 <MailIcon aria-hidden="true" className="size-5 shrink-0" />
                 <span className="min-w-0 [overflow-wrap:anywhere]">{channel.email}</span>
               </a>
@@ -69,7 +69,7 @@ export async function SiteFooter() {
         <div className="mt-12 flex flex-col gap-3 border-t border-band-border pt-6 text-sm text-band-muted sm:flex-row sm:items-center sm:justify-between">
           {/* Exactly the line the editor wrote, with {year} and {name} filled
               in. It used to have the organisation name and ", Adelaide,
-              Victoria, Australia" appended in code, so an editor who changed
+              South Australia, Australia" appended in code, so an editor who changed
               the line still could not change the end of it. */}
           <p>{copyright}</p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:justify-end">

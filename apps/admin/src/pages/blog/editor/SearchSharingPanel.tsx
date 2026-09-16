@@ -89,7 +89,7 @@ export function SearchSharingPanel({ post, readOnly, resetKey }: Props) {
 
   return (
     <Collapse
-      className="ms-search-sharing"
+      className="as-search-sharing"
       style={{ marginBottom: 16 }}
       items={[
         {
@@ -116,7 +116,7 @@ export function SearchSharingPanel({ post, readOnly, resetKey }: Props) {
                 <Input.TextArea rows={3} maxLength={300} placeholder={excerpt || 'The summary shown under the title in search results'} />
               </Form.Item>
               <LengthMeter length={(seoDescription || excerpt).length} min={70} max={160} what="summary" />
-              <Form.Item label="Focus phrase" name="seoKeywords" extra="The words people would search for, e.g. “Fitzroy walking tour”." style={{ margin: '16px 0 4px' }}>
+              <Form.Item label="Focus phrase" name="seoKeywords" extra="The words people would search for, e.g. “Prospect walking tour”." style={{ margin: '16px 0 4px' }}>
                 <Input maxLength={255} placeholder="e.g. laneway cafés" />
               </Form.Item>
               <SearchAdvice slug={slug} />

@@ -10,7 +10,7 @@ import type { ThemeMode } from '@/config/theme';
  * or refuse access — a private window, a locked-down profile — and then the
  * admin is simply light and forgets the choice at the end of the visit.
  */
-export const THEME_STORAGE_KEY = 'ms.admin.theme';
+export const THEME_STORAGE_KEY = 'as.admin.theme';
 
 export function readStoredThemeMode(): ThemeMode {
   try {

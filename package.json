@@ -1,7 +1,7 @@
 {
   "name": "adelaide-sphere",
   "version": "1.0.0",
-  "description": "Melbourne Sphere \u2014 Melbourne business directory and blog",
+  "description": "Adelaide Sphere \u2014 Adelaide business directory and blog",
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api start:dev",

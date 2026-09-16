@@ -25,10 +25,10 @@ describe('Public blog and comments (integration)', () => {
   const clearLimits = async () => {
     const redis = app.get(RedisService);
     await redis.ensureConnected();
-    const keys = await redis.client.keys('ms:public:*');
-    if (keys.length > 0) await redis.client.del(...keys.map((k) => k.replace(/^ms:/, '')));
+    const keys = await redis.client.keys('as:public:*');
+    if (keys.length > 0) await redis.client.del(...keys.map((k) => k.replace(/^as:/, '')));
   };
-  const body = 'Melbourne laneways hide small operators worth finding. '.repeat(8);
+  const body = 'Adelaide laneways hide small operators worth finding. '.repeat(8);
 
   beforeAll(async () => {
     await truncateApplicationTables();
@@ -38,7 +38,7 @@ describe('Public blog and comments (integration)', () => {
     const res = await agent().post('/api/v1/admin/auth/login').set('Origin', ORIGIN).set('X-Forwarded-For', '203.0.113.200').send({ email: TEST_ADMIN.email, password: TEST_ADMIN.password }).expect(200);
     cookie = ([] as string[]).concat(res.headers['set-cookie'] ?? []).find((c) => c.startsWith(`${SESSION_COOKIE_NAME}=`))!.split(';')[0]!;
 
-    ids.author = (await admin(agent().post('/api/v1/admin/authors')).send({ displayName: 'Alex Editor', bio: 'Writes about Melbourne.' }).expect(201)).body.data.id;
+    ids.author = (await admin(agent().post('/api/v1/admin/authors')).send({ displayName: 'Alex Editor', bio: 'Writes about Adelaide.' }).expect(201)).body.data.id;
     ids.guides = (await admin(agent().post('/api/v1/admin/blog-categories')).send({ name: 'City guides', landingContent: '## City guides\n\nOur guides to the city.' }).expect(201)).body.data.id;
     ids.news = (await admin(agent().post('/api/v1/admin/blog-categories')).send({ name: 'News' }).expect(201)).body.data.id;
     ids.coffee = (await admin(agent().post('/api/v1/admin/blog-tags')).send({ name: 'Coffee', landingContent: 'Everything coffee in Adelaide.' }).expect(201)).body.data.id;
@@ -50,7 +50,7 @@ describe('Public blog and comments (integration)', () => {
       return post.id as string;
     };
     ids.main = await make('Where to find laneway coffee', ids.guides, [ids.coffee], true);
-    ids.second = await make('A weekend in Carlton', ids.guides, [], true);
+    ids.second = await make('A weekend in Norwood', ids.guides, [], true);
     ids.third = await make('Coffee roasters to watch', ids.news, [ids.coffee], true);
     ids.closed = await make('Comments are closed here', ids.news, [], true, false);
     ids.draft = await make('Still being written', ids.news, [], false);
@@ -72,12 +72,12 @@ describe('Public blog and comments (integration)', () => {
   it('lists published articles newest first with filters and a 12-per-page default', async () => {
     const res = await agent().get('/api/v1/posts').expect(200);
     expect(res.headers['cache-control']).toBe('public, max-age=60');
-    expect(res.body.data.map((p: { title: string }) => p.title)).toEqual(['Where to find laneway coffee', 'A weekend in Carlton', 'Coffee roasters to watch', 'Comments are closed here']);
+    expect(res.body.data.map((p: { title: string }) => p.title)).toEqual(['Where to find laneway coffee', 'A weekend in Norwood', 'Coffee roasters to watch', 'Comments are closed here']);
     expect(res.body.meta).toMatchObject({ page: 1, pageSize: 12, total: 4 });
     expect(JSON.stringify(res.body)).not.toContain('Still being written');
     expect((await agent().get('/api/v1/posts?category=city-guides').expect(200)).body.meta.total).toBe(2);
     expect((await agent().get('/api/v1/posts?tag=coffee').expect(200)).body.meta.total).toBe(2);
-    expect((await agent().get('/api/v1/posts?q=carlton').expect(200)).body.meta.total).toBe(1);
+    expect((await agent().get('/api/v1/posts?q=norwood').expect(200)).body.meta.total).toBe(1);
     expect((await agent().get('/api/v1/posts?category=unknown-slug').expect(200)).body.meta.total).toBe(0);
     await agent().get('/api/v1/posts?pageSize=200').expect(400);
     const page2 = await agent().get('/api/v1/posts?pageSize=2&page=2').expect(200);
@@ -97,7 +97,7 @@ describe('Public blog and comments (integration)', () => {
     });
     expect(post.body).toContain('<p>');
     // Same category first, then shared tags; never itself or unpublished content.
-    expect(post.related.map((r: { title: string }) => r.title)).toEqual(['A weekend in Carlton', 'Coffee roasters to watch']);
+    expect(post.related.map((r: { title: string }) => r.title)).toEqual(['A weekend in Norwood', 'Coffee roasters to watch']);
     expect(post.related.length).toBeLessThanOrEqual(4);
     expect(JSON.stringify(post)).not.toContain('Still being written');
     await agent().get('/api/v1/posts/still-being-written').expect(404);

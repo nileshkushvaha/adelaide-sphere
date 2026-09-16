@@ -9,7 +9,7 @@ describe('TotpService', () => {
     expect(secret).toMatch(/^[A-Z2-7]{32}$/);
     const uri = svc.otpauthUri(secret, 'admin@example.com');
     expect(uri.startsWith('otpauth://totp/')).toBe(true);
-    expect(uri).toContain('issuer=Melbourne%20Sphere%20Admin');
+    expect(uri).toContain('issuer=Adelaide%20Sphere%20Admin');
     expect(uri).toContain(`secret=${secret}`);
   });
 

@@ -142,7 +142,7 @@ export function MenusPage() {
         </SectionCard>
       ) : (
         <>
-          <div className="ms-menu-select-bar">
+          <div className="as-menu-select-bar">
             <Space wrap align="center">
               <label htmlFor="menu-select" style={{ fontWeight: 500 }}>
                 Select a menu to edit:

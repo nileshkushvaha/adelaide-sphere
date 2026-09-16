@@ -10,7 +10,7 @@ import { closeTestDatabase, createIntegrationApp, testDatabase, truncateApplicat
 describe('Featured placements (integration)', () => {
   let app: INestApplication;
   let cookie: string;
-  let ids: { cafes: string; shopping: string; cbd: string; carlton: string };
+  let ids: { cafes: string; shopping: string; cbd: string; norwood: string };
   const businesses: Record<string, { id: string; version: number }> = {};
   const agent = () => request(app.getHttpServer());
   const post = (path: string) => agent().post(path).set('Origin', ORIGIN).set('Cookie', cookie);
@@ -57,12 +57,12 @@ describe('Featured placements (integration)', () => {
 
   const listing = (name: string, categoryId: string, areaId: string) => ({
     name,
-    description: `${name} is a Melbourne business used by the featured placement integration test suite.`,
+    description: `${name} is an Adelaide business used by the featured placement integration test suite.`,
     primaryCategoryId: categoryId,
     localAreaId: areaId,
     publicPhone: '+61 3 9000 1234',
     address: { line1: '1 Test St', suburb: 'Adelaide', postcode: '5000', latitude: -34.9285, longitude: 138.6007 },
-    eligibilitySource: 'City of Melbourne suburb list',
+    eligibilitySource: 'City of Adelaide suburb list',
     contentRightsReviewed: true,
   });
 
@@ -78,8 +78,8 @@ describe('Featured placements (integration)', () => {
     ids = {
       cafes: await mk('/api/v1/admin/categories', { name: 'Cafes' }),
       shopping: await mk('/api/v1/admin/categories', { name: 'Shopping' }),
-      cbd: await mk('/api/v1/admin/areas', { name: 'Melbourne CBD', eligibilitySource: 'council list' }),
-      carlton: await mk('/api/v1/admin/areas', { name: 'Carlton', eligibilitySource: 'council list' }),
+      cbd: await mk('/api/v1/admin/areas', { name: 'Adelaide CBD', eligibilitySource: 'council list' }),
+      norwood: await mk('/api/v1/admin/areas', { name: 'Norwood', eligibilitySource: 'council list' }),
     };
 
     for (const [name, categoryId, areaId] of [
@@ -88,7 +88,7 @@ describe('Featured placements (integration)', () => {
       ['Featured Cafe Three', ids.cafes, ids.cbd],
       ['Featured Cafe Four', ids.cafes, ids.cbd],
       ['Ordinary Cafe', ids.cafes, ids.cbd],
-      ['Carlton Shop', ids.shopping, ids.carlton],
+      ['Norwood Shop', ids.shopping, ids.norwood],
       ['Draft Cafe', ids.cafes, ids.cbd],
     ] as const) {
       const created = await post('/api/v1/admin/businesses').send(listing(name, categoryId, areaId)).expect(201);
@@ -135,7 +135,7 @@ describe('Featured placements (integration)', () => {
     // A filter that no featured listing matches leaves the block empty rather than padding it.
     const shopping = await agent().get('/api/v1/businesses?category=shopping').expect(200);
     expect(shopping.body.meta.featured).toEqual([]);
-    expect(shopping.body.data.map((card: { name: string }) => card.name)).toEqual(['Carlton Shop']);
+    expect(shopping.body.data.map((card: { name: string }) => card.name)).toEqual(['Norwood Shop']);
 
     // Featuring never bypasses the keyword match either.
     const keyword = await agent().get('/api/v1/businesses?q=Ordinary').expect(200);
@@ -159,7 +159,7 @@ describe('Featured placements (integration)', () => {
 
   it('validates the interval, refuses overlaps and unknown listings, and audits the change', async () => {
     const bad = await post('/api/v1/admin/featured')
-      .send({ businessId: businesses['Carlton Shop']!.id, startsAt: new Date().toISOString(), endsAt: new Date(Date.now() - 1000).toISOString() })
+      .send({ businessId: businesses['Norwood Shop']!.id, startsAt: new Date().toISOString(), endsAt: new Date(Date.now() - 1000).toISOString() })
       .expect(400);
     expect(bad.body.error.fields.endsAt).toBeTruthy();
 
@@ -214,10 +214,10 @@ describe('Featured placements (integration)', () => {
   });
 
   it('refuses an open-ended window that swallows a later one, in both directions', async () => {
-    await clearPlacements('Carlton Shop');
+    await clearPlacements('Norwood Shop');
     const later = await post('/api/v1/admin/featured')
       .send({
-        businessId: businesses['Carlton Shop']!.id,
+        businessId: businesses['Norwood Shop']!.id,
         startsAt: new Date('2027-06-01T00:00:00.000Z').toISOString(),
         endsAt: new Date('2027-06-30T00:00:00.000Z').toISOString(),
       })
@@ -225,14 +225,14 @@ describe('Featured placements (integration)', () => {
 
     // An open-ended window starting before it covers it.
     const openEnded = await post('/api/v1/admin/featured')
-      .send({ businessId: businesses['Carlton Shop']!.id, startsAt: new Date('2027-05-01T00:00:00.000Z').toISOString() })
+      .send({ businessId: businesses['Norwood Shop']!.id, startsAt: new Date('2027-05-01T00:00:00.000Z').toISOString() })
       .expect(409);
     expect(openEnded.body.error.code).toBe('PLACEMENT_OVERLAP');
 
     // The same collision reached by editing rather than creating.
     const free = await post('/api/v1/admin/featured')
       .send({
-        businessId: businesses['Carlton Shop']!.id,
+        businessId: businesses['Norwood Shop']!.id,
         startsAt: new Date('2027-08-01T00:00:00.000Z').toISOString(),
         endsAt: new Date('2027-08-10T00:00:00.000Z').toISOString(),
       })

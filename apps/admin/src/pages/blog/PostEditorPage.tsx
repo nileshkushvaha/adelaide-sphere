@@ -431,10 +431,10 @@ export function PostEditorPage() {
       {formError && <Alert type="error" showIcon role="alert" message={formError} style={{ marginBottom: 16 }} />}
 
       <Form<PostFormValues> form={form} layout="vertical" onFinish={() => void save()} onValuesChange={() => setDirty(true)} disabled={readOnly} initialValues={{ tagIds: [], commentsEnabled: true }}>
-        <div className="ms-post-editor">
-          <div className="ms-post-editor__main">
+        <div className="as-post-editor">
+          <div className="as-post-editor__main">
             <SectionCard>
-              <Form.Item label="Title" name="title" className="ms-post-title" rules={[{ required: true, message: 'Give the article a title' }, { min: 3, message: 'A title needs at least 3 characters' }]}>
+              <Form.Item label="Title" name="title" className="as-post-title" rules={[{ required: true, message: 'Give the article a title' }, { min: 3, message: 'A title needs at least 3 characters' }]}>
                 <Input maxLength={180} variant="borderless" placeholder="Add a title" />
               </Form.Item>
               {/* The address sits under the title, read-only until it is edited.
@@ -492,7 +492,7 @@ export function PostEditorPage() {
             <SearchSharingPanel post={post} readOnly={readOnly} resetKey={resetKey} />
           </div>
 
-          <div className="ms-post-editor__top">
+          <div className="as-post-editor__top">
             <PublishBox post={post} checklist={checklist} canWrite={canWrite} canPublish={canPublish} readOnly={readOnly} saving={saving} dirty={dirty} onSave={() => form.submit()} onAction={openAction} onFocusField={focusField} onPreview={openPreview} onHistory={() => setHistoryOpen(true)} onFeature={canFeature ? (featured) => void toggleFeatured(featured) : undefined} featuring={featuring} />
             <DetailsBox
               authors={authors.status === 'ready' ? authors.data : []}
@@ -508,7 +508,7 @@ export function PostEditorPage() {
             />
           </div>
 
-          <div className="ms-post-editor__rest">
+          <div className="as-post-editor__rest">
             <FeaturedImageBox post={post} readOnly={readOnly} resetKey={resetKey} />
           </div>
         </div>

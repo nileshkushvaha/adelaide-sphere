@@ -80,7 +80,7 @@ describe('Media pipeline (integration)', () => {
   };
 
   /** Runs the whole upload lifecycle and returns the asset id. */
-  const upload = async (body: Buffer, contentType = 'image/png', altText: string | null = 'A Melbourne laneway') => {
+  const upload = async (body: Buffer, contentType = 'image/png', altText: string | null = 'A Adelaide laneway') => {
     const ticket = (await admin(agent().post('/api/v1/admin/media/uploads')).send({ fileName: 'laneway.png', contentType, bytes: body.byteLength }).expect(201)).body.data;
     const db = testDatabase();
     const asset = await db.mediaAsset.findUniqueOrThrow({ where: { id: ticket.assetId } });
@@ -107,7 +107,7 @@ describe('Media pipeline (integration)', () => {
     readerCookie = await login('media.reader@example.com', 'reader-password-12345', '203.0.113.211');
 
     const category = (await admin(agent().post('/api/v1/admin/categories')).send({ name: 'Cafes' }).expect(201)).body.data.id;
-    const area = (await admin(agent().post('/api/v1/admin/areas')).send({ name: 'Fitzroy', eligibilitySource: 'council list' }).expect(201)).body.data.id;
+    const area = (await admin(agent().post('/api/v1/admin/areas')).send({ name: 'Unley', eligibilitySource: 'council list' }).expect(201)).body.data.id;
     const business = (await admin(agent().post('/api/v1/admin/businesses')).send({ name: 'Gallery Cafe', description: 'A cafe used by the media tests, long enough to publish.', primaryCategoryId: category, localAreaId: area, publicPhone: '03 9000 7777', eligibilitySource: 'council list', contentRightsReviewed: true }).expect(201)).body.data;
     businessId = business.id;
   });
@@ -142,7 +142,7 @@ describe('Media pipeline (integration)', () => {
     const { assetId: id, completed } = await upload(png);
     expect(completed.status).toBe(200);
     assetId = id;
-    expect(completed.body.data).toMatchObject({ status: 'quarantined', width: 1200, height: 800, variants: [], altText: 'A Melbourne laneway' });
+    expect(completed.body.data).toMatchObject({ status: 'quarantined', width: 1200, height: 800, variants: [], altText: 'A Adelaide laneway' });
     const db = testDatabase();
     expect(await db.outboxEvent.count({ where: { resourceId: assetId, type: 'media.uploaded' } })).toBe(1);
     const stored = await db.mediaAsset.findUniqueOrThrow({ where: { id: assetId } });
@@ -198,7 +198,7 @@ describe('Media pipeline (integration)', () => {
       .send({ expectedVersion: business.version, items: [{ mediaId: assetId, caption: 'Front window', isCover: true }, { mediaId: second.assetId, altOverride: 'The courtyard' }] })
       .expect(200);
     expect(saved.body.data.map((entry: { mediaId: string; alt: string; isCover: boolean; sortOrder: number }) => [entry.mediaId === assetId, entry.alt, entry.isCover, entry.sortOrder])).toEqual([
-      [true, 'A Melbourne laneway', true, 0],
+      [true, 'A Adelaide laneway', true, 0],
       [false, 'The courtyard', false, 1],
     ]);
     expect(saved.body.data[0].variants.map((v: { kind: string; url: string }) => [v.kind, v.url])).toEqual([['thumbnail', 'https://cdn.test/media/a/1.webp'], ['card', 'https://cdn.test/media/a/2.webp']]);
@@ -234,14 +234,14 @@ describe('Media pipeline (integration)', () => {
     // Written directly: these relations are SET NULL and the settings reference
     // has no foreign key at all, so the database alone would allow each delete.
     const testimonial = await db.testimonial.create({ data: { displayName: 'Priya', quote: 'Found a plumber in an hour.', mediaId: portrait } });
-    const partner = await db.partnerOrganisation.create({ data: { name: 'Fitzroy Traders', mediaId: logo } });
+    const partner = await db.partnerOrganisation.create({ data: { name: 'Unley Traders', mediaId: logo } });
     await db.setting.upsert({
       where: { group_key: { group: 'website', key: 'general' } },
       create: { group: 'website', key: 'general', data: { logoMediaId: siteLogo } },
       update: { data: { logoMediaId: siteLogo } },
     });
 
-    for (const [id, label] of [[portrait, 'Priya'], [logo, 'Fitzroy Traders'], [siteLogo, 'Site logo, icon or sharing image']] as const) {
+    for (const [id, label] of [[portrait, 'Priya'], [logo, 'Unley Traders'], [siteLogo, 'Site logo, icon or sharing image']] as const) {
       const refused = await admin(agent().delete(`/api/v1/admin/media/${id}`)).expect(409);
       expect(refused.body.error.code).toBe('MEDIA_IN_USE');
       // The refusal names the place, so the administrator knows where to go.
@@ -252,7 +252,7 @@ describe('Media pipeline (integration)', () => {
     const detail = await admin(agent().get(`/api/v1/admin/media/${portrait}`)).expect(200);
     expect(detail.body.data.usages).toEqual([{ kind: 'testimonial', id: testimonial.id, label: 'Priya' }]);
     const partnerDetail = await admin(agent().get(`/api/v1/admin/media/${logo}`)).expect(200);
-    expect(partnerDetail.body.data.usages).toEqual([{ kind: 'partner', id: partner.id, label: 'Fitzroy Traders' }]);
+    expect(partnerDetail.body.data.usages).toEqual([{ kind: 'partner', id: partner.id, label: 'Unley Traders' }]);
 
     // "Unused" agrees with deletion: none of the three is offered as unused.
     const unused = (await admin(agent().get('/api/v1/admin/media?unused=true&pageSize=50')).expect(200)).body.data as { id: string }[];
@@ -267,7 +267,7 @@ describe('Media pipeline (integration)', () => {
   it('counts an image inside an article, page or answer as a use, and lets it go once the text no longer shows it', async () => {
     const db = testDatabase();
     const { assetId: bodyImage } = await upload(pngBytes(640, 400));
-    await db.mediaAsset.update({ where: { id: bodyImage }, data: { status: 'ready', readyAt: new Date(Date.now() - 400 * 86_400_000), altText: 'A tram on Swanston Street' } });
+    await db.mediaAsset.update({ where: { id: bodyImage }, data: { status: 'ready', readyAt: new Date(Date.now() - 400 * 86_400_000), altText: 'A tram on King William Street' } });
     const author = await db.author.create({ data: { displayName: 'Body Image Author', slug: 'body-image-author' } });
     const category = await db.blogCategory.create({ data: { name: 'Body images', slug: 'body-images' } });
     // Inserted before the editor recorded ids: recognised from the rendition address.

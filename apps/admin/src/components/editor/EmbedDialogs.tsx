@@ -36,7 +36,7 @@ export function EmbedDialog({ onCancel, onInsert }: { onCancel: () => void; onIn
           <label htmlFor="embed-title" style={{ display: 'block', fontWeight: 500, marginBottom: 4 }}>
             Title <span aria-hidden="true">*</span>
           </label>
-          <Input id="embed-title" value={title} maxLength={EMBED_TITLE_MAX} status={tried && !title.trim() ? 'error' : undefined} aria-required="true" placeholder="e.g. A walk through Degraves Street" onChange={(event) => setTitle(event.target.value)} />
+          <Input id="embed-title" value={title} maxLength={EMBED_TITLE_MAX} status={tried && !title.trim() ? 'error' : undefined} aria-required="true" placeholder="e.g. A walk through Peel Street" onChange={(event) => setTitle(event.target.value)} />
           <Typography.Text type={tried && !title.trim() ? 'danger' : 'secondary'} style={{ fontSize: 12.5 }}>
             Names the video or map for people using screen readers.
           </Typography.Text>

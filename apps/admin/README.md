@@ -2,17 +2,17 @@
 
 Independent admin frontend: React 19, TypeScript 6, Vite 8, Refine 5, Ant Design 5, React Router 7. Served under **`/admin/`** and talking to the NestJS API through same-origin **`/api/v1`** paths (SRS ARC 004, ARC 005).
 
-> **Access control** is enforced by the API: every request under `/api/v1/admin` needs the `ms_admin_session` cookie (HttpOnly) and a permission (SRS AUTH 002, RBAC 001–012). The app mirrors that with Refine's `<Authenticated>` around the shell and an auth provider that asks `GET /admin/auth/me`; nothing about the session is stored in web storage. `/admin` is `noindex`. Public exposure still awaits the remaining hardening phases (TLS, web-tier security headers, monitoring).
+> **Access control** is enforced by the API: every request under `/api/v1/admin` needs the `as_admin_session` cookie (HttpOnly) and a permission (SRS AUTH 002, RBAC 001–012). The app mirrors that with Refine's `<Authenticated>` around the shell and an auth provider that asks `GET /admin/auth/me`; nothing about the session is stored in web storage. `/admin` is `noindex`. Public exposure still awaits the remaining hardening phases (TLS, web-tier security headers, monitoring).
 
 ## Runtime contract
 
 | Item | Value |
 | --- | --- |
-| Dev server | `http://127.0.0.1:3002/admin/` (strict port) |
+| Dev server | `http://127.0.0.1:4002/admin/` (strict port) |
 | Vite `base` | `/admin/` |
 | Router basename | `/admin` (derived from `import.meta.env.BASE_URL`) |
 | API root in the browser | `/api/v1` (relative, same origin) |
-| Dev/preview proxy | `/api/v1` → `ADMIN_API_PROXY_TARGET` (default `http://127.0.0.1:3001`), configured server-side in `vite.config.ts` only |
+| Dev/preview proxy | `/api/v1` → `ADMIN_API_PROXY_TARGET` (default `http://127.0.0.1:4001`), configured server-side in `vite.config.ts` only |
 | Production | the reverse proxy serves `/` (web), `/admin/` (these static assets) and `/api/v1` (API); no proxy code ships in the bundle |
 
 Direct navigation and refresh at any `/admin/...` URL work (Vite dev SPA fallback; production hosts must fall back to `/admin/index.html`).
@@ -21,9 +21,9 @@ Direct navigation and refresh at any `/admin/...` URL work (Vite dev SPA fallbac
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm dev:admin` | dev server on 3002 (needs `pnpm dev:api` for API status) |
+| `pnpm dev:admin` | dev server on 4002 (needs `pnpm dev:api` for API status) |
 | `pnpm build:admin` | production build to `apps/admin/dist` |
-| `pnpm --filter admin preview` | serve the production build on 3002 with the same proxy |
+| `pnpm --filter admin preview` | serve the production build on 4002 with the same proxy |
 | `pnpm lint:admin` / `pnpm typecheck:admin` / `pnpm test:admin` | ESLint 10, `tsc` (app + node configs), Vitest + Testing Library (jsdom) |
 
 The aggregate `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build` and `pnpm check` include the admin app.
@@ -104,7 +104,7 @@ Two rules carry most of the weight:
   on screen. Numbers carry their units; limits are stated in plain language.
 * **Some Ant defaults need a wrapper to be accessible.** A required select uses
   `FormSelect`; a table's expand control uses `expandToggle(describe)`; a row of
-  short fields uses the `ms-field-row` class rather than `Space`. Each exists
+  short fields uses the `as-field-row` class rather than `Space`. Each exists
   because the Ant default failed axe or scrolled the page sideways at 320 px.
 
 ### Checking every screen

@@ -53,12 +53,12 @@ export function splitArticleBody(html: string): BodySegment[] {
 export function ArticleBody({ post, body = post.body }: { post: PostDetail; body?: string }) {
   const businesses = new Map((post.businesses ?? []).map((business) => [business.id, business]));
   return (
-    <div className="ms-prose ms-prose-article">
+    <div className="as-prose as-prose-article">
       {splitArticleBody(body).map((segment, index) => {
         switch (segment.kind) {
           case 'html':
             // Sanitised by the API with an allowlist before it was stored (SRS SEC 001).
-            return <div key={index} className="ms-prose-html" dangerouslySetInnerHTML={{ __html: segment.html }} />;
+            return <div key={index} className="as-prose-html" dangerouslySetInnerHTML={{ __html: segment.html }} />;
           case 'youtube':
             return <EmbedPlaceholder key={index} provider="youtube" videoId={segment.id} title={segment.title} />;
           case 'map':
@@ -67,11 +67,11 @@ export function ArticleBody({ post, body = post.body }: { post: PostDetail; body
             const business = businesses.get(segment.businessId);
             if (!business) return null;
             return (
-              <aside key={index} aria-label={`Business: ${business.name}`} data-track="business_card_click" className="ms-business-embed not-prose rounded-card border border-border bg-surface-raised p-5 shadow-sm">
+              <aside key={index} aria-label={`Business: ${business.name}`} data-track="business_card_click" className="as-business-embed not-prose rounded-card border border-border bg-surface-raised p-5 shadow-sm">
                 <p className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-sky-700">Business in this article</p>
                 <p className="font-display mt-2 text-xl tracking-tight">{business.name}</p>
                 {(business.categoryName || business.areaName) && <p className="mt-1 text-sm text-text-muted">{[business.categoryName, business.areaName].filter(Boolean).join(' · ')}</p>}
-                <Link href={`/business/${business.slug}`} className="ms-text-link mt-3 inline-flex min-h-11 items-center text-sm">
+                <Link href={`/business/${business.slug}`} className="as-text-link mt-3 inline-flex min-h-11 items-center text-sm">
                   View the listing
                 </Link>
               </aside>

@@ -17,7 +17,7 @@ const count = new Intl.NumberFormat('en-AU');
  * hue and no legend box; the value is printed at the end of each row, so the
  * chart reads without hovering and needs no separate table.
  */
-export function BarList({ items, label, emptyText, color = 'var(--ms-series-1)' }: { items: BarItem[]; label: string; emptyText: string; color?: string }) {
+export function BarList({ items, label, emptyText, color = 'var(--as-series-1)' }: { items: BarItem[]; label: string; emptyText: string; color?: string }) {
   if (items.length === 0 || items.every((item) => item.value === 0)) {
     return (
       <Typography.Text type="secondary" style={{ fontSize: 13 }}>
@@ -35,9 +35,9 @@ export function BarList({ items, label, emptyText, color = 'var(--ms-series-1)' 
               <span style={{ color: brand.text, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
               <span style={{ color: brand.text, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{count.format(item.value)}</span>
             </span>
-            <span aria-hidden="true" style={{ display: 'block', marginTop: 6, height: 10, borderRadius: 4, background: 'var(--ms-chart-track)' }}>
+            <span aria-hidden="true" style={{ display: 'block', marginTop: 6, height: 10, borderRadius: 4, background: 'var(--as-chart-track)' }}>
               <span
-                className="ms-bar"
+                className="as-bar"
                 style={{ display: 'block', height: '100%', width: `${(item.value / max) * 100}%`, minWidth: item.value > 0 ? 4 : 0, borderRadius: '0 4px 4px 0', background: color }}
               />
             </span>
@@ -46,7 +46,7 @@ export function BarList({ items, label, emptyText, color = 'var(--ms-series-1)' 
         return (
           <li key={item.key}>
             {item.href ? (
-              <Link to={item.href} className="ms-bar-row" style={{ display: 'block', color: 'inherit' }}>
+              <Link to={item.href} className="as-bar-row" style={{ display: 'block', color: 'inherit' }}>
                 {row}
               </Link>
             ) : (

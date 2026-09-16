@@ -1,6 +1,6 @@
 import { SetMetadata } from '@nestjs/common';
 
-export const SENSITIVE_MUTATION_KEY = 'ms:sensitive-mutation';
+export const SENSITIVE_MUTATION_KEY = 'as:sensitive-mutation';
 
 /**
  * Marks a route as a privileged mutation: administrator status, roles, direct

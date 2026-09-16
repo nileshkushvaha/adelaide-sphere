@@ -461,7 +461,7 @@ async function seedRoutes() {
 async function retireApiCache() {
   const url = process.env.REDIS_URL;
   if (!url) return console.log('  REDIS_URL is not set; cached reads expire on their own within five minutes');
-  const redis = new Redis(url, { keyPrefix: 'ms:', lazyConnect: true, maxRetriesPerRequest: 1 });
+  const redis = new Redis(url, { keyPrefix: 'as:', lazyConnect: true, maxRetriesPerRequest: 1 });
   try {
     await redis.connect();
     await redis.incr('cache:public:ns');

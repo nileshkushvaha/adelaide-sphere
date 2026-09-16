@@ -7,7 +7,7 @@ function card(overrides: Partial<PostCard> = {}): PostCard {
     id: 'p1',
     title: 'Coffee & cake <on> "Smith" St',
     slug: 'coffee-and-cake',
-    excerpt: 'A walk through Fitzroy’s best cafés.',
+    excerpt: 'A walk through Prospect’s best cafés.',
     category: { name: 'Food & drink', slug: 'food' },
     author: { displayName: 'Sam O’Neil', slug: 'sam' },
     tags: [],

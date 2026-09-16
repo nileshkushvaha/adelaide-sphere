@@ -15,11 +15,11 @@ export async function SiteMapBand() {
   const src = isSiteMapSrc(configured) ? configured : DEFAULT_ADELAIDE_MAP_SRC;
   const title = settings.siteMap?.title || SITE_MAP_TITLE;
   return (
-    <section aria-labelledby="site-map-heading" className="ms-dot-grid bg-surface-sunken text-text">
-      <div className="ms-container py-10 sm:py-12">
+    <section aria-labelledby="site-map-heading" className="as-dot-grid bg-surface-sunken text-text">
+      <div className="as-container py-10 sm:py-12">
         <SectionHeading id="site-map-heading" eyebrow="Around the city" title="Explore Adelaide" description="Find your way around the city and its neighbourhoods." />
       </div>
-      <div className="ms-site-map">
+      <div className="as-site-map">
         <iframe src={src} title={title} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
       </div>
     </section>

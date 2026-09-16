@@ -33,8 +33,8 @@ describe('email layout', () => {
     for (const gradient of html.match(/style="[^"]*linear-gradient[^"]*"/g) ?? []) expect(gradient, gradient).toMatch(/background-color:#/);
     expect(html).toContain('role="presentation"');
     // Dark mode recolours text links, never the button's white label.
-    expect(html).toContain('a.ms-button { color: #FFFFFF !important; }');
-    expect(html).toContain('class="ms-button"');
+    expect(html).toContain('a.as-button { color: #FFFFFF !important; }');
+    expect(html).toContain('class="as-button"');
   });
 
   it('escapes every value, so nobody can put markup into a message', () => {
@@ -52,7 +52,7 @@ describe('email layout', () => {
 
 describe('enquiry email', () => {
   const base = {
-    businessName: 'Carlton <Corner> Bakery',
+    businessName: 'Norwood <Corner> Bakery',
     visitorName: 'Jo <img src=x onerror=alert(1)>',
     visitorEmail: 'jo@example.com',
     visitorPhone: null,
@@ -68,7 +68,7 @@ describe('enquiry email', () => {
     expect(html).not.toContain('<a href="https://evil.example">');
     expect(html).toContain('&lt;a href=&quot;https://evil.example&quot;&gt;click&lt;/a&gt;');
     expect(html).toContain('Line one<br>');
-    expect(html).toContain('Carlton &lt;Corner&gt; Bakery');
+    expect(html).toContain('Norwood &lt;Corner&gt; Bakery');
   });
 
   it('still sets the message apart in the plain-text part', () => {

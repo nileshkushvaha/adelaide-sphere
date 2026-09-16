@@ -5,7 +5,7 @@ const body = renderSanitisedBody('Some article body. '.repeat(20));
 
 describe('post publication rules (SRS BLOG 002)', () => {
   it('accepts a complete post', () => {
-    expect(postPublicationBlockers({ title: 'Melbourne laneway cafes', slug: 'melbourne-laneway-cafes', excerpt: 'A guide to the best laneway cafes.', sanitizedBody: body, authorActive: true, categoryActive: true })).toEqual([]);
+    expect(postPublicationBlockers({ title: 'Adelaide laneway cafes', slug: 'adelaide-laneway-cafes', excerpt: 'A guide to the best laneway cafes.', sanitizedBody: body, authorActive: true, categoryActive: true })).toEqual([]);
   });
 
   it('lists every unmet requirement', () => {

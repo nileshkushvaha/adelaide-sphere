@@ -76,7 +76,7 @@ export function offsetMinutesAt(instant: Date): number {
 }
 
 /**
- * Instant for a Adelaide wall-clock time. `minuteOfDay` may exceed 1440 to
+ * Instant for an Adelaide wall-clock time. `minuteOfDay` may exceed 1440 to
  * express "the next day" (overnight closing). DST policy, applied explicitly:
  * a time inside the spring-forward gap (e.g. 02:30 on 2026-10-04) is moved
  * forward by the gap; a time repeated at the autumn overlap (02:30 on

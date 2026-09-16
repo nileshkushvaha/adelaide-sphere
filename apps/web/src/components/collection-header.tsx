@@ -34,8 +34,8 @@ export function CollectionHeader({ eyebrow, title, crumbs, description, bodyHtml
   // "City guides / City guides / Our guides."
   const body = withoutRepeatedHeading(bodyHtml, title);
   return (
-    <div className="ms-on-dark ms-editorial-band text-band-text">
-      <div className={`ms-container py-10 sm:py-14 ${image ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-center lg:gap-12' : ''}`}>
+    <div className="as-on-dark as-editorial-band text-band-text">
+      <div className={`as-container py-10 sm:py-14 ${image ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-center lg:gap-12' : ''}`}>
         <div>
           <Breadcrumbs items={crumbs} tone="dark" />
           <p className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
@@ -51,7 +51,7 @@ export function CollectionHeader({ eyebrow, title, crumbs, description, bodyHtml
           </p>
           <h1 className="font-display mt-3.5 max-w-3xl text-balance text-[clamp(2.25rem,4.5vw,3.5rem)] leading-[1.04] tracking-tight">{title}</h1>
           {description && <p className="mt-4 max-w-2xl text-lg leading-relaxed text-band-muted">{description}</p>}
-          {body && <div className="ms-prose mt-4 max-w-2xl text-band-muted [&_a]:text-band-link [&_h2]:text-white [&_h3]:text-white [&_strong]:text-white" dangerouslySetInnerHTML={{ __html: body }} />}
+          {body && <div className="as-prose mt-4 max-w-2xl text-band-muted [&_a]:text-band-link [&_h2]:text-white [&_h3]:text-white [&_strong]:text-white" dangerouslySetInnerHTML={{ __html: body }} />}
           {footer && <div className="mt-8">{footer}</div>}
         </div>
         {image && (

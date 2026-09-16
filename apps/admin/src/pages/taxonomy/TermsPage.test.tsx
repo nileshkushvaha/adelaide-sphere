@@ -7,8 +7,8 @@ import { renderWithProviders, user } from '@/test/render';
 import { jsonResponse } from '@/test/fetch-fakes';
 
 const areas = [
-  { id: 'l1', name: 'Carlton', slug: 'carlton', editorialIntro: null, eligibilitySource: 'council list', eligibilityVerifiedAt: '2026-09-06T00:00:00.000Z', sortOrder: 2, active: true, version: 1, createdAt: '2026-09-06T00:00:00.000Z', updatedAt: '2026-09-06T00:00:00.000Z' },
-  { id: 'l2', name: 'Docklands', slug: 'docklands', editorialIntro: null, eligibilitySource: null, eligibilityVerifiedAt: null, sortOrder: 3, active: false, version: 2, createdAt: '2026-09-06T00:00:00.000Z', updatedAt: '2026-09-06T00:00:00.000Z' },
+  { id: 'l1', name: 'Norwood', slug: 'norwood', editorialIntro: null, eligibilitySource: 'council list', eligibilityVerifiedAt: '2026-09-06T00:00:00.000Z', sortOrder: 2, active: true, version: 1, createdAt: '2026-09-06T00:00:00.000Z', updatedAt: '2026-09-06T00:00:00.000Z' },
+  { id: 'l2', name: 'Kent Town', slug: 'kent-town', editorialIntro: null, eligibilitySource: null, eligibilityVerifiedAt: null, sortOrder: 3, active: false, version: 2, createdAt: '2026-09-06T00:00:00.000Z', updatedAt: '2026-09-06T00:00:00.000Z' },
 ];
 
 describe('taxonomy terms page (local areas)', () => {
@@ -24,7 +24,7 @@ describe('taxonomy terms page (local areas)', () => {
       if (url.startsWith('/api/v1/admin/areas') && method === 'GET') return jsonResponse(200, { data: areas, meta: { page: 1, pageSize: 20, total: 2, pageCount: 1 } });
       if (url === '/api/v1/admin/areas' && method === 'POST') {
         const body = JSON.parse(String(init?.body));
-        if (body.name === 'Carlton') return jsonResponse(409, { error: { code: 'SLUG_IN_USE', message: 'That slug is already used', fields: { slug: ['That slug is already used'] }, requestId: 'r' } });
+        if (body.name === 'Norwood') return jsonResponse(409, { error: { code: 'SLUG_IN_USE', message: 'That slug is already used', fields: { slug: ['That slug is already used'] }, requestId: 'r' } });
         return jsonResponse(201, { data: { ...areas[0], id: 'l3', name: body.name, slug: 'kensington' } });
       }
       if (url === '/api/v1/admin/areas/l1' && method === 'PATCH') return jsonResponse(409, { error: { code: 'STALE_VERSION', message: 'changed', fields: {}, requestId: 'r' } });
@@ -39,7 +39,7 @@ describe('taxonomy terms page (local areas)', () => {
   it('lists areas with status, verification and URL-driven filters', async () => {
     renderWithProviders(<AppRoutes />, { initialEntries: ['/admin/areas?status=active&sort=sortOrder&order=desc'] });
     expect(await screen.findByRole('heading', { level: 1, name: 'Local areas' })).toBeInTheDocument();
-    const row = (await screen.findByText('Docklands')).closest('tr')!;
+    const row = (await screen.findByText('Kent Town')).closest('tr')!;
     expect(within(row).getByText('inactive')).toBeInTheDocument();
     expect(within(row).getByText('Not verified')).toBeInTheDocument();
     expect(calls[0]?.url).toBe('/api/v1/admin/areas?page=1&pageSize=20&status=active&sort=sortOrder&order=desc');
@@ -55,7 +55,7 @@ describe('taxonomy terms page (local areas)', () => {
       return jsonResponse(200, { data: areas, meta: { page, pageSize: 20, total: 48, pageCount: 3 } });
     }) as typeof fetch;
     renderWithProviders(<AppRoutes />, { initialEntries: ['/admin/areas?sort=name&order=asc'] });
-    await screen.findByText('Docklands');
+    await screen.findByText('Kent Town');
 
     await ue.click(screen.getByTitle('2'));
     await vi.waitFor(() => expect(calls.some((call) => call.url.includes('page=2'))).toBe(true));
@@ -68,7 +68,7 @@ describe('taxonomy terms page (local areas)', () => {
     const ue = user();
     renderWithProviders(<AppRoutes />, { initialEntries: ['/admin/areas/new'] });
     expect(await screen.findByRole('heading', { level: 1, name: /add local area/i })).toBeInTheDocument();
-    await ue.type(screen.getByLabelText(/^name/i), 'Carlton');
+    await ue.type(screen.getByLabelText(/^name/i), 'Norwood');
     await ue.click(screen.getByRole('button', { name: /^create$/i }));
     expect(await screen.findByText(/already used/i)).toBeInTheDocument();
     await ue.clear(screen.getByLabelText(/^name/i));
@@ -80,8 +80,8 @@ describe('taxonomy terms page (local areas)', () => {
 
     // Creating returns to the list, where activation is still a confirmation.
     renderWithProviders(<TermsPage config={AREAS_CONFIG} />, { initialEntries: ['/admin/areas'] });
-    await ue.click(await screen.findByRole('switch', { name: /deactivate carlton/i }));
-    const titles = await screen.findAllByText(/deactivate “carlton”/i);
+    await ue.click(await screen.findByRole('switch', { name: /deactivate norwood/i }));
+    const titles = await screen.findAllByText(/deactivate “norwood”/i);
     const confirm = titles.map((t) => t.closest('.ant-modal-confirm')).find((el): el is HTMLElement => el instanceof HTMLElement)!;
     await ue.click(within(confirm).getByRole('button', { name: /^deactivate$/i }));
     const deactivate = calls.find((c) => c.url === '/api/v1/admin/areas/l1/deactivate');
@@ -92,14 +92,14 @@ describe('taxonomy terms page (local areas)', () => {
   it('surfaces stale-version conflicts when editing', async () => {
     const ue = user();
     renderWithProviders(<AppRoutes />, { initialEntries: ['/admin/areas/l1'] });
-    expect(await screen.findByRole('heading', { level: 1, name: 'Carlton' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Norwood' })).toBeInTheDocument();
     await ue.click(screen.getByRole('button', { name: /^save$/i }));
     expect(await screen.findByRole('alert')).toHaveTextContent(/changed by someone else/i);
   });
 
   it('links each term to its own editable address', async () => {
     renderWithProviders(<TermsPage config={AREAS_CONFIG} />, { initialEntries: ['/admin/areas'] });
-    expect(await screen.findByRole('link', { name: 'Carlton' })).toHaveAttribute('href', '/admin/areas/l1');
+    expect(await screen.findByRole('link', { name: 'Norwood' })).toHaveAttribute('href', '/admin/areas/l1');
     expect(screen.getByRole('link', { name: /add local area/i })).toHaveAttribute('href', '/admin/areas/new');
   });
 });

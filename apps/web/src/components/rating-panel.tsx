@@ -21,7 +21,7 @@ export function RatingPanel({ rating, breakdown, writeHref = '#write-review' }: 
       <div className="rounded-card-lg border border-border bg-surface-raised p-6 shadow-sm">
         <p className="font-semibold">No reviews yet</p>
         <p className="mt-2 text-sm leading-relaxed text-text-muted">Ratings appear once our moderators have approved the first review. Nothing is published automatically.</p>
-        <a href={writeHref} className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-link underline-offset-4 ms-text-link">
+        <a href={writeHref} className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-link underline-offset-4 as-text-link">
           Be the first to review
         </a>
       </div>

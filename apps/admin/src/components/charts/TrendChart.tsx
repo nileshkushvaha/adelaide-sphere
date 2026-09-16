@@ -8,7 +8,7 @@ export interface TrendSeries {
   label: string;
   /** One value per day, aligned with `days`. */
   points: number[];
-  /** A `--ms-series-*` variable, fixed per entity so a hidden series never repaints the others. */
+  /** A `--as-series-*` variable, fixed per entity so a hidden series never repaints the others. */
   color: string;
 }
 
@@ -118,7 +118,7 @@ export function TrendChart({ days, series, label }: { days: string[]; series: Tr
           role="group"
           aria-label={label}
           aria-describedby={instructionsId}
-          className="ms-chart-frame"
+          className="as-chart-frame"
           onPointerMove={onPointerMove}
           onPointerLeave={() => setActive(null)}
           onFocus={() => setActive((current) => current ?? n - 1)}
@@ -132,7 +132,7 @@ export function TrendChart({ days, series, label }: { days: string[]; series: Tr
           <svg width={width} height={HEIGHT} viewBox={`0 0 ${width} ${HEIGHT}`} aria-hidden="true" style={{ display: 'block', maxWidth: '100%' }}>
             {yTicks.map((tick) => (
               <g key={tick}>
-                <line x1={PAD.left} x2={PAD.left + plotW} y1={y(tick)} y2={y(tick)} stroke={tick === 0 ? 'var(--ms-chart-axis)' : 'var(--ms-chart-grid)'} strokeWidth={1} />
+                <line x1={PAD.left} x2={PAD.left + plotW} y1={y(tick)} y2={y(tick)} stroke={tick === 0 ? 'var(--as-chart-axis)' : 'var(--as-chart-grid)'} strokeWidth={1} />
                 <text x={PAD.left - 8} y={y(tick)} dy="0.32em" textAnchor="end" fontSize={11} fill={brand.textSubtle} style={{ fontVariantNumeric: 'tabular-nums' }}>
                   {count.format(tick)}
                 </text>
@@ -143,7 +143,7 @@ export function TrendChart({ days, series, label }: { days: string[]; series: Tr
                 {shortDay.format(asDate(days[index] ?? ''))}
               </text>
             ))}
-            {active !== null && <line x1={x(active)} x2={x(active)} y1={PAD.top} y2={PAD.top + plotH} stroke="var(--ms-chart-axis)" strokeWidth={1} />}
+            {active !== null && <line x1={x(active)} x2={x(active)} y1={PAD.top} y2={PAD.top + plotH} stroke="var(--as-chart-axis)" strokeWidth={1} />}
             {series.map((item) => (
               <path
                 key={item.key}
@@ -157,7 +157,7 @@ export function TrendChart({ days, series, label }: { days: string[]; series: Tr
             ))}
             {n > 0 &&
               series.map((item) => (
-                <circle key={item.key} cx={x(markerIndex)} cy={y(item.points[markerIndex] ?? 0)} r={4} fill={item.color} stroke="var(--ms-surface-raised)" strokeWidth={2} />
+                <circle key={item.key} cx={x(markerIndex)} cy={y(item.points[markerIndex] ?? 0)} r={4} fill={item.color} stroke="var(--as-surface-raised)" strokeWidth={2} />
               ))}
             {labelsFit &&
               active === null &&

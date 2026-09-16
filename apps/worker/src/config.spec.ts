@@ -2,8 +2,8 @@ import { MAIL_TRANSPORTS, PRODUCTION_MAIL_TRANSPORTS } from '@adelaide-sphere/ma
 import { loadWorkerConfig } from './config.js';
 
 const BASE = {
-  DATABASE_URL: 'mysql://app:secret@127.0.0.1:3307/adelaide_sphere_dev',
-  REDIS_URL: 'redis://:pw@127.0.0.1:6380/0',
+  DATABASE_URL: 'mysql://app:secret@127.0.0.1:3317/adelaide_sphere_dev',
+  REDIS_URL: 'redis://:pw@127.0.0.1:6390/0',
   FIELD_ENCRYPTION_KEY: 'a'.repeat(44),
   MAIL_TRANSPORT: 'console',
   MEDIA_S3_ACCESS_KEY_ID: 'key',
@@ -127,17 +127,17 @@ describe('mail transport agreement with the API', () => {
 
 describe('metrics endpoint exposure', () => {
   it('keeps the metrics server on loopback unless it is deliberately widened', () => {
-    expect(loadWorkerConfig({ ...BASE, WORKER_METRICS_PORT: '9464' } as NodeJS.ProcessEnv).metricsBind).toBe('127.0.0.1');
+    expect(loadWorkerConfig({ ...BASE, WORKER_METRICS_PORT: '9474' } as NodeJS.ProcessEnv).metricsBind).toBe('127.0.0.1');
   });
 
   it('refuses a wider bind without a token, because that would publish the endpoint', () => {
-    expect(() => loadWorkerConfig({ ...BASE, WORKER_METRICS_PORT: '9464', WORKER_METRICS_BIND: '0.0.0.0' } as NodeJS.ProcessEnv)).toThrow(/binding beyond loopback requires METRICS_TOKEN/);
+    expect(() => loadWorkerConfig({ ...BASE, WORKER_METRICS_PORT: '9474', WORKER_METRICS_BIND: '0.0.0.0' } as NodeJS.ProcessEnv)).toThrow(/binding beyond loopback requires METRICS_TOKEN/);
   });
 
   it('accepts a wider bind with a token, for a scraper on an internal network', () => {
-    const config = loadWorkerConfig({ ...BASE, WORKER_METRICS_PORT: '9464', WORKER_METRICS_BIND: '0.0.0.0', METRICS_TOKEN: 'x'.repeat(40) } as NodeJS.ProcessEnv);
+    const config = loadWorkerConfig({ ...BASE, WORKER_METRICS_PORT: '9474', WORKER_METRICS_BIND: '0.0.0.0', METRICS_TOKEN: 'x'.repeat(40) } as NodeJS.ProcessEnv);
     expect(config.metricsBind).toBe('0.0.0.0');
-    expect(config.metricsPort).toBe(9464);
+    expect(config.metricsPort).toBe(9474);
   });
 
   it('refuses a token that is too short to be worth having', () => {

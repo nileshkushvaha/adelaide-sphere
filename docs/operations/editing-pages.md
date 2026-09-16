@@ -62,7 +62,7 @@ The box on the right says where the page stands and what is left to do.
   saving updates the live page within a minute.
 - **Publish** makes the page live. It waits until your changes are saved and the
   checklist is clear.
-- **Schedule** publishes at a date and time you choose, in Melbourne time, even
+- **Schedule** publishes at a date and time you choose, in Adelaide time, even
   if nobody is signed in. If the page no longer passes the checklist at that
   time, it goes back to draft and says why.
 - **Unpublish** takes the page down. You are asked why; the reason is kept in

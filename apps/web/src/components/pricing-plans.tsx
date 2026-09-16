@@ -21,7 +21,7 @@ export function PricingPlans({ pricing, headingLevel = 3, compact = false }: { p
         const Icon = PLAN_ICON[plan.key];
         const period = plan.period === 'year' ? 'per year' : 'one time';
         return (
-          <li key={plan.key} className={`ms-pricing-card ${emphasised ? 'ms-pricing-card--featured' : ''}`}>
+          <li key={plan.key} className={`as-pricing-card ${emphasised ? 'as-pricing-card--featured' : ''}`}>
             <div className={`flex h-full flex-col rounded-card-lg bg-surface-raised ${compact ? 'p-5 sm:p-6' : 'p-6 sm:p-8'}`}>
               <div className="flex items-start justify-between gap-4">
                 <span aria-hidden="true" className={`grid size-12 place-items-center rounded-2xl ${emphasised ? 'bg-sky-700 text-white' : 'bg-sky-50 text-sky-700'}`}>
@@ -54,7 +54,7 @@ export function PricingPlans({ pricing, headingLevel = 3, compact = false }: { p
               <div className="mt-auto pt-8">
                 <Link
                   href={`/contact?plan=${planSlug(plan.key)}#contact-form`}
-                  className={`inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-base font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-sky-700 ${emphasised ? 'ms-primary-action text-white' : 'border border-border-strong text-text hover:bg-sky-50'}`}
+                  className={`inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-6 text-base font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-sky-700 ${emphasised ? 'as-primary-action text-white' : 'border border-border-strong text-text hover:bg-sky-50'}`}
                 >
                   Choose {plan.name}
                   <ArrowRightIcon aria-hidden="true" className="size-5" />

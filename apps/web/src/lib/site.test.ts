@@ -20,8 +20,8 @@ describe('contactChannelFrom', () => {
   });
 
   it('names the application in the subject line, so a renamed site does not send stale mail', () => {
-    const channel = contactChannelFrom(settings({ name: 'Melbourne Guide', contact: { ...DEFAULT_SITE_SETTINGS.contact, email: 'hello@example.com.au' } }));
-    expect(channel.listingMailto).toContain(encodeURIComponent('Add or update a business on Melbourne Guide'));
+    const channel = contactChannelFrom(settings({ name: 'Adelaide Guide', contact: { ...DEFAULT_SITE_SETTINGS.contact, email: 'hello@example.com.au' } }));
+    expect(channel.listingMailto).toContain(encodeURIComponent('Add or update a business on Adelaide Guide'));
   });
 });
 

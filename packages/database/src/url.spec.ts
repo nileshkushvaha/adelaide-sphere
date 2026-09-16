@@ -3,12 +3,12 @@ import { sslOptionFor } from './client.js';
 
 describe('parseMysqlUrl', () => {
   it('parses a standard URL', () => {
-    expect(parseMysqlUrl('mysql://app:secret@127.0.0.1:3307/melbourne_sphere_dev')).toEqual({
+    expect(parseMysqlUrl('mysql://app:secret@127.0.0.1:3317/adelaide_sphere_dev')).toEqual({
       host: '127.0.0.1',
-      port: 3307,
+      port: 3317,
       user: 'app',
       password: 'secret',
-      database: 'melbourne_sphere_dev',
+      database: 'adelaide_sphere_dev',
       // TLS is off unless the URL asks for it, so a connection cannot be
       // silently unencrypted *or* silently encrypted-but-unverified.
       sslMode: 'disabled',

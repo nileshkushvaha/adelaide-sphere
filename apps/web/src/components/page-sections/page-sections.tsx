@@ -60,8 +60,8 @@ function Header({ section, page }: { section: HeaderSection; page: StaticPageCon
   return (
     <>
       <JsonLdScript data={breadcrumbJsonLd(crumbs)} />
-      <header className="ms-on-dark bg-band text-band-text">
-        <div className={`ms-container grid items-center gap-10 py-10 sm:py-14 ${image ? 'lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]' : ''}`}>
+      <header className="as-on-dark bg-band text-band-text">
+        <div className={`as-container grid items-center gap-10 py-10 sm:py-14 ${image ? 'lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]' : ''}`}>
           <div>
             <Breadcrumbs items={crumbs} tone="dark" />
             {section.eyebrow && <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-sky-400">{section.eyebrow}</p>}
@@ -95,7 +95,7 @@ function ImageText({ section, page }: { section: ImageTextSection; page: StaticP
   const image = section.imageId ? page.images[section.imageId] : undefined;
   const headingId = `section-${section.id}-heading`;
   return (
-    <section aria-labelledby={section.heading ? headingId : undefined} className="ms-container py-12 sm:py-16">
+    <section aria-labelledby={section.heading ? headingId : undefined} className="as-container py-12 sm:py-16">
       <div className={`grid items-center gap-10 ${image ? 'lg:grid-cols-2' : ''}`}>
         {image && (
           <figure className={section.imageSide === 'right' ? 'lg:order-2' : ''}>
@@ -107,8 +107,8 @@ function ImageText({ section, page }: { section: ImageTextSection; page: StaticP
         )}
         <div>
           {section.heading && <SectionHeading id={headingId}>{section.heading}</SectionHeading>}
-          <div className="ms-prose mt-4">
-            <div className="ms-prose-html" dangerouslySetInnerHTML={{ __html: section.html }} />
+          <div className="as-prose mt-4">
+            <div className="as-prose-html" dangerouslySetInnerHTML={{ __html: section.html }} />
           </div>
           <SectionButton button={section.button} page={page} variant="outline" className="mt-6" />
         </div>
@@ -121,8 +121,8 @@ function Callout({ section, page }: { section: CalloutSection; page: StaticPageC
   const brand = section.tone === 'brand';
   const headingId = `section-${section.id}-heading`;
   return (
-    <section aria-labelledby={headingId} className="ms-container py-8 sm:py-10">
-      <div className={`rounded-card-lg p-8 sm:p-12 ${brand ? 'ms-on-dark bg-band text-band-text' : 'border border-border bg-surface-muted'}`}>
+    <section aria-labelledby={headingId} className="as-container py-8 sm:py-10">
+      <div className={`rounded-card-lg p-8 sm:p-12 ${brand ? 'as-on-dark bg-band text-band-text' : 'border border-border bg-surface-muted'}`}>
         <SectionHeading id={headingId}>{section.heading}</SectionHeading>
         {section.text && <p className={`mt-3 max-w-2xl text-lg leading-relaxed ${brand ? 'text-band-muted' : 'text-text-muted'}`}>{section.text}</p>}
         <div className="mt-7 flex flex-wrap gap-3">
@@ -137,7 +137,7 @@ function Callout({ section, page }: { section: CalloutSection; page: StaticPageC
 function Cards({ section }: { section: CardsSection }) {
   const headingId = `section-${section.id}-heading`;
   return (
-    <section aria-labelledby={section.heading ? headingId : undefined} className="ms-container py-12 sm:py-16">
+    <section aria-labelledby={section.heading ? headingId : undefined} className="as-container py-12 sm:py-16">
       {section.heading && <SectionHeading id={headingId}>{section.heading}</SectionHeading>}
       <ul className={`grid gap-5 sm:grid-cols-2 ${section.cards.length % 3 === 0 ? 'lg:grid-cols-3' : ''} ${section.heading ? 'mt-8' : ''}`}>
         {section.cards.map((card, index) => {
@@ -156,7 +156,7 @@ function Cards({ section }: { section: CardsSection }) {
           return (
             <li key={index}>
               {card.href ? (
-                <a href={card.href} className="ms-card-lift block h-full rounded-card-lg border border-border bg-surface-raised p-6 shadow-sm">
+                <a href={card.href} className="as-card-lift block h-full rounded-card-lg border border-border bg-surface-raised p-6 shadow-sm">
                   {body}
                 </a>
               ) : (
@@ -178,7 +178,7 @@ function CardTitle({ level, children }: { level: 2 | 3; children: ReactNode }) {
 function Faq({ section }: { section: FaqSection }) {
   const headingId = `section-${section.id}-heading`;
   return (
-    <section aria-labelledby={headingId} className="ms-container py-12 sm:py-16">
+    <section aria-labelledby={headingId} className="as-container py-12 sm:py-16">
       <SectionHeading id={headingId}>{section.heading ?? 'Frequently asked questions'}</SectionHeading>
       {/* Native disclosure: keyboard operable and readable without JavaScript (NFR 011). */}
       <ul className="mt-8 flex max-w-3xl flex-col gap-3">
@@ -192,7 +192,7 @@ function Faq({ section }: { section: FaqSection }) {
                 </span>
               </summary>
               {/* Sanitised server-side with the article allowlist (SEC 001). */}
-              <div className="ms-prose border-t border-border px-5 pt-4 pb-5 text-text-muted" dangerouslySetInnerHTML={{ __html: item.answerHtml }} />
+              <div className="as-prose border-t border-border px-5 pt-4 pb-5 text-text-muted" dangerouslySetInnerHTML={{ __html: item.answerHtml }} />
             </details>
           </li>
         ))}
@@ -209,7 +209,7 @@ function Contact({ section, contact, turnstileSiteKey, title }: { section: Conta
     contact.address && { label: 'Address', value: contact.address, href: null },
   ].filter((item): item is { label: string; value: string; href: string | null } => Boolean(item));
   return (
-    <section aria-labelledby={headingId} className="ms-container py-12 sm:py-16">
+    <section aria-labelledby={headingId} className="as-container py-12 sm:py-16">
       <div className={`grid gap-10 ${section.showForm ? 'lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]' : ''}`}>
         <div>
           <SectionHeading id={headingId}>{section.heading ?? 'Get in touch'}</SectionHeading>
@@ -220,7 +220,7 @@ function Contact({ section, contact, turnstileSiteKey, title }: { section: Conta
                   <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">{item.label}</dt>
                   <dd className="mt-1 text-base">
                     {item.href ? (
-                      <a href={item.href} className="ms-text-link">
+                      <a href={item.href} className="as-text-link">
                         {item.value}
                       </a>
                     ) : (
@@ -232,7 +232,7 @@ function Contact({ section, contact, turnstileSiteKey, title }: { section: Conta
             </dl>
           ) : (
             <p className="mt-4 text-text-muted">
-              <Link href="/contact" className="ms-text-link">
+              <Link href="/contact" className="as-text-link">
                 Contact the editors
               </Link>
             </p>
@@ -259,9 +259,9 @@ function renderSection(section: PageSection, context: Context): ReactNode {
     case 'text': {
       const { html } = withHeadingAnchors(section.html);
       return (
-        <div className="ms-container py-10 sm:py-12">
-          <div className="ms-prose max-w-[68ch]">
-            <div className="ms-prose-html" dangerouslySetInnerHTML={{ __html: html }} />
+        <div className="as-container py-10 sm:py-12">
+          <div className="as-prose max-w-[68ch]">
+            <div className="as-prose-html" dangerouslySetInnerHTML={{ __html: html }} />
           </div>
         </div>
       );
@@ -279,12 +279,12 @@ function renderSection(section: PageSection, context: Context): ReactNode {
       if (businesses.length === 0) return null;
       const headingId = `section-${section.id}-heading`;
       return (
-        <section aria-labelledby={section.heading ? headingId : undefined} className="ms-container py-12 sm:py-16">
+        <section aria-labelledby={section.heading ? headingId : undefined} className="as-container py-12 sm:py-16">
           {section.heading && <SectionHeading id={headingId}>{section.heading}</SectionHeading>}
           <ul className={`grid gap-5 sm:grid-cols-2 lg:grid-cols-3 ${section.heading ? 'mt-8' : ''}`}>
             {businesses.map((business) => (
               <li key={business.id}>
-                <Link href={`/business/${encodeURIComponent(business.slug)}`} className="ms-card-lift block h-full rounded-card-lg border border-border bg-surface-raised p-6 shadow-sm" data-track="business_card_click">
+                <Link href={`/business/${encodeURIComponent(business.slug)}`} className="as-card-lift block h-full rounded-card-lg border border-border bg-surface-raised p-6 shadow-sm" data-track="business_card_click">
                   <span className="font-display block text-xl tracking-tight">{business.name}</span>
                   {(business.categoryName || business.areaName) && <span className="mt-1 block text-sm text-text-muted">{[business.categoryName, business.areaName].filter(Boolean).join(' · ')}</span>}
                 </Link>
@@ -318,7 +318,7 @@ export function PageSections({ page, contact, turnstileSiteKey, fallbackHero }: 
         </div>
       ))}
       {hasHeader && (
-        <p className="ms-container pb-12 text-sm text-text-muted">
+        <p className="as-container pb-12 text-sm text-text-muted">
           Last updated <time dateTime={page.updatedAt}>{adelaideDate(page.updatedAt)}</time>
         </p>
       )}

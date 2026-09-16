@@ -2,7 +2,7 @@ import { buildEnquiryMail, safeReplyTo, sanitiseHeaderValue } from './enquiry-ma
 
 describe('enquiry mail composition (SRS ENQ 005)', () => {
   const base = {
-    businessName: 'Carlton Corner Bakery',
+    businessName: 'Norwood Corner Bakery',
     visitorName: 'Jo Visitor',
     visitorEmail: 'jo@example.com',
     visitorPhone: '03 9000 1234',
@@ -30,7 +30,7 @@ describe('enquiry mail composition (SRS ENQ 005)', () => {
     const mail = buildEnquiryMail(base);
     expect(mail.subject).toBe('Enquiry: Catering for 20 people');
     expect(mail.replyTo).toBe('jo@example.com');
-    expect(mail.text).toContain('Carlton Corner Bakery');
+    expect(mail.text).toContain('Norwood Corner Bakery');
     expect(mail.text).toContain('--- message ---');
     expect(mail.text).toContain('Do you cater for office breakfasts?');
     expect(mail.text).toContain('Reference: abc123');

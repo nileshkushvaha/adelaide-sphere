@@ -36,7 +36,7 @@ const id = () => randomUUID().replace(/-/g, '').slice(0, 24);
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 
 const CATEGORY_NAMES = ['Cafes', 'Restaurants', 'Bars', 'Bakeries', 'Retail', 'Trades', 'Health', 'Services'];
-const AREA_NAMES = ['Melbourne CBD', 'Carlton', 'Fitzroy', 'Docklands', 'Southbank', 'North Melbourne', 'East Melbourne', 'Parkville'];
+const AREA_NAMES = ['Adelaide CBD', 'Norwood', 'Unley', 'Kent Town', 'Prospect', 'North Adelaide', 'Hyde Park', 'Goodwood'];
 
 console.log(`Seeding ${databaseName}: ${businessCount} businesses, ${postCount} articles, ${reviewCount} reviews.`);
 const started = Date.now();

@@ -101,7 +101,7 @@ export function TestimonialEditorPage() {
         <Input maxLength={120} style={{ maxWidth: 420 }} placeholder="e.g. Sarah Nguyen" />
       </Form.Item>
       <Form.Item label="Role or relationship" name="relationship" extra="How the person is described under their name.">
-        <Input maxLength={160} style={{ maxWidth: 420 }} placeholder="e.g. Owner, Carlton Corner Bakery" />
+        <Input maxLength={160} style={{ maxWidth: 420 }} placeholder="e.g. Owner, Norwood Corner Bakery" />
       </Form.Item>
       <Form.Item
         label="Quote"

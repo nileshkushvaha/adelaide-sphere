@@ -134,7 +134,7 @@ describe('renderCopyright', () => {
 });
 
 describe('site map setting (SRS 1.11 BUS 003)', () => {
-  const pb = '!1m18!1m12!1m3!1d3151.8!2d144.96!3d-37.81!5e0!3m2!1sen!2sau';
+  const pb = '!1m18!1m12!1m3!1d3151.8!2d138.6007!3d-34.9285!5e0!3m2!1sen!2sau';
   const base = { applicationName: 'Adelaide Sphere', headerTopBarEnabled: false };
 
   it('stores the clean embed address from pasted HTML or the address itself', () => {

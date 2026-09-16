@@ -36,7 +36,7 @@ the API enforces its own rule on every request whatever the screen shows.
 | `/businesses` | List | `listings.read` | done |
 | `/businesses/new`, `/businesses/:id` | Editor | `listings.read` (saving needs `listings.write`) | done — ten sections, publication blockers beside publish, private enquiry address kept apart, public-address change with its redirect, unsaved-changes guard |
 | `/businesses/featured` | List | `listings.read` | done |
-| `/businesses/featured/new` | Editor | `listings.publish` | done — copy, Melbourne offset for the date entered, the overlap rule, and a preview of the card the placement puts on screen, read from the public route for the chosen listing |
+| `/businesses/featured/new` | Editor | `listings.publish` | done — copy, Adelaide offset for the date entered, the overlap rule, and a preview of the card the placement puts on screen, read from the public route for the chosen listing |
 | `/categories`, `/services`, `/areas` and their editors | List/Editor | `taxonomy.manage` | done |
 | `/media` | List | `media.manage` | done — drag-and-drop with a keyboard path, upload progress, a definite "processing has stopped" state |
 | `/media/:id` | Detail | `media.manage` | done — renditions, focal-point picker, every place the image is used |
@@ -51,12 +51,12 @@ the API enforces its own rule on every request whatever the screen shows.
 | `/account` | Settings | session | done |
 | `/roles`, `/roles/new`, `/roles/:id` | List/Editor | `roles.view` (editing needs `roles.create` / `roles.update`) | done |
 | `/permissions` | List | `permissions.view` | done — search across label, code and description, module and state filters |
-| `/audit` | Operations | `audit.read` | done — date range in Melbourne days, who did it, readable wording, forensic detail in an expandable row |
+| `/audit` | Operations | `audit.read` | done — date range in Adelaide days, who did it, readable wording, forensic detail in an expandable row |
 | `/security/settings` | Settings | `security.settings.view` | done — reference screen |
 | `/system/email-logs`, `/system/queues`, `/system/schedules`, `/system/cache` | Operations | `system.email_logs.view`, `system.queues.view`, `system.schedules.view`, `system.cache.view` | done |
 | `/website/pages`, `/website/pages/new`, `/website/pages/:slug`, `/pages` (redirect) | List/Editor | `settings.manage` | done |
 | `/website/faqs`, `/website/testimonials`, `/website/partners` and their editors | List/Editor | `website.*.view` / `.create` / `.update` | done |
-| `/website/service-alerts` and its editor | List/Editor | `website.alerts.view` / `.create` / `.update` | done — preview drawn from the shared alert table at phone and desktop width, scheduling in Melbourne time |
+| `/website/service-alerts` and its editor | List/Editor | `website.alerts.view` / `.create` / `.update` | done — preview drawn from the shared alert table at phone and desktop width, scheduling in Adelaide time |
 | `/login`, `/forgot-password`, `/reset-password`, `/accept-setup` | Auth | public | done |
 | `*` | Status | — | done |
 

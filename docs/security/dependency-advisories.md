@@ -54,9 +54,9 @@ database connection. What the code does:
 ### Production database URL
 
 ```
-DATABASE_URL=mysql://app_user:<password>@db.internal:3306/melbourne_sphere?sslmode=verify-identity
+DATABASE_URL=mysql://app_user:<password>@db.internal:3306/adelaide_sphere?sslmode=verify-identity
 # or, with a private certificate authority:
-DATABASE_URL=mysql://app_user:<password>@db.internal:3306/melbourne_sphere?sslmode=verify-ca&sslca=%2Fetc%2Fssl%2Fcerts%2Fmysql-ca.pem
+DATABASE_URL=mysql://app_user:<password>@db.internal:3306/adelaide_sphere?sslmode=verify-ca&sslca=%2Fetc%2Fssl%2Fcerts%2Fmysql-ca.pem
 ```
 
 `sslca` is a percent-encoded absolute path readable by the API process. Use

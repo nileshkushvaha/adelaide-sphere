@@ -1,6 +1,6 @@
 # Administrator authorization
 
-How access control works in Melbourne Sphere: the model, where it is enforced, how to protect new code, and what to do when it goes wrong.
+How access control works in Adelaide Sphere: the model, where it is enforced, how to protect new code, and what to do when it goes wrong.
 
 Specification: SRS 1.1 **RBAC 001–012** (section 10), with ADM 001/003, AUTH 002, SEC 003, PRIV 001. Technology decision: [ADR 0001](decisions/0001-authorization-casl.md).
 

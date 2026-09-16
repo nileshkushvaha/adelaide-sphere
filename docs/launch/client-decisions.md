@@ -8,7 +8,7 @@ Status date: 2026-09-07. Source of the baselines: SRS §23 (decisions D01–D08)
 
 | ID | Decision | Needed by | Status | Owner |
 | --- | --- | --- | --- | --- |
-| D01 | Melbourne geographic boundary and locality allow-list | Before publishing listings outside the City of Melbourne | **Pending** — council-area baseline applied; recommendation in `melbourne-boundary.md` | Client |
+| D01 | Adelaide geographic boundary and locality allow-list | Before publishing listings outside the current Inner Adelaide baseline | **Pending** — Inner Adelaide baseline applied (16 localities seeded); details in `adelaide-boundary.md` | Client |
 | D02 | Logo, wordmark, browser icon, share image, hero photography, rotating phrases | Before visual acceptance | **Pending** — documented development fallbacks in place | Client / design lead |
 | D03a | Cloudflare Turnstile account and keys | Before staging (public forms are closed without it) | **Provided** — confirmed by the client 15 Sep 2026; keys held in the server env files only | Technical lead / client |
 | D03b | Transactional email provider and verified sender | Before staging (enquiry delivery cannot be proven without it) | **Provided** — confirmed by the client 15 Sep 2026; prove enquiry and password-reset delivery on staging | Technical lead / client |
@@ -27,20 +27,20 @@ Status date: 2026-09-07. Source of the baselines: SRS §23 (decisions D01–D08)
 
 ## Decision records
 
-### D01 — Which parts of Melbourne does the directory cover?
+### D01 — Which parts of Adelaide does the directory cover?
 
-- **Question.** When the site says "Melbourne", do you mean the City of Melbourne council area (the CBD and its immediate surrounds), the whole metropolitan area, or a specific list of suburbs you approve?
-- **Why it matters.** Every listing must be checked against an approved boundary before it can be published (SRS SCP 004). If the boundary is too narrow, most of the businesses people expect to find (Fitzroy, St Kilda, Richmond, Footscray…) cannot be listed. If it is too wide or undefined, the directory loses its "Melbourne, done properly" positioning and editors cannot say no consistently.
-- **Recommended default.** A curated allow-list of gazetted suburbs (localities), bounded by the Australian Bureau of Statistics' "Greater Melbourne" statistical area, activated in tiers starting from the inner city. Details, the proposed list and the rules are in `melbourne-boundary.md`.
-- **Alternatives.** (a) Keep only the City of Melbourne council area (current state). (b) Allow all of Greater Melbourne in one step.
+- **Question.** When the site says "Adelaide", do you mean the City of Adelaide council area (the CBD and North Adelaide), Inner Adelaide (the city plus the surrounding inner councils), the whole metropolitan area, or a specific list of suburbs you approve?
+- **Why it matters.** Every listing must be checked against an approved boundary before it can be published (SRS SCP 004). If the boundary is too narrow, many of the businesses people expect to find cannot be listed. If it is too wide or undefined, editors cannot say no consistently.
+- **Recommended default.** A curated allow-list of gazetted localities, starting from the Inner Adelaide baseline and bounded by the Australian Bureau of Statistics' "Greater Adelaide" statistical area. Details, the current list and the open points are in `adelaide-boundary.md`.
+- **Alternatives.** (a) Only the City of Adelaide council area. (b) All of Greater Adelaide in one step.
 - **Technical impact.** None to the application's structure: the site has one fixed city and will keep it. Only the "local areas" list changes (rows in the admin, seeded from a reviewed file). No city selector, no country selector, no new routes.
-- **Deadline / dependency.** Before any listing outside the 14 baseline areas is published. Listings can be prepared as drafts meanwhile.
-- **Current status.** Pending. The conservative council-area baseline is live: 14 areas, four of which (Carlton North, Flemington, Port Melbourne, South Yarra) are only partly inside the council boundary.
+- **Deadline / dependency.** Before any listing outside the 16 baseline areas is published. Listings can be prepared as drafts meanwhile.
+- **Current status.** Pending. The Inner Adelaide baseline is live: 16 seeded localities out of 108 researched in seven councils. Keswick's council split is disputed between sources (to confirm with the client).
 - **Responsible party.** Client (product owner). Engineering applies the answer.
 
 ### D02 — Brand assets and homepage imagery
 
-- **Question.** Can you supply the final logo (with a version that works on dark blue), a square browser icon, a default sharing image, Melbourne photographs you own or have licensed for the homepage banner, and the short phrases that rotate in the headline?
+- **Question.** Can you supply the final logo (with a version that works on dark blue), a square browser icon, a default sharing image, Adelaide photographs you own or have licensed for the homepage banner, and the short phrases that rotate in the headline?
 - **Why it matters.** The site currently shows an original development wordmark and icon, and two Creative Commons photographs with the required credit line. They are honest fallbacks, not your brand. Sharing links on social platforms currently carry no image.
 - **Recommended default.** Supply the items in `content-requirements.md` §2; each is uploaded through the admin's General settings and Site settings screens, with no code change.
 - **Alternatives.** Commission the design lead to produce them; or approve the development fallbacks explicitly as launch assets (the two photographs are licensed for commercial use with attribution, so this is permissible).

@@ -70,7 +70,7 @@ export function SectionFields({ section, index, onChange, errors, references, on
     case 'text':
       return (
         <Form.Item label="Text" extra="Headings, lists, links, tables and pictures. Scripts and styles are removed when you save." style={{ marginBottom: 0 }} {...status(errors, 'html')}>
-          <div className="ms-page-section__editor">
+          <div className="as-page-section__editor">
             <RichTextEditorLazy value={section.html} onChange={(html) => onChange({ ...section, html })} disabled={disabled} ariaLabel={`Text for section ${index + 1}`} minHeight={260} />
           </div>
         </Form.Item>
@@ -92,7 +92,7 @@ export function SectionFields({ section, index, onChange, errors, references, on
             <Input id={id('heading')} value={section.heading ?? ''} maxLength={PAGE_SECTION_LIMITS.heading} showCount placeholder="e.g. Local knowledge you can trust" disabled={disabled} onChange={(event) => onChange({ ...section, heading: event.target.value || null })} />
           </Form.Item>
           <Form.Item label="Text" {...status(errors, 'html')}>
-            <div className="ms-page-section__editor">
+            <div className="as-page-section__editor">
               <RichTextEditorLazy value={section.html} onChange={(html) => onChange({ ...section, html })} disabled={disabled} ariaLabel={`Text for section ${index + 1}`} minHeight={180} />
             </div>
           </Form.Item>
@@ -145,7 +145,7 @@ export function SectionFields({ section, index, onChange, errors, references, on
                     </Space>
                   }
                 >
-                  <div className="ms-form-pair">
+                  <div className="as-form-pair">
                     <Form.Item label="Icon" htmlFor={cardId('icon')} extra="Optional.">
                       <MenuIconPicker id={cardId('icon')} value={card.icon} onChange={(icon) => setCard(cardIndex, { icon: icon as typeof card.icon })} disabled={disabled} />
                     </Form.Item>
@@ -201,7 +201,7 @@ export function SectionFields({ section, index, onChange, errors, references, on
                     <Input id={id(`question-${itemIndex}`)} value={item.question} maxLength={PAGE_SECTION_LIMITS.question} placeholder="e.g. Is listing my business free?" disabled={disabled} onChange={(event) => setItem({ question: event.target.value })} />
                   </Form.Item>
                   <Form.Item label="Answer" style={{ marginBottom: 0 }} {...status(itemErrors, 'answerHtml')}>
-                    <div className="ms-page-section__editor">
+                    <div className="as-page-section__editor">
                       <RichTextEditorLazy value={item.answerHtml} onChange={(answerHtml) => setItem({ answerHtml })} disabled={disabled} ariaLabel={`Answer to question ${itemIndex + 1}`} minHeight={120} />
                     </div>
                   </Form.Item>

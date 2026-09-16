@@ -2,9 +2,9 @@
 # applications. Not started by `pnpm infra:up`; behind a profile so it can never
 # come up by accident.
 #
-#   MS_WEB_UPSTREAM=host.docker.internal:3210 \
-#   MS_API_UPSTREAM=host.docker.internal:4001 \
-#   MS_ADMIN_UPSTREAM=host.docker.internal:3211 \
+#   AS_WEB_UPSTREAM=host.docker.internal:3210 \
+#   AS_API_UPSTREAM=host.docker.internal:4001 \
+#   AS_ADMIN_UPSTREAM=host.docker.internal:3211 \
 #   docker compose -f infrastructure/edge/docker-compose.edge.yml --profile edge up -d
 #
 # The not-found document is mounted read-only from the web build, so it is the
@@ -21,14 +21,14 @@ services:
     container_name: adelaide-sphere-edge
     restart: unless-stopped
     environment:
-      MS_WEB_UPSTREAM: ${MS_WEB_UPSTREAM:-host.docker.internal:4000}
-      MS_API_UPSTREAM: ${MS_API_UPSTREAM:-host.docker.internal:4001}
-      MS_ADMIN_UPSTREAM: ${MS_ADMIN_UPSTREAM:-host.docker.internal:4002}
+      AS_WEB_UPSTREAM: ${AS_WEB_UPSTREAM:-host.docker.internal:4000}
+      AS_API_UPSTREAM: ${AS_API_UPSTREAM:-host.docker.internal:4001}
+      AS_ADMIN_UPSTREAM: ${AS_ADMIN_UPSTREAM:-host.docker.internal:4002}
     volumes:
       - ../../infrastructure/edge/nginx.conf:/etc/nginx/templates/nginx.conf.template:ro
       - ../../apps/web/.next/server/app/_not-found.html:/usr/share/nginx/not-found/_not-found.html:ro
     command: >-
-      /bin/sh -c "envsubst '$$MS_WEB_UPSTREAM $$MS_API_UPSTREAM $$MS_ADMIN_UPSTREAM'
+      /bin/sh -c "envsubst '$$AS_WEB_UPSTREAM $$AS_API_UPSTREAM $$AS_ADMIN_UPSTREAM'
       < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf
       && exec nginx -g 'daemon off;'"
     ports:

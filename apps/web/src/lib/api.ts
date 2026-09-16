@@ -1,6 +1,7 @@
 import { DEFAULT_ADELAIDE_MAP_SRC, SITE_MAP_TITLE } from '@adelaide-sphere/domain/embeds';
 import type { PageSection } from '@adelaide-sphere/domain/page-sections';
 import { DEFAULT_PRICING } from '@adelaide-sphere/domain/pricing';
+import { cache } from 'react';
 import 'server-only';
 import type { components } from '@adelaide-sphere/contracts';
 import type { SearchState } from './search-params';
@@ -23,6 +24,20 @@ export type PublicAuthorPage = components['schemas']['PublicAuthorPageDto'];
 export type PublicArea = components['schemas']['PublicLocalAreaDto'];
 
 const apiOrigin = (process.env.API_ORIGIN ?? 'http://127.0.0.1:4001').replace(/\/+$/, '');
+
+/**
+ * The longest a render waits for the API, including reading the body: ten
+ * times the read target (SRS NFR 002, p95 500 ms). An API that accepts
+ * connections but stops answering must fail the page quickly (its error
+ * state) rather than hold a web worker until the socket gives up. A failed
+ * detail page can wait twice, because Next.js renders the page again after
+ * its metadata fails and the two renders do not share a request cache.
+ */
+export const API_TIMEOUT_MS = 5_000;
+
+function isTimeout(error: unknown): boolean {
+  return error instanceof Error && error.name === 'TimeoutError';
+}
 
 /** Error from the API or the network; pages let it reach the error boundary (SRS DIR 006: never shown as zero results). */
 export class ApiRequestError extends Error {
@@ -48,10 +63,22 @@ interface FetchOptions {
 async function apiGet<T>(path: string, options: FetchOptions): Promise<T> {
   const url = new URL(`${apiOrigin}/api/v1${path}`);
   for (const [key, value] of Object.entries(options.query ?? {})) if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, String(value));
+  return (await getJson(url.toString(), options.revalidate, (options.tags ?? []).join('\n'))) as T;
+}
+
+/**
+ * One request per URL per render. A fetch that carries an abort signal is not
+ * memoised by Next.js, and the shell settings and menus are read by several
+ * components on every page, so React's request cache does it instead. The key
+ * is plain strings because `cache` compares arguments by identity.
+ */
+const getJson = cache(async (url: string, revalidate: number, tagList: string): Promise<unknown> => {
+  const tags = tagList ? tagList.split('\n') : undefined;
   let response: Response;
   try {
-    response = await fetch(url, { headers: { accept: 'application/json' }, next: { revalidate: options.revalidate, tags: options.tags } });
+    response = await fetch(url, { headers: { accept: 'application/json' }, next: { revalidate, tags }, signal: AbortSignal.timeout(API_TIMEOUT_MS) });
   } catch (error) {
+    if (isTimeout(error)) throw new ApiRequestError(0, 'TIMEOUT', 'The directory service did not answer in time', null, { cause: error });
     throw new ApiRequestError(0, 'NETWORK', 'The directory service could not be reached', null, { cause: error });
   }
   if (!response.ok) {
@@ -64,12 +91,17 @@ async function apiGet<T>(path: string, options: FetchOptions): Promise<T> {
       message = body.error?.message ?? message;
       requestId = body.error?.requestId ?? requestId;
     } catch {
-      // non-JSON error body: keep the status-based message
+      // non-JSON error body (or the time ran out while reading it): keep the status-based message
     }
     throw new ApiRequestError(response.status, code, message, requestId);
   }
-  return (await response.json()) as T;
-}
+  try {
+    return await response.json();
+  } catch (error) {
+    if (isTimeout(error)) throw new ApiRequestError(0, 'TIMEOUT', 'The directory service did not answer in time', null, { cause: error });
+    throw new ApiRequestError(response.status, 'INVALID_RESPONSE', 'The directory service sent an unreadable response', response.headers.get('x-request-id'), { cause: error });
+  }
+});
 
 /** Hero content and optional counters (SRS HERO 002/007). Falls back to the SRS wording if the API is unreachable so the hero still renders. */
 export async function fetchHome(): Promise<PublicHome> {
@@ -133,7 +165,7 @@ export async function fetchMenus(): Promise<PublicMenus> {
 export interface PublicFaq {
   id: string;
   question: string;
-  /** Sanitised server-side; rendered inside `.ms-prose` like every other editorial body. */
+  /** Sanitised server-side; rendered inside `.as-prose` like every other editorial body. */
   answerHtml: string;
   groupName: string | null;
 }
@@ -240,7 +272,7 @@ export async function fetchBlogTerms(kind: 'blog-categories' | 'tags'): Promise<
 export async function fetchPostPreview(token: string): Promise<PostDetail | null> {
   if (!/^[A-Za-z0-9_-]{32}$/.test(token)) return null;
   try {
-    const response = await fetch(`${apiOrigin}/api/v1/preview/posts/${encodeURIComponent(token)}`, { headers: { accept: 'application/json' }, cache: 'no-store' });
+    const response = await fetch(`${apiOrigin}/api/v1/preview/posts/${encodeURIComponent(token)}`, { headers: { accept: 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(API_TIMEOUT_MS) });
     if (!response.ok) return null;
     return ((await response.json()) as { data: PostDetail }).data;
   } catch {
@@ -256,7 +288,7 @@ export async function fetchPostPreview(token: string): Promise<PostDetail | null
 export async function fetchPagePreview(token: string): Promise<StaticPageContent | null> {
   if (!/^[A-Za-z0-9_-]{32}$/.test(token)) return null;
   try {
-    const response = await fetch(`${apiOrigin}/api/v1/preview/pages/${encodeURIComponent(token)}`, { headers: { accept: 'application/json' }, cache: 'no-store' });
+    const response = await fetch(`${apiOrigin}/api/v1/preview/pages/${encodeURIComponent(token)}`, { headers: { accept: 'application/json' }, cache: 'no-store', signal: AbortSignal.timeout(API_TIMEOUT_MS) });
     if (!response.ok) return null;
     return ((await response.json()) as { data: StaticPageContent }).data;
   } catch {

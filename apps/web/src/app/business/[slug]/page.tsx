@@ -89,8 +89,8 @@ export default async function BusinessPage({ params }: PageProps<'/business/[slu
 
       {/* Identity band: who this is, where it is, how it rates and the three
           things a visitor actually wants to do (SRS BUS 001/003). */}
-      <div className="ms-on-dark bg-band text-band-text [background-image:radial-gradient(circle_at_78%_20%,rgba(25,158,216,.2),transparent_30%),linear-gradient(135deg,#0d2848,#071426)]">
-        <div className="ms-container py-9 sm:py-12">
+      <div className="as-on-dark bg-band text-band-text [background-image:radial-gradient(circle_at_78%_20%,rgba(25,158,216,.2),transparent_30%),linear-gradient(135deg,#0d2848,#071426)]">
+        <div className="as-container py-9 sm:py-12">
           <Breadcrumbs items={crumbs} tone="dark" />
           <div className="mt-7 grid gap-10 lg:grid-cols-[minmax(0,1fr)_27rem] lg:items-center">
             <div>
@@ -107,12 +107,12 @@ export default async function BusinessPage({ params }: PageProps<'/business/[slu
               </p>
               <h1 className="font-display mt-5 max-w-4xl text-[clamp(2.4rem,4.8vw,4.6rem)] leading-[1.02]">{business.name}</h1>
               <p className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-                <Link href={`/business/area/${business.localArea.slug}`} className="inline-flex items-center gap-1.5 text-band-muted underline-offset-4 hover:text-white ms-text-link">
+                <Link href={`/business/area/${business.localArea.slug}`} className="inline-flex items-center gap-1.5 text-band-muted underline-offset-4 hover:text-white as-text-link">
                   <MapPinIcon aria-hidden="true" className="size-4" />
                   {business.localArea.name}, Adelaide
                 </Link>
                 {business.rating ? (
-                  <a href="#reviews-heading" className="inline-flex items-center gap-2 text-band-muted underline-offset-4 hover:text-white ms-text-link">
+                  <a href="#reviews-heading" className="inline-flex items-center gap-2 text-band-muted underline-offset-4 hover:text-white as-text-link">
                     <RatingStars value={business.rating.average} size="sm" />
                     <span>
                       <span className="font-semibold text-white">{business.rating.average.toFixed(1)}</span>
@@ -163,7 +163,7 @@ export default async function BusinessPage({ params }: PageProps<'/business/[slu
             </div>
 
             <div className="flex flex-col gap-3">
-              <div className="ms-glass-dark relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-navy-950 shadow-lg ring-1 ring-white/10">
+              <div className="as-glass-dark relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-navy-950 shadow-lg ring-1 ring-white/10">
                 {business.image ? (
                   <Image src={business.image.url} alt={business.image.alt ?? ''} fill priority sizes="(min-width: 1024px) 26rem, 100vw" className="object-cover" />
                 ) : (
@@ -180,7 +180,7 @@ export default async function BusinessPage({ params }: PageProps<'/business/[slu
         </div>
       </div>
 
-      <div className="ms-dot-grid bg-surface-muted"><div className="ms-container grid gap-10 py-12 sm:py-16 lg:grid-cols-[minmax(0,1fr)_28rem] lg:gap-12">
+      <div className="as-dot-grid bg-surface-muted"><div className="as-container grid gap-10 py-12 sm:py-16 lg:grid-cols-[minmax(0,1fr)_28rem] lg:gap-12">
         <div className="flex flex-col gap-8">
           <section aria-labelledby="about-heading" className="rounded-card-lg border border-white/80 bg-white/82 p-6 shadow-md backdrop-blur-sm sm:p-8">
             <h2 id="about-heading" className="font-display text-2xl tracking-tight">
@@ -235,7 +235,7 @@ export default async function BusinessPage({ params }: PageProps<'/business/[slu
                 <div>
                   <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted">Phone</dt>
                   <dd className="mt-1">
-                    <a href={contact.phone.telHref} className="text-link underline-offset-4 ms-text-link">
+                    <a href={contact.phone.telHref} className="text-link underline-offset-4 as-text-link">
                       {contact.phone.display}
                     </a>
                   </dd>
@@ -245,7 +245,7 @@ export default async function BusinessPage({ params }: PageProps<'/business/[slu
                 <div>
                   <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted">Email</dt>
                   <dd className="mt-1">
-                    <a href={`mailto:${contact.email}`} className="break-all text-link underline-offset-4 ms-text-link">
+                    <a href={`mailto:${contact.email}`} className="break-all text-link underline-offset-4 as-text-link">
                       {contact.email}
                     </a>
                   </dd>
@@ -255,7 +255,7 @@ export default async function BusinessPage({ params }: PageProps<'/business/[slu
                 <div>
                   <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted">Website</dt>
                   <dd className="mt-1">
-                    <a href={contact.website} target="_blank" rel="noopener noreferrer nofollow" className="break-all text-link underline-offset-4 ms-text-link">
+                    <a href={contact.website} target="_blank" rel="noopener noreferrer nofollow" className="break-all text-link underline-offset-4 as-text-link">
                       {contact.website.replace(/^https?:\/\//, '')}
                     </a>
                   </dd>
@@ -333,8 +333,8 @@ export default async function BusinessPage({ params }: PageProps<'/business/[slu
       </div></div>
 
       {business.related.length > 0 && (
-        <section aria-labelledby="related-heading" className="ms-section bg-surface-sunken">
-          <div className="ms-container">
+        <section aria-labelledby="related-heading" className="as-section bg-surface-sunken">
+          <div className="as-container">
             <h2 id="related-heading" className="font-display text-3xl tracking-tight">
               More {business.primaryCategory.name.toLowerCase()} nearby
             </h2>

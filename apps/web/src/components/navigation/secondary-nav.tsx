@@ -13,7 +13,7 @@ export function SecondaryNav({ items }: { items: PublicMenuItem[] }) {
       <ul className="flex flex-wrap items-center gap-x-4 gap-y-1">
         {items.map((item) => (
           <li key={item.id}>
-            <MenuLink item={item} className="ms-secondary-link inline-flex min-h-9 items-center gap-1.5 text-band-muted transition-colors hover:text-white" iconClassName="size-3.5 shrink-0" />
+            <MenuLink item={item} className="as-secondary-link inline-flex min-h-9 items-center gap-1.5 text-band-muted transition-colors hover:text-white" iconClassName="size-3.5 shrink-0" />
           </li>
         ))}
       </ul>

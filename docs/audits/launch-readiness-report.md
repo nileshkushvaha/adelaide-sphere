@@ -26,7 +26,7 @@ What the audit does support saying: the application itself is in good order. 193
 
 | # | Blocker | Type | Owner | Notes |
 | --- | --- | --- | --- | --- |
-| 1 | Greater Melbourne boundary (**D01**) | Client decision | Client | Eligibility currently enforces the City of Melbourne council area. Listings admitted under the wrong boundary are expensive to unpick later. |
+| 1 | Greater Adelaide boundary (**D01**) | Client decision | Client | Eligibility currently enforces the Inner Adelaide baseline. Listings admitted under the wrong boundary are expensive to unpick later. |
 | 2 | Approved privacy, terms and review-guidelines copy (**D05**) | Client decision | Client | The pages exist and refuse to publish while empty or containing placeholder wording. The site cannot collect a review or an enquiry lawfully without them. |
 | 3 | Resend account, sending domain, DNS and webhook secret (**D09**) | External credential | Client | Until this exists nothing can be delivered: no password reset, no account set-up, no enquiry. The code path is now complete on both sides (audit F-02). |
 | 4 | Turnstile site and secret keys (**D03**) | External credential | Client | Without them every public write answers 503 by design. Verified fail-closed in this audit. |
@@ -40,7 +40,7 @@ What the audit does support saying: the application itself is in good order. 193
 | 12 | ~~404 responses have an empty server-rendered body~~ | Deployment configuration | Delivery team | **Closed 2026-09-09** in the reference configuration (`infrastructure/edge/nginx.conf`), verified through real nginx in front of a production build: 404 with a 55,873-byte branded page, 1,042 characters of visible text, `noindex`, no JavaScript, API and admin untouched. Adapting it to the chosen production edge is a staging task. |
 | 13 | ~~The browser suite is outside the release gate~~ | Code defect (process) | Delivery team | **Closed 2026-09-08.** `pnpm verify:release` runs root checks, integration tests and the browser suite; the runner provisions its own database and administrators, fails on any unexplained skip, and cleans up on success and on failure. |
 | 14 | 30-minute capacity profile (NFR 003) not run; no review data in the load set | Manual verification | Delivery team | 10,000 listings measured; 100,000 reviews unmeasured. Deep pagination reached 837 ms at worst. |
-| 15 | Commissioned Melbourne photography | Client decision | Client | Interim licensed images are in place and credited; replacement is documented. |
+| 15 | Commissioned Adelaide photography | Client decision | Client | Interim licensed images are in place and credited; replacement is documented. |
 
 Accepted risks (no action proposed): the transitive dependency advisories dispositioned in `docs/security/dependency-advisories.md`, each pinned by Prisma or Refine and none reachable in a path this product takes.
 

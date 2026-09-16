@@ -1,4 +1,4 @@
--- Collation policy (Phase 8, SRS DAT 001 / DIR 004): every Melbourne Sphere
+-- Collation policy (Phase 8, SRS DAT 001 / DIR 004): every Adelaide Sphere
 -- database and table uses utf8mb4 with utf8mb4_unicode_ci (Prisma Migrate's
 -- MySQL default), matching the Compose server default. This aligns the
 -- development database, which was created before the policy, so that raw

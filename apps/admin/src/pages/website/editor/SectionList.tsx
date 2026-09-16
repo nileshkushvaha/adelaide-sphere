@@ -74,7 +74,7 @@ export function SectionList({ sections, onChange, onRemove, expanded, onToggle, 
       </div>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd} accessibility={{ announcements }}>
         <SortableContext items={sections.map((section) => section.id)} strategy={verticalListSortingStrategy}>
-          <ol className="ms-page-sections">
+          <ol className="as-page-sections">
             {sections.map((section, index) => (
               <SortableSection
                 key={section.id}
@@ -163,37 +163,37 @@ function SortableSection({
   return (
     <li
       ref={setNodeRef}
-      className={`ms-page-section${section.hidden ? ' is-hidden' : ''}${isDragging ? ' is-dragging' : ''}${problems ? ' has-errors' : ''}`}
+      className={`as-page-section${section.hidden ? ' is-hidden' : ''}${isDragging ? ' is-dragging' : ''}${problems ? ' has-errors' : ''}`}
       style={{ transform: CSS.Translate.toString(transform), transition: reducedMotion ? undefined : transition }}
     >
-      <div className="ms-page-section__bar">
+      <div className="as-page-section__bar">
         {!disabled && !fixed ? (
-          <button type="button" ref={setActivatorNodeRef} className="ms-page-section__handle" aria-label={`Reorder ${label}, section ${index + 1}`} {...attributes} {...listeners}>
+          <button type="button" ref={setActivatorNodeRef} className="as-page-section__handle" aria-label={`Reorder ${label}, section ${index + 1}`} {...attributes} {...listeners}>
             <HolderOutlined aria-hidden="true" />
           </button>
         ) : (
-          <span className="ms-page-section__handle is-static" aria-hidden="true" />
+          <span className="as-page-section__handle is-static" aria-hidden="true" />
         )}
-        <button type="button" className="ms-page-section__toggle" aria-expanded={open} aria-controls={bodyId} onClick={onToggle}>
+        <button type="button" className="as-page-section__toggle" aria-expanded={open} aria-controls={bodyId} onClick={onToggle}>
           {open ? <DownOutlined aria-hidden="true" /> : <RightOutlined aria-hidden="true" />}
-          <span className="ms-page-section__icon">
+          <span className="as-page-section__icon">
             <SectionIcon type={section.type} />
           </span>
-          <span className="ms-page-section__text">
-            <span className="ms-page-section__label">
+          <span className="as-page-section__text">
+            <span className="as-page-section__label">
               {index + 1}. {label}
             </span>
-            <Typography.Text type="secondary" className="ms-page-section__summary">
+            <Typography.Text type="secondary" className="as-page-section__summary">
               {sectionSummary(section, pageTitle)}
             </Typography.Text>
           </span>
         </button>
-        <span className="ms-page-section__tags">
+        <span className="as-page-section__tags">
           {section.hidden && <Tag>Hidden</Tag>}
           {problems > 0 && <Tag color="error">{problems === 1 ? '1 problem' : `${problems} problems`}</Tag>}
         </span>
         {!disabled && (
-          <span className="ms-page-section__actions">
+          <span className="as-page-section__actions">
             <Tooltip title="Move up">
               <Button type="text" size="small" icon={<ArrowUpOutlined aria-hidden="true" />} aria-label={`Move ${label} up`} disabled={fixed || index === 0 || previousIsHeader} onClick={() => onMove(index - 1)} />
             </Tooltip>
@@ -212,7 +212,7 @@ function SortableSection({
           </span>
         )}
       </div>
-      <div id={bodyId} className="ms-page-section__body" hidden={!open}>
+      <div id={bodyId} className="as-page-section__body" hidden={!open}>
         {section.hidden && (
           <Typography.Paragraph type="secondary" style={{ marginTop: 0 }}>
             Hidden: kept on the page but not shown to visitors.

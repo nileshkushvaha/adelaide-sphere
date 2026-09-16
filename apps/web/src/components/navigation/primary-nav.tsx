@@ -119,7 +119,7 @@ export function PrimaryNav({ primary, secondary }: Props) {
 
   return (
     <>
-      <nav ref={navRef} aria-label="Main" className="ms-primary-nav ml-6 hidden lg:flex" data-enhanced={enhanced ? '' : undefined} onKeyDown={onKeyDown} onBlur={onBlur} onMouseLeave={hoverLeave}>
+      <nav ref={navRef} aria-label="Main" className="as-primary-nav ml-6 hidden lg:flex" data-enhanced={enhanced ? '' : undefined} onKeyDown={onKeyDown} onBlur={onBlur} onMouseLeave={hoverLeave}>
         <ul className="flex items-center gap-1">
           {links.map((item) => (
             <TopItem key={item.id} item={item} state={state} />
@@ -133,7 +133,7 @@ export function PrimaryNav({ primary, secondary }: Props) {
             key={item.id}
             item={item}
             current={trail.current === item.id}
-            className="ms-primary-action hidden min-h-11 items-center gap-2 rounded-full bg-sky-700 px-5 text-sm font-bold text-white shadow-sm transition-transform hover:-translate-y-0.5 hover:bg-sky-600 sm:inline-flex"
+            className="as-primary-action hidden min-h-11 items-center gap-2 rounded-full bg-sky-700 px-5 text-sm font-bold text-white shadow-sm transition-transform hover:-translate-y-0.5 hover:bg-sky-600 sm:inline-flex"
           />
         ))}
         <MobileNavDrawer primary={primary} secondary={secondary} />
@@ -149,7 +149,7 @@ function TopItem({ item, state }: { item: PublicMenuItem; state: MenuState }) {
 
   return (
     <li
-      className="ms-nav-item relative"
+      className="as-nav-item relative"
       data-active-trail={state.trail.ancestors.has(item.id) ? '' : undefined}
       onMouseEnter={hasChildren ? (event) => state.hoverOpen([item.id], event.currentTarget) : undefined}
     >
@@ -158,13 +158,13 @@ function TopItem({ item, state }: { item: PublicMenuItem; state: MenuState }) {
           <MenuLink
             item={item}
             current={state.trail.current === item.id}
-            className={`ms-header-link relative inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-lg px-3 text-[0.9375rem] font-semibold`}
+            className={`as-header-link relative inline-flex min-h-11 items-center gap-2 whitespace-nowrap rounded-lg px-3 text-[0.9375rem] font-semibold`}
           />
         )}
         {hasChildren && (
           <button
             type="button"
-            className={item.href ? 'ms-nav-toggle' : 'ms-header-link inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-[0.9375rem] font-semibold'}
+            className={item.href ? 'as-nav-toggle' : 'as-header-link inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-[0.9375rem] font-semibold'}
             aria-expanded={isOpen}
             aria-controls={submenuId}
             onClick={(event) => state.toggle([item.id], event.currentTarget)}
@@ -177,12 +177,12 @@ function TopItem({ item, state }: { item: PublicMenuItem; state: MenuState }) {
                 <span>{item.label}</span>
               </>
             )}
-            <ChevronDownIcon aria-hidden="true" className="ms-nav-chevron size-4" />
+            <ChevronDownIcon aria-hidden="true" className="as-nav-chevron size-4" />
           </button>
         )}
       </div>
       {hasChildren && (
-        <ul id={submenuId} className="ms-submenu" data-open={isOpen ? '' : undefined}>
+        <ul id={submenuId} className="as-submenu" data-open={isOpen ? '' : undefined}>
           {item.children.map((child) => (
             <SubItem key={child.id} item={child} parentId={item.id} state={state} />
           ))}
@@ -205,9 +205,9 @@ function SubItem({ item, parentId, state }: { item: PublicMenuItem; parentId: st
     >
       <div className="flex items-stretch">
         {item.href ? (
-          <MenuLink item={item} current={state.trail.current === item.id} className="ms-submenu-link flex-1" showDescription descriptionClassName="ms-submenu-description" />
+          <MenuLink item={item} current={state.trail.current === item.id} className="as-submenu-link flex-1" showDescription descriptionClassName="as-submenu-description" />
         ) : (
-          <span className="ms-submenu-link ms-submenu-heading flex-1">
+          <span className="as-submenu-link as-submenu-heading flex-1">
             <MenuIcon name={item.icon} className="size-4 shrink-0" />
             <span>{item.label}</span>
           </span>
@@ -215,21 +215,21 @@ function SubItem({ item, parentId, state }: { item: PublicMenuItem; parentId: st
         {hasChildren && (
           <button
             type="button"
-            className="ms-nav-toggle ms-nav-toggle--sub"
+            className="as-nav-toggle as-nav-toggle--sub"
             aria-expanded={isOpen}
             aria-controls={flyoutId}
             onClick={(event) => state.toggle([parentId, item.id], event.currentTarget.closest('li'))}
           >
             <span className="sr-only">{item.label} submenu</span>
-            <ChevronRightIcon aria-hidden="true" className="ms-nav-chevron size-4" />
+            <ChevronRightIcon aria-hidden="true" className="as-nav-chevron size-4" />
           </button>
         )}
       </div>
       {hasChildren && (
-        <ul id={flyoutId} className="ms-flyout" data-open={isOpen ? '' : undefined} data-flip={state.flip ? '' : undefined}>
+        <ul id={flyoutId} className="as-flyout" data-open={isOpen ? '' : undefined} data-flip={state.flip ? '' : undefined}>
           {item.children.map((grandchild) => (
             <li key={grandchild.id}>
-              <MenuLink item={grandchild} current={state.trail.current === grandchild.id} className="ms-submenu-link" showDescription descriptionClassName="ms-submenu-description" />
+              <MenuLink item={grandchild} current={state.trail.current === grandchild.id} className="as-submenu-link" showDescription descriptionClassName="as-submenu-description" />
             </li>
           ))}
         </ul>

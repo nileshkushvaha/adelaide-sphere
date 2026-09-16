@@ -83,7 +83,7 @@ export function AdministratorsPage() {
       {state.status === 'error' && <ErrorState message={state.message} reference={state.reference} onRetry={reload} />}
       <Table<AdminListItem>
         rowKey="id"
-        className="ms-scroll-table"
+        className="as-scroll-table"
         loading={state.status === 'loading'}
         dataSource={state.status === 'ready' ? state.data.data : []}
         pagination={state.status === 'ready' ? tablePagination(state.data.meta, list) : false}

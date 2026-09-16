@@ -2,7 +2,7 @@
 --
 -- Additive. Comments gain `parentId` (the top-level comment a reply belongs to;
 -- threads are two levels, so a reply to a reply joins the same top-level
--- comment), `staff` and `authorAdminId` for replies the Melbourne Sphere team
+-- comment), `staff` and `authorAdminId` for replies the Adelaide Sphere team
 -- writes from moderation. Deleting a comment removes its replies with it.
 -- reviewed: the contact and acknowledgement columns become nullable (no data
 -- changes) because a team reply has no visitor email or acknowledgement; every

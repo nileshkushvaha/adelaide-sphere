@@ -4,10 +4,10 @@ import type { PermissionKey } from '../identity/permissions.js';
 import type { AdminPrincipal } from '../identity/identity.service.js';
 import type { SessionSummary } from './session.service.js';
 
-export const PUBLIC_ROUTE_KEY = 'ms:public';
-export const SESSION_ONLY_KEY = 'ms:session-only';
-export const PERMISSIONS_KEY = 'ms:permissions';
-export const ANY_PERMISSIONS_KEY = 'ms:any-permissions';
+export const PUBLIC_ROUTE_KEY = 'as:public';
+export const SESSION_ONLY_KEY = 'as:session-only';
+export const PERMISSIONS_KEY = 'as:permissions';
+export const ANY_PERMISSIONS_KEY = 'as:any-permissions';
 
 /** Marks an admin-prefixed route as reachable without a session (login, forgot, reset). */
 export const Public = () => SetMetadata(PUBLIC_ROUTE_KEY, true);

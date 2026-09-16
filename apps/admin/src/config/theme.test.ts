@@ -57,9 +57,9 @@ describe('theme', () => {
     const root = document.documentElement;
     expect(root.dataset.theme).toBe('dark');
     expect(brand.text).toBe(`var(${cssVariableName('text')})`);
-    expect(root.style.getPropertyValue('--ms-text')).toBe(palettes.dark.text);
+    expect(root.style.getPropertyValue('--as-text')).toBe(palettes.dark.text);
     applyThemeVariables('light');
-    expect(root.style.getPropertyValue('--ms-text')).toBe(palettes.light.text);
+    expect(root.style.getPropertyValue('--as-text')).toBe(palettes.light.text);
     expect(root.dataset.theme).toBe('light');
   });
 

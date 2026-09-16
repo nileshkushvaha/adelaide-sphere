@@ -322,7 +322,7 @@ export function QueueMonitorPage() {
               />
             </div>
             <Table<QueueJob>
-              className="ms-scroll-table"
+              className="as-scroll-table"
               // Failed and waiting jobs are what an operator is looking for.
               rowClassName={(row) => statusRowClass(row.state)}
               rowKey="id"

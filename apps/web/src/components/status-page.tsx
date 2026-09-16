@@ -24,8 +24,8 @@ interface Props {
 export function StatusPage({ status, title, description, reference, actions, children }: Props) {
   return (
     <div role={status === '500' || status === '503' ? 'alert' : undefined}>
-      <section className="ms-on-dark ms-section bg-band-deep text-band-text">
-        <div className="ms-container-tight">
+      <section className="as-on-dark as-section bg-band-deep text-band-text">
+        <div className="as-container-tight">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-400">Error {status}</p>
           <h1 className="mt-3 font-display text-4xl leading-tight tracking-tight sm:text-5xl">{title}</h1>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-band-muted sm:text-lg">{description}</p>
@@ -38,8 +38,8 @@ export function StatusPage({ status, title, description, reference, actions, chi
           )}
         </div>
       </section>
-      <section className="ms-section bg-surface-muted">
-        <div className="ms-container-tight">
+      <section className="as-section bg-surface-muted">
+        <div className="as-container-tight">
           <div className="flex flex-wrap gap-3">
             {actions}
             <Button asChild>

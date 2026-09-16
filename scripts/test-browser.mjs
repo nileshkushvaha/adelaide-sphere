@@ -27,7 +27,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const artefacts = mkdtempSync(join(tmpdir(), 'ms-browser-'));
+const artefacts = mkdtempSync(join(tmpdir(), 'as-browser-'));
 const started = [];
 let databaseCreated = null;
 let redisUsed = false;

@@ -87,7 +87,7 @@ export function TermEditorPage({ config }: { config: TermsPageConfig }) {
         {field.section && (
           // A real heading, so the group is announced as one rather than being
           // grey text that happens to sit above some fields.
-          <div className="ms-form-section">
+          <div className="as-form-section">
             <h3>{field.section.title}</h3>
             {field.section.description && <p>{field.section.description}</p>}
           </div>

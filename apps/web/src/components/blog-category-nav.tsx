@@ -50,7 +50,7 @@ export function BlogCategoryNav({ categories, active, tone = 'dark' }: Props) {
     <nav aria-label="Blog categories">
       {/* The negative margin lets the row bleed into the container's gutter while
           it scrolls, so the last chip is not clipped mid-word on a phone. */}
-      <ul className="-mx-[var(--ms-gutter)] flex gap-2.5 overflow-x-auto px-[var(--ms-gutter)] pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+      <ul className="-mx-[var(--as-gutter)] flex gap-2.5 overflow-x-auto px-[var(--as-gutter)] pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
         {chip('/blog', 'All stories', 'all')}
         {categories.map((category) => chip(`/blog/category/${category.slug}`, category.name, category.slug, category.postCount))}
       </ul>

@@ -11,8 +11,8 @@ export function Sparkline({ points, color, width = 112, height = 32 }: { points:
   const last = coordinates.at(-1)!;
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true" style={{ display: 'block', flexShrink: 0 }}>
-      <polyline points={coordinates.map(([cx, cy]) => `${cx.toFixed(1)},${cy.toFixed(1)}`).join(' ')} fill="none" stroke="var(--ms-chart-axis)" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={last[0]} cy={last[1]} r={3.5} fill={color} stroke="var(--ms-surface-raised)" strokeWidth={2} />
+      <polyline points={coordinates.map(([cx, cy]) => `${cx.toFixed(1)},${cy.toFixed(1)}`).join(' ')} fill="none" stroke="var(--as-chart-axis)" strokeWidth={1.5} strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={last[0]} cy={last[1]} r={3.5} fill={color} stroke="var(--as-surface-raised)" strokeWidth={2} />
     </svg>
   );
 }

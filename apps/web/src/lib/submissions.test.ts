@@ -29,7 +29,7 @@ describe('validateContactForm', () => {
     name: 'Sam Taylor',
     email: 'sam@example.com',
     topic: 'Correct a published listing',
-    message: 'The opening hours for the Carlton bakery are wrong on Sundays.',
+    message: 'The opening hours for the Norwood bakery are wrong on Sundays.',
     acknowledged: true,
   };
 

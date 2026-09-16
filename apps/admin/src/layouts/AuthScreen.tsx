@@ -24,44 +24,44 @@ const FEATURES = [
  */
 export function AuthScreen({ title, description, children }: { title: string; description?: ReactNode; children: ReactNode }) {
   return (
-    <div className="ms-auth">
-      <span className="ms-auth-orb ms-auth-orb--sky" aria-hidden="true" />
-      <span className="ms-auth-orb ms-auth-orb--teal" aria-hidden="true" />
+    <div className="as-auth">
+      <span className="as-auth-orb as-auth-orb--sky" aria-hidden="true" />
+      <span className="as-auth-orb as-auth-orb--teal" aria-hidden="true" />
 
-      <main id="main-content" tabIndex={-1} className="ms-auth-inner">
-        <div className="ms-auth-card-wrap">
+      <main id="main-content" tabIndex={-1} className="as-auth-inner">
+        <div className="as-auth-card-wrap">
           {/* A plain container, not a named region: inside <main> a landmark that
               only repeats the page's h1 is noise for a screen reader. */}
-          <div className="ms-auth-card">
-            <h1 className="ms-auth-title">
+          <div className="as-auth-card">
+            <h1 className="as-auth-title">
               {title}
             </h1>
-            {description && <p className="ms-auth-description">{description}</p>}
+            {description && <p className="as-auth-description">{description}</p>}
             {children}
           </div>
-          <p className="ms-auth-below">
+          <p className="as-auth-below">
             <LockOutlined aria-hidden="true" />
             <span>Administrator access only. Sign-in attempts are limited and recorded.</span>
           </p>
         </div>
 
-        <div className="ms-auth-intro">
+        <div className="as-auth-intro">
           <Brand width={320} />
-          <p className="ms-auth-headline">
+          <p className="as-auth-headline">
             <span>The workspace behind Adelaide Sphere.</span>
           </p>
-          <p className="ms-auth-lede">Listings, articles, moderation and the operational screens that keep the public site accurate.</p>
-          <ul className="ms-auth-features" aria-label="How this workspace is protected">
+          <p className="as-auth-lede">Listings, articles, moderation and the operational screens that keep the public site accurate.</p>
+          <ul className="as-auth-features" aria-label="How this workspace is protected">
             {FEATURES.map((feature) => (
-              <li key={feature.text} className="ms-auth-feature">
-                <span className="ms-auth-feature-icon" aria-hidden="true">
+              <li key={feature.text} className="as-auth-feature">
+                <span className="as-auth-feature-icon" aria-hidden="true">
                   {feature.icon}
                 </span>
                 <span>{feature.text}</span>
               </li>
             ))}
           </ul>
-          <p className="ms-auth-footnote">Adelaide Sphere · Adelaide only</p>
+          <p className="as-auth-footnote">Adelaide Sphere · Adelaide only</p>
         </div>
       </main>
     </div>

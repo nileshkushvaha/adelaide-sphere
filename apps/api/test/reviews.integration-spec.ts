@@ -43,8 +43,8 @@ describe('Reviews, moderation and abuse reports (integration)', () => {
   const clearLimits = async () => {
     const redis = app.get(RedisService);
     await redis.ensureConnected();
-    const keys = await redis.client.keys('ms:public:*');
-    if (keys.length > 0) await redis.client.del(...keys.map((k) => k.replace(/^ms:/, '')));
+    const keys = await redis.client.keys('as:public:*');
+    if (keys.length > 0) await redis.client.del(...keys.map((k) => k.replace(/^as:/, '')));
   };
 
   beforeAll(async () => {
@@ -67,7 +67,7 @@ describe('Reviews, moderation and abuse reports (integration)', () => {
     readerCookie = ([] as string[]).concat(readerRes.headers['set-cookie'] ?? []).find((c) => c.startsWith(`${SESSION_COOKIE_NAME}=`))!.split(';')[0]!;
 
     const category = (await admin(agent().post('/api/v1/admin/categories')).send({ name: 'Cafes' }).expect(201)).body.data.id;
-    const area = (await admin(agent().post('/api/v1/admin/areas')).send({ name: 'Melbourne CBD', eligibilitySource: 'council list' }).expect(201)).body.data.id;
+    const area = (await admin(agent().post('/api/v1/admin/areas')).send({ name: 'Adelaide CBD', eligibilitySource: 'council list' }).expect(201)).body.data.id;
     const make = async (name: string, publish: boolean) => {
       const b = (await admin(agent().post('/api/v1/admin/businesses')).send({ name, description: 'A listing used by the review tests, long enough to publish.', primaryCategoryId: category, localAreaId: area, publicPhone: '03 9000 2222', eligibilitySource: 'council list', contentRightsReviewed: true }).expect(201)).body.data;
       if (publish) await admin(agent().post(`/api/v1/admin/businesses/${b.id}/publish`)).send({ expectedVersion: b.version, duplicateOverrideReason: 'distinct review fixtures' }).expect(200);

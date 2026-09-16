@@ -7,14 +7,14 @@ const meta = { page: 1, pageSize: 20, total: 1, pageCount: 1 };
 const now = '2026-09-06T00:00:00.000Z';
 const term = (id: string, name: string) => ({ id, name, slug: name.toLowerCase(), active: true, version: 1, sortOrder: 0, createdAt: now, updatedAt: now });
 const business = {
-  id: 'b1', name: 'Little Collins Espresso', slug: 'little-collins-espresso', description: 'A neighbourhood espresso bar serving single-origin coffee and toasties.', status: 'draft',
+  id: 'b1', name: 'Peel Street Espresso', slug: 'peel-street-espresso', description: 'A neighbourhood espresso bar serving single-origin coffee and toasties.', status: 'draft',
   primaryCategoryId: 'c1', secondaryCategoryIds: [], serviceIds: [], localAreaId: 'l1', publicPhone: '03 9000 1234', publicEmail: null, publicUrl: null, addressVisibility: 'full',
   address: { line1: '12 Peel St', line2: null, suburb: 'Adelaide', postcode: '5000', latitude: null, longitude: null }, privateEnquiryEmail: 'owner@example.com', hasPrivateEnquiryEmail: true,
   eligibilitySource: 'council list', eligibilityVerifiedAt: now, contentRightsReviewedAt: null, contentRightsNote: null, duplicateOverrideReason: null,
   telHref: 'tel:+61390001234', links: [{ kind: 'instagram', url: 'https://instagram.com/lce', label: null }], hoursMode: 'scheduled',
   publicationBlockers: ['Content rights must be reviewed'], duplicateWarnings: [], firstPublishedAt: null, publishedAt: null, archivedAt: null, version: 3, createdAt: now, updatedAt: now,
 };
-const listItem = { id: 'b1', name: business.name, slug: business.slug, status: 'draft', primaryCategoryId: 'c1', primaryCategoryName: 'Cafes', localAreaId: 'l1', localAreaName: 'Melbourne CBD', publishable: false, duplicateFlagged: true, publishedAt: null, updatedAt: now, createdAt: now };
+const listItem = { id: 'b1', name: business.name, slug: business.slug, status: 'draft', primaryCategoryId: 'c1', primaryCategoryName: 'Cafes', localAreaId: 'l1', localAreaName: 'Adelaide CBD', publishable: false, duplicateFlagged: true, publishedAt: null, updatedAt: now, createdAt: now };
 
 describe('businesses pages', () => {
   const originalFetch = globalThis.fetch;
@@ -32,7 +32,7 @@ describe('businesses pages', () => {
       calls.push({ url, method, body: typeof init?.body === 'string' ? init.body : undefined });
       if (url.startsWith('/api/v1/admin/categories')) return jsonResponse(200, { data: [term('c1', 'Cafes')], meta });
       if (url.startsWith('/api/v1/admin/services')) return jsonResponse(200, { data: [term('s1', 'Coffee')], meta });
-      if (url.startsWith('/api/v1/admin/areas')) return jsonResponse(200, { data: [term('l1', 'Melbourne CBD')], meta });
+      if (url.startsWith('/api/v1/admin/areas')) return jsonResponse(200, { data: [term('l1', 'Adelaide CBD')], meta });
       if (url.startsWith('/api/v1/admin/businesses?') && method === 'GET') return jsonResponse(200, { data: [listItem], meta });
       if (url === '/api/v1/admin/businesses/b-published' && method === 'GET') {
         return jsonResponse(200, { data: { ...business, id: 'b-published', status: 'published', firstPublishedAt: now, publishedAt: now, publicationBlockers: [] } });
@@ -73,7 +73,7 @@ describe('businesses pages', () => {
   it('lists businesses through the data provider with URL-driven filters and flags', async () => {
     renderWithProviders(<AppRoutes />, { initialEntries: ['/admin/businesses?status=draft&q=espresso&sort=name&order=asc&categoryId=c1'] });
     expect(await screen.findByRole('heading', { level: 1, name: 'Businesses' })).toBeInTheDocument();
-    const row = (await screen.findByRole('link', { name: 'Little Collins Espresso' })).closest('tr')!;
+    const row = (await screen.findByRole('link', { name: 'Peel Street Espresso' })).closest('tr')!;
     expect(within(row).getByText('draft')).toBeInTheDocument();
     expect(within(row).getByText('not ready')).toBeInTheDocument();
     expect(within(row).getByLabelText('Possible duplicate')).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe('businesses pages', () => {
     const provider = (await import('@/test/render')).authenticatedProvider();
     provider.getPermissions = async () => ['listings.read'];
     renderWithProviders(<AppRoutes />, { initialEntries: ['/admin/businesses'], authProvider: provider });
-    await screen.findByRole('link', { name: 'Little Collins Espresso' });
+    await screen.findByRole('link', { name: 'Peel Street Espresso' });
     expect(screen.queryByRole('link', { name: /add business/i })).not.toBeInTheDocument();
   });
 
@@ -101,7 +101,7 @@ describe('businesses pages', () => {
     await ue.click(screen.getByLabelText(/primary category/i));
     await ue.click(await screen.findByTitle('Cafes'));
     await ue.click(screen.getByLabelText(/^local area/i));
-    await ue.click(await screen.findByTitle('Melbourne CBD'));
+    await ue.click(await screen.findByTitle('Adelaide CBD'));
     await ue.type(screen.getByLabelText(/address line 1/i), '1 King William St');
     await ue.type(screen.getByLabelText(/^suburb/i), 'Adelaide');
     await ue.type(screen.getByLabelText(/^postcode/i), '5000');
@@ -134,7 +134,7 @@ describe('businesses pages', () => {
       return realFetch(input, init);
     }) as typeof fetch;
     renderWithProviders(<AppRoutes />, { initialEntries: ['/admin/businesses/b1'], authProvider: provider });
-    await screen.findByRole('heading', { level: 1, name: 'Little Collins Espresso' });
+    await screen.findByRole('heading', { level: 1, name: 'Peel Street Espresso' });
     await ue.click(screen.getByRole('button', { name: /save changes/i }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument();
   });
@@ -142,7 +142,7 @@ describe('businesses pages', () => {
   it('loads the hours schedule, maps nested validation errors, and saves with the record version', async () => {
     const ue = user();
     renderWithProviders(<AppRoutes />, { initialEntries: ['/admin/businesses/b1'] });
-    await screen.findByRole('heading', { level: 1, name: 'Little Collins Espresso' });
+    await screen.findByRole('heading', { level: 1, name: 'Peel Street Espresso' });
     expect(await screen.findByText('closed now')).toBeInTheDocument();
     expect(await screen.findByDisplayValue('09:00')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Christmas Day')).toBeInTheDocument();
@@ -160,7 +160,7 @@ describe('businesses pages', () => {
   it('shows blockers, surfaces stale edits and walks publish through blocked → duplicate override → published', async () => {
     const ue = user();
     renderWithProviders(<AppRoutes />, { initialEntries: ['/admin/businesses/b1'] });
-    expect(await screen.findByRole('heading', { level: 1, name: 'Little Collins Espresso' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Peel Street Espresso' })).toBeInTheDocument();
     // The heading now counts what is outstanding, so the operator sees the size
     // of the job before opening the list.
     // What is still missing is listed beside the publish action, from the server's own blockers.
@@ -169,7 +169,7 @@ describe('businesses pages', () => {
     await ue.click(screen.getByRole('button', { name: /save changes/i }));
     expect(await screen.findByText(/changed by someone else/i)).toBeInTheDocument();
     const patch = calls.find((c) => c.method === 'PATCH');
-    expect(JSON.parse(patch!.body!)).toMatchObject({ expectedVersion: 3, name: 'Little Collins Espresso' });
+    expect(JSON.parse(patch!.body!)).toMatchObject({ expectedVersion: 3, name: 'Peel Street Espresso' });
     expect(JSON.parse(patch!.body!)).not.toHaveProperty('privateEnquiryEmail');
 
     await ue.click(screen.getByRole('button', { name: /^publish business$/i }));
@@ -187,7 +187,7 @@ describe('businesses pages', () => {
 
   it('groups the editor so a long form can be read, and separates the private address from the public ones', async () => {
     renderWithProviders(<AppRoutes />, { initialEntries: ['/admin/businesses/b1'], authProvider: providerWithPermissions(['listings.read', 'listings.update', 'listings.publish']) });
-    await screen.findByRole('heading', { level: 1, name: 'Little Collins Espresso' });
+    await screen.findByRole('heading', { level: 1, name: 'Peel Street Espresso' });
 
     for (const section of ['Business identity', 'Categories and services', 'Adelaide location', 'Contact details', 'Private enquiry address', 'Publishing', 'Verification', 'Record history']) {
       expect(screen.getByRole('heading', { level: 2, name: section })).toBeInTheDocument();
@@ -201,10 +201,10 @@ describe('businesses pages', () => {
 
   it('moves a published listing through the address control, leaving the old address working', async () => {
     renderWithProviders(<AppRoutes />, { initialEntries: ['/admin/businesses/b-published'], authProvider: providerWithPermissions(['listings.read', 'listings.update', 'listings.publish']) });
-    await screen.findByRole('heading', { level: 1, name: 'Little Collins Espresso' });
+    await screen.findByRole('heading', { level: 1, name: 'Peel Street Espresso' });
 
     // The address is shown, not typed into, until Edit is pressed.
-    expect(screen.getByText('/business/little-collins-espresso')).toBeInTheDocument();
+    expect(screen.getByText('/business/peel-street-espresso')).toBeInTheDocument();
     const ue = user();
     await ue.click(screen.getByRole('button', { name: 'Edit' }));
     const field = screen.getByLabelText('Web address');
@@ -223,7 +223,7 @@ describe('businesses pages', () => {
 
   it('refuses an address that is not a slug, before asking the server', async () => {
     renderWithProviders(<AppRoutes />, { initialEntries: ['/admin/businesses/b-published'], authProvider: providerWithPermissions(['listings.read', 'listings.update', 'listings.publish']) });
-    await screen.findByRole('heading', { level: 1, name: 'Little Collins Espresso' });
+    await screen.findByRole('heading', { level: 1, name: 'Peel Street Espresso' });
     const ue = user();
     await ue.click(screen.getByRole('button', { name: 'Edit' }));
     await ue.clear(screen.getByLabelText('Web address'));
@@ -235,7 +235,7 @@ describe('businesses pages', () => {
 
   it('keeps the save action in reach and says whether there is anything unsaved', async () => {
     renderWithProviders(<AppRoutes />, { initialEntries: ['/admin/businesses/b1'], authProvider: providerWithPermissions(['listings.read', 'listings.update']) });
-    await screen.findByRole('heading', { level: 1, name: 'Little Collins Espresso' });
+    await screen.findByRole('heading', { level: 1, name: 'Peel Street Espresso' });
 
     expect(screen.getByText(/1 thing still to fix before it can be published/i)).toBeInTheDocument();
     const ue = user();

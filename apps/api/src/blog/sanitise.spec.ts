@@ -37,8 +37,8 @@ describe('editorial sanitisation (SRS SEC 001, BLOG 001)', () => {
   });
 
   it('keeps a required alt attribute and lazy loading on images', () => {
-    const html = renderSanitisedBody('![Melbourne laneway](https://example.com/a.jpg)');
-    expect(html).toContain('alt="Melbourne laneway"');
+    const html = renderSanitisedBody('![Adelaide laneway](https://example.com/a.jpg)');
+    expect(html).toContain('alt="Adelaide laneway"');
     expect(html).toContain('loading="lazy"');
     expect(sanitiseHtmlFragment('<img src="https://example.com/a.jpg">')).toContain('alt=""');
   });
@@ -87,14 +87,14 @@ describe('renderSanitisedBody (rich-editor HTML)', () => {
   });
 
   it('keeps figures with captions and only the editor figure classes', () => {
-    const html = renderSanitisedBody('<figure class="ms-figure ms-figure--wide evil"><img src="https://cdn.example/a.webp" alt="A tram"><figcaption>Swanston Street</figcaption></figure>', 'html');
-    expect(html).toContain('<figure class="ms-figure ms-figure--wide">');
-    expect(html).toContain('<figcaption>Swanston Street</figcaption>');
+    const html = renderSanitisedBody('<figure class="as-figure as-figure--wide evil"><img src="https://cdn.example/a.webp" alt="A tram"><figcaption>King William Street</figcaption></figure>', 'html');
+    expect(html).toContain('<figure class="as-figure as-figure--wide">');
+    expect(html).toContain('<figcaption>King William Street</figcaption>');
     expect(html).not.toContain('evil');
   });
 
   it('keeps valid embed and business markers, and never stores an iframe', () => {
-    const youtube = renderSanitisedBody('<div class="ms-embed" data-embed="youtube" data-embed-id="dQw4w9WgXcQ" data-embed-title="Laneway tour" onclick="x()">YouTube video</div>', 'html');
+    const youtube = renderSanitisedBody('<div class="as-embed" data-embed="youtube" data-embed-id="dQw4w9WgXcQ" data-embed-title="Laneway tour" onclick="x()">YouTube video</div>', 'html');
     expect(youtube).toContain('data-embed="youtube"');
     expect(youtube).toContain('data-embed-id="dQw4w9WgXcQ"');
     expect(youtube).not.toContain('onclick');
@@ -125,9 +125,9 @@ describe('renderSanitisedBody (rich-editor HTML)', () => {
 
 describe('document links (change log 1.16)', () => {
   it('keeps the library id and the document class on a link, and nothing else extra', () => {
-    const html = renderSanitisedBody('<p><a href="https://media.example/media/cmu2a3ydk0000yjumqnk96o5a/x.pdf" data-media-id="cmu2a3ydk0000yjumqnk96o5a" class="ms-doc-link evil" onclick="x()">Price list</a> <a href="/about" data-media-id="not an id">About</a></p>', 'html');
+    const html = renderSanitisedBody('<p><a href="https://media.example/media/cmu2a3ydk0000yjumqnk96o5a/x.pdf" data-media-id="cmu2a3ydk0000yjumqnk96o5a" class="as-doc-link evil" onclick="x()">Price list</a> <a href="/about" data-media-id="not an id">About</a></p>', 'html');
     expect(html).toContain('data-media-id="cmu2a3ydk0000yjumqnk96o5a"');
-    expect(html).toContain('class="ms-doc-link"');
+    expect(html).toContain('class="as-doc-link"');
     expect(html).not.toContain('evil');
     expect(html).not.toContain('onclick');
     expect(html).not.toContain('not an id');

@@ -1,4 +1,4 @@
-import { json } from 'express';
+import { json, type Express } from 'express';
 import type { INestApplication } from '@nestjs/common';
 import helmet from 'helmet';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -39,6 +39,15 @@ export interface ConfigureAppOptions {
  * error envelope. Anything added here is exercised by the test suite.
  */
 export function configureApp(app: NestExpressApplication, options: ConfigureAppOptions = {}): INestApplication {
+  // Express matches routes case-insensitively by default, which let
+  // `/api/v1/Admin/...` reach admin handlers past the path-based guards. Each
+  // route has exactly one spelling. Nest's adapter creates the Express router
+  // before this runs, so the setting alone is too late; the router reads its
+  // own flag as each route is added, and Nest adds its routes at init, after
+  // this. app.e2e-spec.ts fails if an upgrade stops honouring it.
+  const express = app.getHttpAdapter().getInstance() as Express & { router: { caseSensitive?: boolean } };
+  express.set('case sensitive routing', true);
+  express.router.caseSensitive = true;
   // Client IP is taken from X-Forwarded-For only for the configured number of
   // trusted hops (0 = never). Express then exposes req.ip for limits/audit.
   app.set('trust proxy', options.trustProxy ?? 0);

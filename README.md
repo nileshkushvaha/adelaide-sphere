@@ -1,10 +1,10 @@
-# Melbourne Sphere
+# Adelaide Sphere
 
-Melbourne, Australia business directory and blog. pnpm monorepo containing a Next.js public site and a NestJS REST API, with a Refine admin application and a BullMQ worker to follow.
+Adelaide, South Australia business directory and blog. pnpm monorepo containing a Next.js public site and a NestJS REST API, with a Refine admin application and a BullMQ worker to follow.
 
 AI/session context: [CLAUDE.md](CLAUDE.md), [docs/ai/current-state.md](docs/ai/current-state.md) and [docs/ai/srs-index.md](docs/ai/srs-index.md).
 
-Requirements source of truth: [docs/Melbourne_Sphere_Technical_SRS_v1.md](docs/Melbourne_Sphere_Technical_SRS_v1.md). (It was converted from a Word document that is not kept in this repository; the Markdown file is the working reference and is not synchronised with anything automatically.) Setup history and decisions: [docs/setup-progress.md](docs/setup-progress.md).
+Requirements source of truth: [docs/Adelaide_Sphere_Technical_SRS_v1.md](docs/Adelaide_Sphere_Technical_SRS_v1.md). (It was converted from a Word document that is not kept in this repository; the Markdown file is the working reference and is not synchronised with anything automatically.) Setup history and decisions: [docs/setup-progress.md](docs/setup-progress.md).
 
 ## Prerequisites
 
@@ -44,10 +44,10 @@ pnpm install --frozen-lockfile
 | `pnpm typecheck` | web: `next typegen && tsc --noEmit`; api and database: `tsc --noEmit`; admin: app + node configs (`typecheck:admin`) |
 | `pnpm test` | unit tests: database package + API + admin + web (Vitest, no database needed); `test:admin` for the admin app alone |
 | `pnpm test:e2e` | API end-to-end tests (Vitest + supertest, no database) |
-| `pnpm test:integration` | database + API integration tests against the local MySQL and Redis (`pnpm infra:up` first); the API suite targets the isolated `melbourne_sphere_test` database (refuses any name not ending in `_test`) and Redis logical database 1 |
+| `pnpm test:integration` | database + API integration tests against the local MySQL and Redis (`pnpm infra:up` first); the API suite targets the isolated `adelaide_sphere_test` database (refuses any name not ending in `_test`) and Redis logical database 1 |
 | `pnpm contracts:generate` / `pnpm contracts:check` | regenerate / verify the OpenAPI document and generated types in `packages/contracts` (`check` runs the verification) |
 | `pnpm --filter api admin:bootstrap` | one-time creation of the first Super Admin (see below); `admin:seed-rbac` re-seeds permissions/roles |
-| `pnpm --filter api taxonomy:seed` | idempotent baseline fixtures: City of Melbourne council-area local areas (SRS SCP 004 baseline until D01) plus starter categories/services; audited |
+| `pnpm --filter api taxonomy:seed` | idempotent baseline fixtures: Inner Adelaide local areas (SRS SCP 004 baseline until D01) plus starter categories/services; audited |
 | `pnpm check` | db build, migration policy check, lint, typecheck, unit, e2e, build, contract check in sequence |
 | `pnpm infra:up` / `infra:down` / `infra:status` / `infra:logs` / `infra:validate` | local MySQL + Redis via Docker Compose (see below); `down` keeps data |
 | `pnpm db:build` / `db:generate` / `db:validate` | Prisma client generation and compile of `packages/database` (`check` runs `db:build` first) |
@@ -62,7 +62,7 @@ Each app reads environment variables from its **own** directory; nothing reads a
 
 | App | File | Loaded by | Variables |
 | --- | --- | --- | --- |
-| api | `apps/api/.env` (copy `apps/api/.env.example`) | the API itself, via `@nestjs/config`, from a path resolved relative to the app (so `pnpm dev:api` from the root and `pnpm start:dev` from `apps/api` behave the same). Real environment variables override the file. The file is ignored when `NODE_ENV=test`. | `NODE_ENV` (development \| test \| production, default development), `PORT` (integer 1–65535, default 3001), `DATABASE_URL` (required, `mysql://…`, validated structurally; never echoed), `DATABASE_ALLOW_PUBLIC_KEY_RETRIEVAL` (true/false, default false; true locally, see `packages/database/README.md`), `TRUST_PROXY` (integer proxy hops, default 0; 1 behind the production reverse proxy), `REDIS_URL` (required), `APP_SECRET_KEY` (required, ≥32 random chars), `TRUSTED_ORIGINS`, `SESSION_COOKIE_SECURE`, `SESSION_IDLE_MINUTES`, `SESSION_ABSOLUTE_HOURS`, `ARGON2_*`, `PUBLIC_ADMIN_URL`, `MAIL_TRANSPORT`, `OPENAPI_ENABLED`, `FIELD_ENCRYPTION_KEY` (required, base64 of 32 random bytes) — see `apps/api/.env.example`; production refuses insecure values |
+| api | `apps/api/.env` (copy `apps/api/.env.example`) | the API itself, via `@nestjs/config`, from a path resolved relative to the app (so `pnpm dev:api` from the root and `pnpm start:dev` from `apps/api` behave the same). Real environment variables override the file. The file is ignored when `NODE_ENV=test`. | `NODE_ENV` (development \| test \| production, default development), `PORT` (integer 1–65535, default 4001), `DATABASE_URL` (required, `mysql://…`, validated structurally; never echoed), `DATABASE_ALLOW_PUBLIC_KEY_RETRIEVAL` (true/false, default false; true locally, see `packages/database/README.md`), `TRUST_PROXY` (integer proxy hops, default 0; 1 behind the production reverse proxy), `REDIS_URL` (required), `APP_SECRET_KEY` (required, ≥32 random chars), `TRUSTED_ORIGINS`, `SESSION_COOKIE_SECURE`, `SESSION_IDLE_MINUTES`, `SESSION_ABSOLUTE_HOURS`, `ARGON2_*`, `PUBLIC_ADMIN_URL`, `MAIL_TRANSPORT`, `OPENAPI_ENABLED`, `FIELD_ENCRYPTION_KEY` (required, base64 of 32 random bytes) — see `apps/api/.env.example`; production refuses insecure values |
 | database | `packages/database/.env` (copy `packages/database/.env.example`) | the Prisma CLI via `prisma.config.ts`, only when `DATABASE_URL` is not already in the environment; path resolved relative to the config file | `DATABASE_URL`, `SHADOW_DATABASE_URL` (migrate dev only) |
 | web | `apps/web/.env.local` (see `apps/web/.env.example`) | Next.js, from `apps/web/.env*`, when the server starts | `API_ORIGIN` (server-only, default `http://127.0.0.1:4001`) |
 | admin | `apps/admin/.env` (see `apps/admin/.env.example`) | `vite.config.ts` only (dev server / preview); never the browser bundle | `ADMIN_API_PROXY_TARGET` (default `http://127.0.0.1:4001`) |
@@ -85,7 +85,7 @@ Invalid API configuration aborts startup with exit code 1 and a message naming t
 
 - **Model**: `admin_users`, `roles`, `permissions`, `role_permissions`, `admin_roles`, `admin_sessions`, `password_reset_tokens`, `audit_logs` (Prisma, plural snake_case tables). One system role `super_admin` holds every permission in the catalogue (`apps/api/src/identity/permissions.ts`).
 - **Passwords**: Argon2id (`@node-rs/argon2`), OWASP-minimum parameters enforced by config, 12–256 characters, automatic rehash on login when parameters are raised.
-- **Sessions**: opaque 256-bit token in the `ms_admin_session` cookie (`HttpOnly`, `Secure` in production, `SameSite=Strict`, `Path=/api/v1/admin`); SHA-256 hash stored server-side; 30 min idle / 12 h absolute; logout and password reset revoke server records. No tokens in web storage.
+- **Sessions**: opaque 256-bit token in the `as_admin_session` cookie (`HttpOnly`, `Secure` in production, `SameSite=Strict`, `Path=/api/v1/admin`); SHA-256 hash stored server-side; 30 min idle / 12 h absolute; logout and password reset revoke server records. No tokens in web storage.
 - **CSRF**: mutations under `/api/v1/admin` must carry a trusted `Origin` (else `Referer`, else `Sec-Fetch-Site: same-origin`); `TRUSTED_ORIGINS` lists the allowed browser origins.
 - **Throttling**: Redis counters, 5 failed logins per 15 min per IP and per account (escalating to 1 h), `429` + `Retry-After`; if Redis is unavailable sign-in returns `503` rather than skipping the check.
 - **Authorisation**: global guards on every `/api/v1/admin/*` route: session → `@RequirePermissions(...)`; a route without a declaration is denied. Hiding UI is never authorisation.
@@ -103,7 +103,7 @@ It seeds permissions/roles, refuses to run if any administrator exists, and reco
 
 ## Directory taxonomy (Phase 11)
 
-- Fixed Melbourne context from `GET /api/v1/site/context` (city, state, country, timezone, locale, boundary note); no city/state/country selectors or CRUD exist anywhere (SRS SCP 001).
+- Fixed Adelaide context from `GET /api/v1/site/context` (city, state, country, timezone, locale, boundary note); no city/state/country selectors or CRUD exist anywhere (SRS SCP 001).
 - Public reads, active items only, `Cache-Control: public, max-age=300`: `GET /api/v1/categories` (two-level tree), `/services` (with synonyms), `/areas` (approved local areas).
 - Admin (`taxonomy.manage`): `/api/v1/admin/categories|services|areas` list (`q`, `status`, `sort` allowlist, `order`, `page`, `pageSize ≤ 50`), create (slug generated from the name unless given; lowercase-hyphen; unique even when inactive), PATCH with `expectedVersion` (409 `STALE_VERSION`), explicit `activate`/`deactivate` actions. Rules: categories nest at most two levels (409 `CATEGORY_DEPTH`/`CATEGORY_CYCLE`), a parent with active children cannot be deactivated, a child cannot be activated under an inactive parent, and terms referenced by active listings cannot be deactivated (409 `TERM_IN_USE`; the listing reference check is wired in Phase 12). Every change is audited.
 - Admin screens: Categories, Services, Local areas (search/status/sort in the URL, create/edit dialog with field errors and stale-edit handling, activate/deactivate with confirmation).
@@ -116,7 +116,7 @@ It seeds permissions/roles, refuses to run if any administrator exists, and reco
 
 ## Listing hours, links and contacts (Phase 13)
 
-- `GET/PUT /api/v1/admin/businesses/{id}/hours`: weekly schedule keyed `monday`…`sunday`, each `closed`, `open24` or `intervals` (`HH:MM` wall-clock times in Australia/Melbourne, `24:00` = end of day, `endNextDay` for overnight trading), plus date exceptions (`closed`, `open24`, `custom`). `mode: unknown` means "not recorded" and is never rendered as open or closed. PUT replaces the whole schedule atomically with `expectedVersion` and returns the status evaluated now (`open | closed | unknown`, `until`, `source`). Validation errors carry field paths such as `weekly.monday.intervals.1.start`.
+- `GET/PUT /api/v1/admin/businesses/{id}/hours`: weekly schedule keyed `monday`…`sunday`, each `closed`, `open24` or `intervals` (`HH:MM` wall-clock times in Australia/Adelaide, `24:00` = end of day, `endNextDay` for overnight trading), plus date exceptions (`closed`, `open24`, `custom`). `mode: unknown` means "not recorded" and is never rendered as open or closed. PUT replaces the whole schedule atomically with `expectedVersion` and returns the status evaluated now (`open | closed | unknown`, `until`, `source`). Validation errors carry field paths such as `weekly.monday.intervals.1.start`.
 - `publicPhone` must be an Australian number (landline, mobile, 13/1300/1800); it is stored in national display form and `telHref` is derived for the public "Call" action. `publicUrl` and `links[]` (facebook, instagram, x, linkedin, youtube, tiktok, other) must be http(s) URLs without credentials; known kinds must point at their own domain, one per kind, at most 8.
 - Admin: hours editor (per-day state, intervals with "closes next day", exceptions, evaluated status) and link rows on the business page.
 
@@ -131,7 +131,7 @@ It seeds permissions/roles, refuses to run if any administrator exists, and reco
 - `GET /api/v1/home`: hero headline, 2–5 rotating phrases and optional counters (published businesses, categories and areas), returned only when an administrator enables them.
 - `GET/PUT /api/v1/admin/settings/home` (`settings.manage`): validated, versioned (`expectedVersion`, 0 before the first save) and audited site settings stored in `site_settings`.
 - `GET /api/v1/search/suggestions?q=` (≥ 2 characters): grouped category, service (label or synonym) and published-business suggestions, at most eight, with a per-IP ceiling of 30 requests a minute (429 + `Retry-After`; 503 if the limiter is unavailable).
-- Home page: server-rendered hero with a stable H1, a rotating phrase that respects `prefers-reduced-motion`, pauses when the tab is hidden and has a pause/resume control, plus the fixed-Melbourne search panel (GET to `/business`) with progressive suggestions. Admin: the Site settings screen edits the headline, phrases and counter toggle.
+- Home page: server-rendered hero with a stable H1, a rotating phrase that respects `prefers-reduced-motion`, pauses when the tab is hidden and has a pause/resume control, plus the fixed-Adelaide search panel (GET to `/business`) with progressive suggestions. Admin: the Site settings screen edits the headline, phrases and counter toggle.
 
 ## Reviews, ratings and moderation (Phase 16)
 
@@ -151,7 +151,7 @@ It seeds permissions/roles, refuses to run if any administrator exists, and reco
 - Admin API (`posts.write` / `posts.publish`): `/api/v1/admin/authors`, `/blog-categories`, `/blog-tags` (slugs, sanitised landing content, `expectedVersion`, activate/deactivate blocked by `TERM_IN_USE`) and `/api/v1/admin/posts` with explicit `publish`, `schedule`, `unpublish`, `archive`, `restore`. Publishing enforces the BLOG 002 requirements (409 `PUBLICATION_BLOCKED`), locks the slug after first publication and writes an outbox event in the same transaction.
 - Articles are written in **Markdown**; the server renders and sanitises them with an allowlist (`sanitize-html`), so scripts, inline styles, iframes and unsafe URL schemes never reach a page or an admin preview. The stored HTML is exactly what the preview and the public page will show.
 - `GET /api/v1/admin/posts/{id}/preview` is admin-only, `no-store, private` and `X-Robots-Tag: noindex, nofollow`; there is no public draft route.
-- Scheduled articles publish through a periodic catch-up scan: admins choose Melbourne time, the API stores UTC, and a late or repeated scan publishes each due article exactly once.
+- Scheduled articles publish through a periodic catch-up scan: admins choose Adelaide time, the API stores UTC, and a late or repeated scan publishes each due article exactly once.
 
 ## Public blog and comments (Phase 19)
 
@@ -185,7 +185,7 @@ It seeds permissions/roles, refuses to run if any administrator exists, and reco
 
 - **Information pages** (`Configuration → Information pages`): About, Contact, Privacy, Terms and Review guidelines. Content is sanitised rich text with a revision on every change to published text. Publishing is refused while the copy is a stub, contains placeholder wording, or — on the contact page — the contact address is missing, invalid or on an example domain. The public footer links only pages that are actually published.
 - **Featured listings** (`Directory → Featured listings`): manual editorial placements with a position and an optional end date. At most three appear for any search, they must still match the visitor's filters and be published, and they are excluded from the organic results, their count and their pagination. There are no payment fields anywhere.
-- **Home banner**: up to six Melbourne photographs chosen in Site settings, shown behind the hero with a navy overlay, per-slide focal points and captions. They cross-fade with previous/next, pause and per-image controls, and anyone who prefers reduced motion sees only the first. Without images the hero falls back to the solid navy panel.
+- **Home banner**: up to six Adelaide photographs chosen in Site settings, shown behind the hero with a navy overlay, per-slide focal points and captions. They cross-fade with previous/next, pause and per-image controls, and anyone who prefers reduced motion sees only the first. Without images the hero falls back to the solid navy panel.
 - **Caching**: public search results are cached in Redis under a publication namespace, so a publish, unpublish, moderation decision, feature change, page or settings edit retires them at once. The same change writes a `cache.invalidate` event in its own transaction; the worker purges the web tier through `POST /api/revalidate` (shared secret, tag allowlist) and retries until it succeeds, so a removal never waits for a TTL.
 
 ## Operations (Phase 24)
@@ -260,7 +260,7 @@ The API connects to MySQL through Prisma (`packages/database`); Redis is not con
 
 ## Status
 
-Setup phases 1–4 are complete (dependency cleanup, frontend and backend verification, repository conventions, API foundation and frontend connection); Phases 5–21 are complete and verified (local MySQL/Redis; Prisma foundation; admin shell; collation/test-database foundation; administrator authentication, sessions and RBAC; account lifecycle, audit log and optional TOTP; directory taxonomy and Melbourne local areas; business listings core; listing hours, links and contact validation; the public directory; the hero, home settings and search suggestions; reviews, ratings, abuse reports and moderation; enquiries with the transactional outbox and the BullMQ worker; the blog editorial core; public blog pages and comment moderation; the media pipeline; SEO with sitemaps, structured data and redirects). Phases 22–24 are complete (editorial depth and interface quality, information pages, featured placements, caching and invalidation; accessibility and performance; operations, CI, images, monitoring and backups), Phase 25 adds the UAT journeys, the capacity profile and a rehearsed restore drill, Phases 26–27 recompose the public site (home page, contact page and form, blog and listing detail with the published rating distribution), and Phase 28 adds the General settings screen and the states around them, described below. `docs/pre-audit-report.md` records the internal pre-audit and the remaining launch gates. See `docs/setup-progress.md` for verified versions, decisions and the maintenance list (including the ESLint 9 end-of-life item).
+Setup phases 1–4 are complete (dependency cleanup, frontend and backend verification, repository conventions, API foundation and frontend connection); Phases 5–21 are complete and verified (local MySQL/Redis; Prisma foundation; admin shell; collation/test-database foundation; administrator authentication, sessions and RBAC; account lifecycle, audit log and optional TOTP; directory taxonomy and Adelaide local areas; business listings core; listing hours, links and contact validation; the public directory; the hero, home settings and search suggestions; reviews, ratings, abuse reports and moderation; enquiries with the transactional outbox and the BullMQ worker; the blog editorial core; public blog pages and comment moderation; the media pipeline; SEO with sitemaps, structured data and redirects). Phases 22–24 are complete (editorial depth and interface quality, information pages, featured placements, caching and invalidation; accessibility and performance; operations, CI, images, monitoring and backups), Phase 25 adds the UAT journeys, the capacity profile and a rehearsed restore drill, Phases 26–27 recompose the public site (home page, contact page and form, blog and listing detail with the published rating distribution), and Phase 28 adds the General settings screen and the states around them, described below. `docs/pre-audit-report.md` records the internal pre-audit and the remaining launch gates. See `docs/setup-progress.md` for verified versions, decisions and the maintenance list (including the ESLint 9 end-of-life item).
 
 ## General settings, brand marks, loading and error states (Phase 28)
 

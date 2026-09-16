@@ -45,14 +45,14 @@ const HELP_TOPICS: IconPoint[] = [
 ];
 
 const GOOD_TO_KNOW: IconPoint[] = [
-  { icon: ClockIcon, title: 'Read during Melbourne business hours' },
+  { icon: ClockIcon, title: 'Read during Adelaide business hours' },
   { icon: ListChecksIcon, title: 'New listings take a few days to check' },
   { icon: RefreshCwIcon, title: 'Corrections are prioritised' },
   { icon: Link2Icon, title: 'Include the page name or link' },
   { icon: LockKeyholeIcon, title: 'Never send passwords or payment details' },
 ];
 
-const linkClass = 'break-words text-link underline-offset-4 ms-text-link [overflow-wrap:anywhere]';
+const linkClass = 'break-words text-link underline-offset-4 as-text-link [overflow-wrap:anywhere]';
 
 /** A price card links here with `?plan=`; that plan becomes the form's topic. Anything else is ignored. */
 const PLAN_TOPIC = { guest_post: 'Guest post', business_listing: 'Business listing plan' } as const satisfies Record<string, ContactTopic>;
@@ -76,14 +76,14 @@ export default async function ContactPage({ searchParams }: PageProps<'/contact'
   ];
 
   const reach = (
-    <section aria-labelledby="contact-details-heading" className="ms-content-panel flex flex-col gap-6">
+    <section aria-labelledby="contact-details-heading" className="as-content-panel flex flex-col gap-6">
       <div>
         <h2 id="contact-details-heading" className="font-display text-2xl tracking-tight sm:text-3xl">
           How to reach us
         </h2>
         <p className="mt-2 max-w-2xl leading-relaxed text-text-muted">No account needed — every request is read and checked by an editor.</p>
       </div>
-      <ul className="ms-contact-methods flex flex-col gap-3">
+      <ul className="as-contact-methods flex flex-col gap-3">
         <li className="flex items-center gap-4 rounded-card border border-border bg-surface-muted p-4 sm:p-5">
           <IconTile icon={MailIcon} />
           <div className="min-w-0">
@@ -131,12 +131,12 @@ export default async function ContactPage({ searchParams }: PageProps<'/contact'
   ) : null;
 
   return (
-    <article className="ms-product-page">
+    <article className="as-product-page">
       <InformationHero
         title={`Contact ${settings.name}`}
         eyebrow="Get in touch"
         intro={`Questions about a listing, a correction or ${settings.name} itself? Our editorial team is here to help.`}
-        className="ms-editorial-band ms-ocean-band"
+        className="as-editorial-band as-ocean-band"
       />
 
       <ProductPageLayout

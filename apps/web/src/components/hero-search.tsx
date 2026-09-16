@@ -116,7 +116,7 @@ export function HeroSearch({ categories }: { categories: CategoryOption[] }) {
       aria-label="Search Adelaide businesses"
       // Above the banner's own controls and photo credit, which come later in
       // the hero and were painting over the open suggestion list.
-      className="ms-hero-search ms-glass-light relative z-30 mt-6 w-full max-w-5xl rounded-[1.75rem] p-4 text-panel-text sm:p-5"
+      className="as-hero-search as-glass-light relative z-30 mt-6 w-full max-w-5xl rounded-[1.75rem] p-4 text-panel-text sm:p-5"
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <p className="font-display text-base font-bold text-panel-text sm:text-lg">Find your next local favourite</p>
@@ -127,7 +127,7 @@ export function HeroSearch({ categories }: { categories: CategoryOption[] }) {
         </p>
       </div>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
-        <div ref={boxRef} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false); }} className="ms-search-field relative min-w-0 flex-1 rounded-2xl border border-panel-border bg-panel-muted/60">
+        <div ref={boxRef} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false); }} className="as-search-field relative min-w-0 flex-1 rounded-2xl border border-panel-border bg-panel-muted/60">
           <div className="flex min-h-20 flex-col justify-center px-4 py-3">
             <label htmlFor={inputId} className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-panel-text-muted">
               What are you looking for?
@@ -220,7 +220,7 @@ export function HeroSearch({ categories }: { categories: CategoryOption[] }) {
 
         <button
           type="submit"
-          className="inline-flex min-h-16 shrink-0 items-center justify-center gap-2 rounded-2xl ms-primary-action bg-sky-700 px-8 text-base font-semibold text-white transition-colors hover:bg-sky-600 lg:min-h-20"
+          className="inline-flex min-h-16 shrink-0 items-center justify-center gap-2 rounded-2xl as-primary-action bg-sky-700 px-8 text-base font-semibold text-white transition-colors hover:bg-sky-600 lg:min-h-20"
         >
           <SearchIcon aria-hidden="true" className="size-5" />
           Search

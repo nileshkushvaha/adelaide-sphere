@@ -43,31 +43,31 @@ export function ActivityRow({ entry, variant = 'full', onShowRequest }: { entry:
   ].filter(Boolean);
 
   return (
-    <li className={`ms-activity-row ms-activity-row--${variant}${failure ? ' is-failure' : ''}`}>
-      <div className="ms-activity-row__main">
-        <span className={`ms-activity-icon ms-activity-icon--${area}`}>{activityAreaIcon(area)}</span>
-        <div className="ms-activity-row__body">
-          <p className="ms-activity-row__sentence">
-            <span className="ms-activity-row__actor">{activitySubject(entry)} </span>
+    <li className={`as-activity-row as-activity-row--${variant}${failure ? ' is-failure' : ''}`}>
+      <div className="as-activity-row__main">
+        <span className={`as-activity-icon as-activity-icon--${area}`}>{activityAreaIcon(area)}</span>
+        <div className="as-activity-row__body">
+          <p className="as-activity-row__sentence">
+            <span className="as-activity-row__actor">{activitySubject(entry)} </span>
             {activitySentence(entry).map((part, index) =>
               typeof part === 'string' ? (
                 <span key={index}>{part}</span>
               ) : part.href && mayOpen(part.href) ? (
-                <Link key={index} to={part.href} className="ms-activity-row__target">
+                <Link key={index} to={part.href} className="as-activity-row__target">
                   {part.strong}
                 </Link>
               ) : (
-                <strong key={index} className="ms-activity-row__target">
+                <strong key={index} className="as-activity-row__target">
                   {part.strong}
                 </strong>
               ),
             )}
           </p>
-          {variant !== 'compact' && caption.length > 0 && <p className="ms-activity-row__meta">{caption.join(' · ')}</p>}
+          {variant !== 'compact' && caption.length > 0 && <p className="as-activity-row__meta">{caption.join(' · ')}</p>}
         </div>
-        <div className="ms-activity-row__side">
+        <div className="as-activity-row__side">
           <Tooltip title={`${formatDateTime(when)}, Adelaide time`}>
-            <time dateTime={when} className="ms-activity-row__time">
+            <time dateTime={when} className="as-activity-row__time">
               {adelaideTime(when)}
             </time>
           </Tooltip>
@@ -77,7 +77,7 @@ export function ActivityRow({ entry, variant = 'full', onShowRequest }: { entry:
             <Button
               type="text"
               size="small"
-              className={`ms-activity-row__toggle${open ? ' is-open' : ''}`}
+              className={`as-activity-row__toggle${open ? ' is-open' : ''}`}
               aria-expanded={open}
               aria-controls={detailId}
               aria-label={count > 1 ? undefined : open ? 'Hide details' : 'Show details'}
@@ -91,7 +91,7 @@ export function ActivityRow({ entry, variant = 'full', onShowRequest }: { entry:
         </div>
       </div>
       {open && (
-        <div id={detailId} className={count > 1 && entry.groupKey ? 'ms-activity-row__group' : 'ms-activity-row__detail'}>
+        <div id={detailId} className={count > 1 && entry.groupKey ? 'as-activity-row__group' : 'as-activity-row__detail'}>
           {count > 1 && entry.groupKey ? <ActivityGroupMembers group={entry} onShowRequest={onShowRequest} /> : <ActivityDetail entry={entry} onShowRequest={onShowRequest} />}
         </div>
       )}

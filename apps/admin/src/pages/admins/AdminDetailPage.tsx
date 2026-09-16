@@ -137,7 +137,7 @@ export function AdminDetailPage() {
         <Table<SessionListItem>
           rowKey="id"
           size="small"
-          className="ms-scroll-table"
+          className="as-scroll-table"
           loading={sessions.status === 'loading'}
           dataSource={activeSessions}
           pagination={false}

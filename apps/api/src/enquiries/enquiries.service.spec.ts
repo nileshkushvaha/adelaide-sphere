@@ -10,7 +10,7 @@ const input = (over: Partial<SubmitEnquiryDto> = {}): SubmitEnquiryDto => ({
   name: 'Sarah Wilson',
   email: 'sarah@example.com',
   subject: 'Correct a published listing',
-  message: 'The opening hours on the Carlton bakery listing are out of date.',
+  message: 'The opening hours on the Norwood bakery listing are out of date.',
   acknowledged: true,
   captchaToken: 'token',
   ...over,
@@ -41,7 +41,7 @@ describe('EnquiriesService.submit — public-write guard (SRS ENQ 002, SEC 002)'
   });
 
   it('verifies a listing enquiry token against the enquiry action', async () => {
-    const { service, guardPublicWrite } = serviceWith({ business: { id: 'b1', name: 'Carlton Bakery', privateEnquiryEmailEncrypted: 'sealed' } });
+    const { service, guardPublicWrite } = serviceWith({ business: { id: 'b1', name: 'Norwood Bakery', privateEnquiryEmailEncrypted: 'sealed' } });
     await expect(service.submit('b1', input(), ctx)).rejects.toBe(STOP);
     expect(guardPublicWrite).toHaveBeenCalledWith(expect.objectContaining({ action: 'enquiry' }), ctx);
   });

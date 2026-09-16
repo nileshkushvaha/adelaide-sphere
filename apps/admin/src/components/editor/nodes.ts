@@ -55,7 +55,7 @@ export const ArticleFigure = Node.create({
             alt: img.getAttribute('alt') ?? '',
             mediaId: img.getAttribute('data-media-id'),
             caption: node.querySelector('figcaption')?.textContent ?? '',
-            size: node.classList.contains('ms-figure--wide') ? 'wide' : 'normal',
+            size: node.classList.contains('as-figure--wide') ? 'wide' : 'normal',
           };
         },
       },
@@ -65,7 +65,7 @@ export const ArticleFigure = Node.create({
   renderHTML({ HTMLAttributes }) {
     const attrs = HTMLAttributes as unknown as FigureAttributes;
     const img: [string, Record<string, string>] = ['img', { src: attrs.src, alt: attrs.alt ?? '', loading: 'lazy', ...(attrs.mediaId ? { 'data-media-id': attrs.mediaId } : {}) }];
-    return ['figure', { class: attrs.size === 'wide' ? 'ms-figure ms-figure--wide' : 'ms-figure' }, img, ...(attrs.caption ? [['figcaption', {}, attrs.caption] as [string, Record<string, string>, string]] : [])];
+    return ['figure', { class: attrs.size === 'wide' ? 'as-figure as-figure--wide' : 'as-figure' }, img, ...(attrs.caption ? [['figcaption', {}, attrs.caption] as [string, Record<string, string>, string]] : [])];
   },
 });
 
@@ -126,7 +126,7 @@ export const EmbedBlock = Node.create({
 
   renderHTML({ HTMLAttributes }) {
     const attrs = HTMLAttributes as unknown as EmbedAttributes;
-    const marker: Record<string, string> = { class: 'ms-embed', 'data-embed': attrs.provider, 'data-embed-title': attrs.title ?? '' };
+    const marker: Record<string, string> = { class: 'as-embed', 'data-embed': attrs.provider, 'data-embed-title': attrs.title ?? '' };
     if (attrs.provider === 'youtube' && attrs.embedId) marker['data-embed-id'] = attrs.embedId;
     if (attrs.provider === 'map' && attrs.src) marker['data-embed-src'] = attrs.src;
     if (attrs.provider === 'business' && attrs.businessId) marker['data-business-id'] = attrs.businessId;

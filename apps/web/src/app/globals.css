@@ -13,8 +13,8 @@ html {
 }
 
 body {
-  background: var(--ms-surface-muted);
-  color: var(--ms-text);
+  background: var(--as-surface-muted);
+  color: var(--as-text);
 }
 
 /* Display headings are set in Plus Jakarta Sans (next/font supplies --font-display
@@ -29,32 +29,32 @@ body {
 
 /* Premium glass and infographic primitives. Blur is progressive enhancement;
    the opaque fallback preserves contrast when backdrop-filter is unavailable. */
-.ms-glass-light {
-  border: 1px solid var(--ms-glass-border-light);
-  background: var(--ms-glass-light);
-  box-shadow: var(--ms-shadow-lg);
+.as-glass-light {
+  border: 1px solid var(--as-glass-border-light);
+  background: var(--as-glass-light);
+  box-shadow: var(--as-shadow-lg);
 }
-.ms-glass-dark {
-  border: 1px solid var(--ms-glass-border-dark);
-  background: var(--ms-glass-dark);
+.as-glass-dark {
+  border: 1px solid var(--as-glass-border-dark);
+  background: var(--as-glass-dark);
   box-shadow: 0 30px 80px -42px rgba(0,0,0,.85);
 }
 @supports (backdrop-filter: blur(18px)) {
-  .ms-glass-light, .ms-glass-dark { backdrop-filter: blur(18px) saturate(135%); }
+  .as-glass-light, .as-glass-dark { backdrop-filter: blur(18px) saturate(135%); }
 }
 
 /* Light search panels use the darker ocean focus ring, even inside a dark hero. */
-.ms-on-dark .ms-glass-light :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-  outline-color: var(--ms-sky-700);
+.as-on-dark .as-glass-light :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline-color: var(--as-sky-700);
   outline-width: 2px;
 }
-.ms-dot-grid {
-  background-image: radial-gradient(color-mix(in srgb, var(--ms-sky-500) 18%, transparent) 1px, transparent 1px);
+.as-dot-grid {
+  background-image: radial-gradient(color-mix(in srgb, var(--as-sky-500) 18%, transparent) 1px, transparent 1px);
   background-size: 22px 22px;
 }
-.ms-section-number {
+.as-section-number {
   display: inline-flex; width: 2.5rem; height: 2.5rem; align-items: center; justify-content: center;
-  border-radius: 999px; background: var(--ms-teal-100); color: var(--ms-teal-700);
+  border-radius: 999px; background: var(--as-teal-100); color: var(--as-teal-700);
   font-size: .72rem; font-weight: 800; letter-spacing: .08em;
 }
 
@@ -73,22 +73,22 @@ body {
  * the top-right corner, which still leaves white at about 10:1 and band-muted
  * at about 6:1 (`lib/palette.test.ts` guards the base tokens).
  */
-.ms-editorial-band {
+.as-editorial-band {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background-color: var(--ms-band);
+  background-color: var(--as-band);
   /* One light source, upper right, over a band that deepens downward — so the
      heading sits on the darkest part and the empty half of the composition is
      where the light is. A diagonal base gradient fought the glow and left the
      corner opposite the heading looking merely unfinished. */
   background-image:
-    radial-gradient(120% 95% at 85% -15%, color-mix(in srgb, var(--ms-sky-500) 26%, transparent), transparent 58%),
-    radial-gradient(60% 55% at 4% 2%, color-mix(in srgb, var(--ms-sky-400) 8%, transparent), transparent 62%),
-    linear-gradient(180deg, var(--ms-band) 0%, var(--ms-band-deep) 100%);
+    radial-gradient(120% 95% at 85% -15%, color-mix(in srgb, var(--as-sky-500) 26%, transparent), transparent 58%),
+    radial-gradient(60% 55% at 4% 2%, color-mix(in srgb, var(--as-sky-400) 8%, transparent), transparent 62%),
+    linear-gradient(180deg, var(--as-band) 0%, var(--as-band-deep) 100%);
 }
 
-.ms-editorial-band::before {
+.as-editorial-band::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -100,56 +100,56 @@ body {
 }
 
 /* A lit hairline where the band meets the page below it. */
-.ms-editorial-band::after {
+.as-editorial-band::after {
   content: '';
   position: absolute;
   inset-inline: 0;
   bottom: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ms-sky-400) 40%, transparent), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--as-sky-400) 40%, transparent), transparent);
 }
 
 /* Ocean gradients keep their lightest stop dark enough for white text. */
-.ms-ocean-band {
+.as-ocean-band {
   background-image: radial-gradient(ellipse at 95% 0%, #c8102e40, transparent 55%),
-    linear-gradient(125deg, var(--ms-band-deep), #0b2a78 55%, #5a0f2a);
+    linear-gradient(125deg, var(--as-band-deep), #0b2a78 55%, #5a0f2a);
 }
-.ms-primary-action {
-  background-image: linear-gradient(110deg, var(--ms-sky-700), var(--ms-teal-700));
+.as-primary-action {
+  background-image: linear-gradient(110deg, var(--as-sky-700), var(--as-teal-700));
   transition: transform 320ms cubic-bezier(.22,1,.36,1), box-shadow 320ms ease, filter 200ms ease;
 }
-.ms-primary-action:focus-visible {
-  background-image: linear-gradient(110deg, var(--ms-sky-600), #9e0c24);
-  box-shadow: 0 0 0 2px var(--ms-surface), 0 0 0 4px var(--ms-sky-700);
+.as-primary-action:focus-visible {
+  background-image: linear-gradient(110deg, var(--as-sky-600), #9e0c24);
+  box-shadow: 0 0 0 2px var(--as-surface), 0 0 0 4px var(--as-sky-700);
   transform: translateY(-2px);
 }
 
 /* Logimart-style lift and image shine, with keyboard and reduced-motion parity. */
-.ms-card-lift, .ms-area-chip {
+.as-card-lift, .as-area-chip {
   transition: transform 320ms cubic-bezier(.22,1,.36,1), box-shadow 320ms ease, border-color 240ms ease;
 }
-.ms-card-lift:focus-within {
+.as-card-lift:focus-within {
   transform: translateY(-6px);
-  box-shadow: 0 0 0 2px var(--ms-sky-700), var(--ms-shadow-lg);
-  border-color: var(--ms-sky-700);
+  box-shadow: 0 0 0 2px var(--as-sky-700), var(--as-shadow-lg);
+  border-color: var(--as-sky-700);
 }
-.ms-area-card {
-  border: 1px solid var(--ms-band-border);
-  background: var(--ms-band-deep);
-  color: var(--ms-band-text);
+.as-area-card {
+  border: 1px solid var(--as-band-border);
+  background: var(--as-band-deep);
+  color: var(--as-band-text);
 }
-.ms-area-card:focus-within {
-  background: var(--ms-sky-100);
-  color: var(--ms-text);
-  border-color: var(--ms-sky-400);
-  box-shadow: 0 0 0 2px var(--ms-sky-400), var(--ms-shadow-lg);
+.as-area-card:focus-within {
+  background: var(--as-sky-100);
+  color: var(--as-text);
+  border-color: var(--as-sky-400);
+  box-shadow: 0 0 0 2px var(--as-sky-400), var(--as-shadow-lg);
 }
-.ms-area-card:focus-within :is(.text-band-text, .text-band-muted, .text-band-link) { color: inherit; }
-.ms-area-chip:focus-within { transform: translateY(-3px); }
-.ms-area-card:focus-visible { outline-color: var(--ms-sky-700); border-radius: var(--ms-radius-lg); }
-.ms-area-chip:focus-visible { border-radius: var(--ms-radius); }
-.ms-media-shine { position: relative; overflow: hidden; isolation: isolate; }
-.ms-media-shine::after {
+.as-area-card:focus-within :is(.text-band-text, .text-band-muted, .text-band-link) { color: inherit; }
+.as-area-chip:focus-within { transform: translateY(-3px); }
+.as-area-card:focus-visible { outline-color: var(--as-sky-700); border-radius: var(--as-radius-lg); }
+.as-area-chip:focus-visible { border-radius: var(--as-radius); }
+.as-media-shine { position: relative; overflow: hidden; isolation: isolate; }
+.as-media-shine::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -157,46 +157,46 @@ body {
   background: linear-gradient(90deg, transparent, #ffffff55, transparent);
   transform: translateX(-120%) skewX(-18deg);
 }
-.group:focus-within .ms-media-shine::after {
+.group:focus-within .as-media-shine::after {
   transform: translateX(120%) skewX(-18deg);
   transition: transform 850ms cubic-bezier(.22,1,.36,1);
 }
-.ms-card-lift:focus-within img { transform: scale(1.05); }
+.as-card-lift:focus-within img { transform: scale(1.05); }
 @media (hover: hover) {
-  .ms-primary-action:not(:disabled):hover {
-    background-image: linear-gradient(110deg, var(--ms-sky-600), #9e0c24);
+  .as-primary-action:not(:disabled):hover {
+    background-image: linear-gradient(110deg, var(--as-sky-600), #9e0c24);
     transform: translateY(-2px);
-    box-shadow: 0 0 0 2px var(--ms-surface), 0 8px 24px -8px var(--ms-sky-700);
+    box-shadow: 0 0 0 2px var(--as-surface), 0 8px 24px -8px var(--as-sky-700);
   }
-  .ms-card-lift:hover {
+  .as-card-lift:hover {
     transform: translateY(-6px);
-    box-shadow: 0 0 0 2px var(--ms-sky-700), var(--ms-shadow-lg);
-    border-color: var(--ms-sky-700);
+    box-shadow: 0 0 0 2px var(--as-sky-700), var(--as-shadow-lg);
+    border-color: var(--as-sky-700);
   }
-  .ms-area-card:hover {
-    background: var(--ms-sky-100);
-    color: var(--ms-text);
-    border-color: var(--ms-sky-400);
-    box-shadow: 0 0 0 2px var(--ms-sky-400), var(--ms-shadow-lg);
+  .as-area-card:hover {
+    background: var(--as-sky-100);
+    color: var(--as-text);
+    border-color: var(--as-sky-400);
+    box-shadow: 0 0 0 2px var(--as-sky-400), var(--as-shadow-lg);
   }
-  .ms-area-card:hover :is(.text-band-text, .text-band-muted, .text-band-link) { color: inherit; }
-  .ms-area-chip:hover { transform: translateY(-3px); }
-  .group:hover .ms-media-shine::after {
+  .as-area-card:hover :is(.text-band-text, .text-band-muted, .text-band-link) { color: inherit; }
+  .as-area-chip:hover { transform: translateY(-3px); }
+  .group:hover .as-media-shine::after {
     transform: translateX(120%) skewX(-18deg);
     transition: transform 850ms cubic-bezier(.22,1,.36,1);
   }
-  .ms-card-lift:hover img { transform: scale(1.05); }
+  .as-card-lift:hover img { transform: scale(1.05); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ms-card-lift, .ms-area-chip, .ms-primary-action, .ms-card-lift img {
+  .as-card-lift, .as-area-chip, .as-primary-action, .as-card-lift img {
     transform: none !important;
     transition: none !important;
   }
-  .ms-media-shine::after { display: none; }
+  .as-media-shine::after { display: none; }
 }
 
 /* Hero phrase transition (SRS HERO 002: 300 ms, no layout shift). */
-@keyframes ms-fade {
+@keyframes as-fade {
   from {
     opacity: 0;
     transform: translateY(0.25em);
@@ -209,20 +209,20 @@ body {
 
 /* Editorial reading style shared by article bodies and author biographies.
    One place to tune the reading experience instead of long utility strings. */
-.ms-prose {
-  --ms-prose-measure: 68ch;
+.as-prose {
+  --as-prose-measure: 68ch;
   line-height: 1.75;
 }
 
-.ms-prose > * + *,
+.as-prose > * + *,
 /* A body rendered from stored HTML arrives inside one wrapper element, so the
    rhythm has to reach through it; without this the paragraphs of an editor's
    page ran together. */
-.ms-prose > .ms-prose-html > * + * {
+.as-prose > .as-prose-html > * + * {
   margin-top: 1rem;
 }
 
-.ms-prose h2 {
+.as-prose h2 {
   /* Cleared under the sticky header, so a link to a section does not land with
      the heading hidden behind it. */
   scroll-margin-top: 6rem;
@@ -233,138 +233,138 @@ body {
   letter-spacing: -0.01em;
 }
 
-.ms-prose h3 {
+.as-prose h3 {
   margin-top: 1.75rem;
   font-size: 1.25rem;
   font-weight: 650;
 }
 
-.ms-prose h4 {
+.as-prose h4 {
   margin-top: 1.5rem;
   font-size: 1.075rem;
   font-weight: 650;
 }
 
-.ms-prose p,
-.ms-prose ul,
-.ms-prose ol {
-  max-width: var(--ms-prose-measure);
+.as-prose p,
+.as-prose ul,
+.as-prose ol {
+  max-width: var(--as-prose-measure);
 }
 
-.ms-prose ul,
-.ms-prose ol {
+.as-prose ul,
+.as-prose ol {
   padding-inline-start: 1.5rem;
 }
 
-.ms-prose ul {
+.as-prose ul {
   list-style: disc;
 }
 
-.ms-prose ol {
+.as-prose ol {
   list-style: decimal;
 }
 
-.ms-prose li + li {
+.as-prose li + li {
   margin-top: 0.35rem;
 }
 
-.ms-prose a {
-  color: var(--ms-link);
+.as-prose a {
+  color: var(--as-link);
   text-underline-offset: 2px;
   text-decoration: underline;
 }
 
-.ms-prose blockquote {
-  border-inline-start: 3px solid var(--ms-sky-600);
+.as-prose blockquote {
+  border-inline-start: 3px solid var(--as-sky-600);
   padding: 0.25rem 0 0.25rem 1rem;
-  color: var(--ms-text-muted);
+  color: var(--as-text-muted);
   font-style: italic;
 }
 
-.ms-prose pre {
+.as-prose pre {
   overflow-x: auto;
-  border-radius: var(--ms-radius);
-  background: var(--ms-navy-950);
+  border-radius: var(--as-radius);
+  background: var(--as-navy-950);
   color: #e6eef8;
   padding: 1rem 1.25rem;
 }
 
-.ms-prose code {
+.as-prose code {
   font-size: 0.925em;
 }
 
-.ms-prose :not(pre) > code {
-  background: var(--ms-surface-muted);
+.as-prose :not(pre) > code {
+  background: var(--as-surface-muted);
   border-radius: 0.25rem;
   padding: 0.1rem 0.35rem;
 }
 
-.ms-prose img {
-  border-radius: var(--ms-radius);
+.as-prose img {
+  border-radius: var(--as-radius);
   height: auto;
 }
 
-.ms-prose figure figcaption {
+.as-prose figure figcaption {
   margin-top: 0.5rem;
   font-size: 0.875rem;
-  color: var(--ms-text-muted);
+  color: var(--as-text-muted);
 }
 
-.ms-prose table {
+.as-prose table {
   width: 100%;
   border-collapse: collapse;
   display: block;
   overflow-x: auto;
 }
 
-.ms-prose th,
-.ms-prose td {
-  border: 1px solid var(--ms-border);
+.as-prose th,
+.as-prose td {
+  border: 1px solid var(--as-border);
   padding: 0.5rem 0.75rem;
   text-align: start;
 }
 
-.ms-prose th {
-  background: var(--ms-surface-muted);
+.as-prose th {
+  background: var(--as-surface-muted);
   font-weight: 600;
 }
 
-.ms-prose hr {
+.as-prose hr {
   border: 0;
-  border-top: 1px solid var(--ms-border);
+  border-top: 1px solid var(--as-border);
   margin-block: 2rem;
 }
 
 /* Navigation progress (see components/route-progress.tsx). Fixed and
    pointer-transparent, so it never covers or displaces the page; the reduced-motion
    variant holds a steady bar instead of animating (SRS NFR 006). */
-.ms-route-progress {
+.as-route-progress {
   position: fixed;
   inset-block-start: 0;
   inset-inline: 0;
   z-index: 60;
   height: 3px;
-  background: linear-gradient(90deg, var(--ms-band-link, #a9c1f7), var(--ms-link, #0b3aa4));
+  background: linear-gradient(90deg, var(--as-band-link, #a9c1f7), var(--as-link, #0b3aa4));
   transform-origin: 0 50%;
-  animation: ms-route-progress 8s cubic-bezier(0.1, 0.6, 0.2, 1) forwards;
+  animation: as-route-progress 8s cubic-bezier(0.1, 0.6, 0.2, 1) forwards;
 }
 
-.ms-route-spinner {
+.as-route-spinner {
   position: fixed;
   inset-block-end: 1rem;
   inset-inline-end: 1rem;
   z-index: 60;
   width: 1.75rem;
   height: 1.75rem;
-  border: 2px solid color-mix(in srgb, var(--ms-link, #0b3aa4) 25%, transparent);
-  border-top-color: var(--ms-link, #0b3aa4);
+  border: 2px solid color-mix(in srgb, var(--as-link, #0b3aa4) 25%, transparent);
+  border-top-color: var(--as-link, #0b3aa4);
   border-radius: 50%;
-  background: var(--ms-surface-raised, #fff);
-  box-shadow: var(--ms-shadow-md);
-  animation: ms-route-spin 0.8s linear infinite;
+  background: var(--as-surface-raised, #fff);
+  box-shadow: var(--as-shadow-md);
+  animation: as-route-spin 0.8s linear infinite;
 }
 
-@keyframes ms-route-progress {
+@keyframes as-route-progress {
   0% {
     transform: scaleX(0.02);
   }
@@ -376,18 +376,18 @@ body {
   }
 }
 
-@keyframes ms-route-spin {
+@keyframes as-route-spin {
   to {
     transform: rotate(360deg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ms-route-progress {
+  .as-route-progress {
     animation: none;
     transform: scaleX(0.6);
   }
-  .ms-route-spinner {
+  .as-route-spinner {
     animation-duration: 3s;
   }
 }
@@ -395,12 +395,12 @@ body {
 /* Beside a sidebar the reading column is already about a measure wide, so the
    68ch cap only pushed the text away from the panel and left a channel of empty
    page between them. The column bounds the line length instead. */
-.ms-prose-fill {
-  --ms-prose-measure: 100%;
+.as-prose-fill {
+  --as-prose-measure: 100%;
 }
 
 /*
- * A long-form article body (`.ms-container-read` bounds the column, so the
+ * A long-form article body (`.as-container-read` bounds the column, so the
  * per-element 68ch cap is switched off — with it on, paragraphs stopped at one
  * measure while the headings, pictures and tables beside them ran to the full
  * column, and the left edge of the text no longer lined up with anything).
@@ -409,79 +409,79 @@ body {
  * 18px on a desktop, 1.75 line height, and headings sized so a section break is
  * unmistakable at a glance while the article title above still leads.
  */
-.ms-prose-article {
-  --ms-prose-measure: 100%;
+.as-prose-article {
+  --as-prose-measure: 100%;
   font-size: clamp(1.0625rem, 0.98rem + 0.3vw, 1.125rem);
   line-height: 1.78;
 }
 
-.ms-prose-article > .ms-prose-html > * + *,
-.ms-prose-article > * + * {
+.as-prose-article > .as-prose-html > * + *,
+.as-prose-article > * + * {
   margin-top: 1.35em;
 }
 
-.ms-prose-article :is(h2, h3) {
+.as-prose-article :is(h2, h3) {
   font-family: var(--font-display), var(--font-body), sans-serif;
   letter-spacing: -0.02em;
 }
 
-.ms-prose-article h2 {
+.as-prose-article h2 {
   margin-top: 2.5em;
   font-size: clamp(1.6rem, 1.25rem + 1.1vw, 2.05rem);
   line-height: 1.2;
 }
 
-.ms-prose-article h3 {
+.as-prose-article h3 {
   margin-top: 2em;
   font-size: clamp(1.3rem, 1.1rem + 0.6vw, 1.5rem);
   line-height: 1.3;
 }
 
 /* The first heading of a body should not push a two-line gap under the hero. */
-.ms-prose-article > .ms-prose-html > :is(h2, h3):first-child {
+.as-prose-article > .as-prose-html > :is(h2, h3):first-child {
   margin-top: 0;
 }
 
 /* An article link has to be recognisable as a link without relying on colour
    alone (WCAG 1.4.1): it is underlined at rest, and the underline thickens and
    the colour deepens on hover and focus. */
-.ms-prose-article a {
+.as-prose-article a {
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
-  text-decoration-color: color-mix(in srgb, var(--ms-link) 45%, transparent);
-  transition: text-decoration-color var(--ms-motion-fast) ease, color var(--ms-motion-fast) ease;
+  text-decoration-color: color-mix(in srgb, var(--as-link) 45%, transparent);
+  transition: text-decoration-color var(--as-motion-fast) ease, color var(--as-motion-fast) ease;
 }
 
-.ms-prose-article a:hover,
-.ms-prose-article a:focus-visible {
-  color: var(--ms-sky-700);
+.as-prose-article a:hover,
+.as-prose-article a:focus-visible {
+  color: var(--as-sky-700);
   text-decoration-color: currentColor;
   text-decoration-thickness: 2px;
 }
 
 /* A blockquote in a long article is a pull quote, not an aside. */
-.ms-prose-article blockquote {
+.as-prose-article blockquote {
   margin-block: 2em;
   border-inline-start-width: 3px;
   padding: 0.1em 0 0.1em 1.25em;
   font-size: 1.15em;
   font-style: normal;
   line-height: 1.55;
-  color: var(--ms-text);
+  color: var(--as-text);
 }
 
 /* Media inside a body: full column width, its own space, and a caption the
    editor wrote rather than raw metadata. */
-.ms-prose-article :is(img, figure, table, pre) {
+.as-prose-article :is(img, figure, table, pre) {
   margin-block: 2em;
 }
 
-.ms-prose-article figure img {
+.as-prose-article figure img {
   width: 100%;
 }
 
 /* Long addresses pasted into a body must not push the column sideways. */
-.ms-prose-article :is(p, li, td, th) {
+.as-prose-article :is(p, li, td, th) {
   overflow-wrap: break-word;
 }
 
@@ -490,28 +490,28 @@ body {
    paragraph is set larger and each section is separated by a rule rather than
    by space alone. Nothing here is specific to one policy: the same treatment
    applies to whichever of them an editor writes next. */
-.ms-prose-lead > .ms-prose-html > p:first-child {
+.as-prose-lead > .as-prose-html > p:first-child {
   font-size: 1.1875rem;
   line-height: 1.7;
-  color: var(--ms-text);
-  max-width: var(--ms-prose-measure);
+  color: var(--as-text);
+  max-width: var(--as-prose-measure);
 }
 
-.ms-prose-lead > .ms-prose-html > h2 {
+.as-prose-lead > .as-prose-html > h2 {
   margin-top: 2.75rem;
   padding-top: 1.75rem;
-  border-top: 1px solid var(--ms-border);
-  max-width: var(--ms-prose-measure);
+  border-top: 1px solid var(--as-border);
+  max-width: var(--as-prose-measure);
 }
 
-.ms-prose-lead > .ms-prose-html > h2:first-child {
+.as-prose-lead > .as-prose-html > h2:first-child {
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
 }
 
-.ms-prose-lead strong {
-  color: var(--ms-text);
+.as-prose-lead strong {
+  color: var(--as-text);
   font-weight: 640;
 }
 
@@ -552,227 +552,227 @@ body {
 
 /* Keep carousel content inside its own scrollport. Layout containment also
    prevents WebKit from including offscreen slides in the root scroll width. */
-.ms-gallery-strip {
+.as-gallery-strip {
   min-width: 0;
   contain: inline-size layout paint;
 }
 
 
 /* Navigation has the same ocean identity in both light and dark surfaces. */
-.ms-site-header::after, .ms-site-footer::before {
+.as-site-header::after, .as-site-footer::before {
   content: '';
   position: absolute;
   inset-inline: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--ms-sky-700), var(--ms-sky-400), var(--ms-teal-700));
+  background: linear-gradient(90deg, var(--as-sky-700), var(--as-sky-400), var(--as-teal-700));
   pointer-events: none;
 }
-.ms-site-header::after { bottom: -1px; }
-.ms-site-footer { position: relative; background-image: linear-gradient(120deg, #000f36, #012169 55%, #4a0d24); }
-.ms-site-footer::before { top: 0; }
-.ms-header-link { color: var(--ms-text); transition: box-shadow 200ms ease, transform 200ms ease; }
-.ms-header-link[aria-current='page'], .ms-header-link:focus-visible {
+.as-site-header::after { bottom: -1px; }
+.as-site-footer { position: relative; background-image: linear-gradient(120deg, #000f36, #012169 55%, #4a0d24); }
+.as-site-footer::before { top: 0; }
+.as-header-link { color: var(--as-text); transition: box-shadow 200ms ease, transform 200ms ease; }
+.as-header-link[aria-current='page'], .as-header-link:focus-visible {
   color: white;
-  background: linear-gradient(110deg, var(--ms-sky-700), var(--ms-teal-700));
-  box-shadow: 0 4px 12px -5px var(--ms-sky-700);
+  background: linear-gradient(110deg, var(--as-sky-700), var(--as-teal-700));
+  box-shadow: 0 4px 12px -5px var(--as-sky-700);
 }
-.ms-footer-heading::after {
+.as-footer-heading::after {
   content: '';
   display: block;
   margin-top: 0.75rem;
   width: 3rem;
   height: 3px;
   border-radius: 2px;
-  background: linear-gradient(90deg, var(--ms-sky-400), #ff8da0);
+  background: linear-gradient(90deg, var(--as-sky-400), #ff8da0);
 }
-.ms-footer-section { border-top: 1px solid var(--ms-band-border); padding-top: 1.25rem; }
-.ms-footer-link { color: var(--ms-band-muted); transition: transform 200ms ease, box-shadow 200ms ease; }
-.ms-footer-link:focus-visible {
+.as-footer-section { border-top: 1px solid var(--as-band-border); padding-top: 1.25rem; }
+.as-footer-link { color: var(--as-band-muted); transition: transform 200ms ease, box-shadow 200ms ease; }
+.as-footer-link:focus-visible {
   color: white;
-  background: linear-gradient(110deg, var(--ms-sky-700), var(--ms-teal-700));
+  background: linear-gradient(110deg, var(--as-sky-700), var(--as-teal-700));
   text-decoration: none;
 }
 @media (hover: hover) {
-  .ms-header-link:hover, .ms-footer-link:hover {
+  .as-header-link:hover, .as-footer-link:hover {
     color: white;
-    background: linear-gradient(110deg, var(--ms-sky-700), var(--ms-teal-700));
-    box-shadow: 0 4px 12px -5px var(--ms-sky-700);
+    background: linear-gradient(110deg, var(--as-sky-700), var(--as-teal-700));
+    box-shadow: 0 4px 12px -5px var(--as-sky-700);
   }
-  .ms-footer-link:hover { transform: translateX(3px); text-decoration: none; }
+  .as-footer-link:hover { transform: translateX(3px); text-decoration: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ms-header-link, .ms-footer-link { transform: none !important; transition: none !important; }
+  .as-header-link, .as-footer-link { transform: none !important; transition: none !important; }
 }
 
 
 /* Text links use a soft gradient tile that fills with ocean colour on intent.
    Inline fragments clone their decoration when an address wraps to two lines. */
-.ms-text-link, .ms-prose a {
-  color: var(--ms-sky-700);
+.as-text-link, .as-prose a {
+  color: var(--as-sky-700);
   font-weight: 600;
   text-decoration: none;
   border-radius: 0.35em;
   padding-inline: 0.25em;
-  background: linear-gradient(110deg, var(--ms-sky-50), var(--ms-teal-100));
+  background: linear-gradient(110deg, var(--as-sky-50), var(--as-teal-100));
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
   transition: box-shadow 220ms ease;
 }
-.ms-on-dark .ms-text-link {
-  color: var(--ms-band-link);
+.as-on-dark .as-text-link {
+  color: var(--as-band-link);
   background: linear-gradient(110deg, #0b3aa433, #c8102e33);
 }
-.ms-text-link:focus-visible, .ms-prose a:focus-visible, .ms-social-link:focus-visible {
+.as-text-link:focus-visible, .as-prose a:focus-visible, .as-social-link:focus-visible {
   color: white;
   text-decoration: none;
-  background: linear-gradient(110deg, var(--ms-sky-700), var(--ms-teal-700));
-  box-shadow: 0 3px 12px -5px var(--ms-sky-700);
+  background: linear-gradient(110deg, var(--as-sky-700), var(--as-teal-700));
+  box-shadow: 0 3px 12px -5px var(--as-sky-700);
 }
-.ms-footer-link {
+.as-footer-link {
   background: linear-gradient(110deg, #0b3aa41a, #c8102e1a);
   border: 1px solid transparent;
 }
-.ms-footer-link:focus-visible { border-color: var(--ms-sky-400); }
-.ms-header-link:not([aria-current='page']) {
-  background: linear-gradient(110deg, var(--ms-sky-50), #fdecee80);
+.as-footer-link:focus-visible { border-color: var(--as-sky-400); }
+.as-header-link:not([aria-current='page']) {
+  background: linear-gradient(110deg, var(--as-sky-50), #fdecee80);
 }
-.ms-header-link:focus-visible { background: linear-gradient(110deg, var(--ms-sky-700), var(--ms-teal-700)); }
-.ms-social-link {
+.as-header-link:focus-visible { background: linear-gradient(110deg, var(--as-sky-700), var(--as-teal-700)); }
+.as-social-link {
   background: linear-gradient(135deg, #0b3aa41a, #c8102e22);
   transition: transform 220ms ease, box-shadow 220ms ease;
 }
 @media (hover: hover) {
-  .ms-text-link:hover, .ms-prose a:hover, .ms-social-link:hover {
+  .as-text-link:hover, .as-prose a:hover, .as-social-link:hover {
     color: white;
     text-decoration: none;
-    background: linear-gradient(110deg, var(--ms-sky-700), var(--ms-teal-700));
-    box-shadow: 0 3px 12px -5px var(--ms-sky-700);
+    background: linear-gradient(110deg, var(--as-sky-700), var(--as-teal-700));
+    box-shadow: 0 3px 12px -5px var(--as-sky-700);
   }
-  .ms-header-link:hover { background: linear-gradient(110deg, var(--ms-sky-700), var(--ms-teal-700)); }
-  .ms-footer-link:hover { border-color: var(--ms-sky-400); }
-  .ms-social-link:hover { transform: translateY(-3px) rotate(-6deg); }
+  .as-header-link:hover { background: linear-gradient(110deg, var(--as-sky-700), var(--as-teal-700)); }
+  .as-footer-link:hover { border-color: var(--as-sky-400); }
+  .as-social-link:hover { transform: translateY(-3px) rotate(-6deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ms-text-link, .ms-prose a, .ms-social-link { transform: none !important; transition: none !important; }
+  .as-text-link, .as-prose a, .as-social-link { transform: none !important; transition: none !important; }
 }
 
 /* Standalone text actions have more breathing room than inline article links. */
-.inline-flex.ms-text-link {
+.inline-flex.as-text-link {
   padding-inline: 0.75rem;
   border-radius: 999px;
 }
 
 
 /* Give the footer introduction the same section rhythm as its menu columns. */
-.ms-footer-brand > .ms-footer-heading::after { flex-basis: 3rem; margin-right: calc(100% - 3rem); }
-.ms-footer-brand .ms-social-link {
+.as-footer-brand > .as-footer-heading::after { flex-basis: 3rem; margin-right: calc(100% - 3rem); }
+.as-footer-brand .as-social-link {
   width: 2.75rem;
   height: 2.75rem;
-  color: var(--ms-sky-100);
-  border: 1px solid var(--ms-band-border);
+  color: var(--as-sky-100);
+  border: 1px solid var(--as-band-border);
   background: linear-gradient(135deg, #0b3aa444, #c8102e44);
 }
-.ms-footer-brand .ms-social-link:is(:hover, :focus-visible) {
+.as-footer-brand .as-social-link:is(:hover, :focus-visible) {
   color: white;
-  border-color: var(--ms-sky-400);
-  background: linear-gradient(110deg, var(--ms-sky-700), var(--ms-teal-700));
+  border-color: var(--as-sky-400);
+  background: linear-gradient(110deg, var(--as-sky-700), var(--as-teal-700));
 }
-.ms-footer-brand ul { gap: 0.5rem; }
-.ms-footer-email { border: 1px solid var(--ms-sky-400); }
+.as-footer-brand ul { gap: 0.5rem; }
+.as-footer-email { border: 1px solid var(--as-sky-400); }
 
 
 /* About and Contact share an editorial hierarchy without changing other pages. */
-.ms-product-page .ms-content-panel {
+.as-product-page .as-content-panel {
   position: relative;
   padding: clamp(1.25rem, 2.5vw, 2rem);
-  border: 1px solid var(--ms-border);
-  border-radius: var(--ms-radius-lg);
-  background: linear-gradient(135deg, var(--ms-surface), #f3f6fc80);
-  box-shadow: var(--ms-shadow-sm);
+  border: 1px solid var(--as-border);
+  border-radius: var(--as-radius-lg);
+  background: linear-gradient(135deg, var(--as-surface), #f3f6fc80);
+  box-shadow: var(--as-shadow-sm);
 }
-.ms-product-page .ms-content-panel > h2::after,
-.ms-product-page .ms-content-panel > div > h2::after {
+.as-product-page .as-content-panel > h2::after,
+.as-product-page .as-content-panel > div > h2::after {
   content: '';
   display: block;
   width: 3.5rem;
   height: 3px;
   margin-top: 1rem;
   border-radius: 2px;
-  background: linear-gradient(90deg, var(--ms-sky-700), var(--ms-teal-700));
+  background: linear-gradient(90deg, var(--as-sky-700), var(--as-teal-700));
 }
-.ms-product-page .ms-product-icon {
-  background: linear-gradient(135deg, var(--ms-sky-700), var(--ms-teal-700));
+.as-product-page .as-product-icon {
+  background: linear-gradient(135deg, var(--as-sky-700), var(--as-teal-700));
   border-radius: 0.875rem;
   width: 2.75rem;
   height: 2.75rem;
 }
-.ms-product-page .ms-icon-point {
+.as-product-page .as-icon-point {
   padding-block: 0.75rem;
-  border-bottom: 1px solid var(--ms-border);
+  border-bottom: 1px solid var(--as-border);
 }
-.ms-product-page .ms-product-aside {
-  border-color: var(--ms-border-strong);
-  background: linear-gradient(160deg, var(--ms-sky-50), var(--ms-surface) 35%);
-  box-shadow: var(--ms-shadow-md);
+.as-product-page .as-product-aside {
+  border-color: var(--as-border-strong);
+  background: linear-gradient(160deg, var(--as-sky-50), var(--as-surface) 35%);
+  box-shadow: var(--as-shadow-md);
 }
-.ms-product-page .ms-product-aside > span:first-child {
+.as-product-page .as-product-aside > span:first-child {
   height: 5px;
-  background: linear-gradient(90deg, var(--ms-sky-700), var(--ms-teal-700), var(--ms-sky-400));
+  background: linear-gradient(90deg, var(--as-sky-700), var(--as-teal-700), var(--as-sky-400));
 }
-.ms-product-page .ms-product-links {
+.as-product-page .as-product-links {
   padding: 1.5rem;
-  border: 1px solid var(--ms-border);
-  border-radius: var(--ms-radius-lg);
-  background: var(--ms-teal-100);
+  border: 1px solid var(--as-border);
+  border-radius: var(--as-radius-lg);
+  background: var(--as-teal-100);
 }
-.ms-product-page .ms-product-links a { padding-inline: 0.5rem; border-radius: 0.5rem; }
-.ms-product-page .ms-product-links a:focus-visible { color: white; background: linear-gradient(110deg, var(--ms-sky-700), var(--ms-teal-700)); }
-.ms-product-page .ms-product-links a:focus-visible svg { color: inherit; }
-.ms-product-page #contact-form :is(input:not([type=checkbox]), select, textarea):not([aria-invalid=true]) {
-  border-color: var(--ms-border-strong);
-  background-color: var(--ms-surface);
+.as-product-page .as-product-links a { padding-inline: 0.5rem; border-radius: 0.5rem; }
+.as-product-page .as-product-links a:focus-visible { color: white; background: linear-gradient(110deg, var(--as-sky-700), var(--as-teal-700)); }
+.as-product-page .as-product-links a:focus-visible svg { color: inherit; }
+.as-product-page #contact-form :is(input:not([type=checkbox]), select, textarea):not([aria-invalid=true]) {
+  border-color: var(--as-border-strong);
+  background-color: var(--as-surface);
 }
-.ms-product-page #contact-form :is(input, select, textarea):focus-visible {
-  outline: 2px solid var(--ms-sky-700);
+.as-product-page #contact-form :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--as-sky-700);
   outline-offset: 3px;
 }
 @media (hover: hover) {
-  .ms-product-page .ms-product-links a:hover { color: white; background: linear-gradient(110deg, var(--ms-sky-700), var(--ms-teal-700)); }
-  .ms-product-page .ms-product-links a:hover svg { color: inherit; }
+  .as-product-page .as-product-links a:hover { color: white; background: linear-gradient(110deg, var(--as-sky-700), var(--as-teal-700)); }
+  .as-product-page .as-product-links a:hover svg { color: inherit; }
 }
 
 
 /* Inline words reflow naturally; clipping keeps heading entrances inside the page. */
-.ms-heading-fragments { display: block; overflow: clip; overflow-clip-margin: 0.12em; }
-.ms-heading-word { display: inline-block; white-space: nowrap; }
-.ms-heading-character { display: inline-block; }
+.as-heading-fragments { display: block; overflow: clip; overflow-clip-margin: 0.12em; }
+.as-heading-word { display: inline-block; white-space: nowrap; }
+.as-heading-character { display: inline-block; }
 
 
 /* Light listing cards retain readable links and focus rings inside dark bands. */
-.ms-on-light { --ms-band-link: var(--ms-link); }
-.ms-on-dark .ms-on-light :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline-color: var(--ms-focus);
+.as-on-light { --as-band-link: var(--as-link); }
+.as-on-dark .as-on-light :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline-color: var(--as-focus);
 }
 
 
 /* Opaque search surface keeps the banner photograph from competing with inputs. */
-.ms-hero-search {
+.as-hero-search {
   border: 2px solid transparent;
-  background: linear-gradient(var(--ms-panel), var(--ms-panel)) padding-box,
-    linear-gradient(115deg, var(--ms-sky-400), var(--ms-teal-700), var(--ms-sky-100)) border-box;
+  background: linear-gradient(var(--as-panel), var(--as-panel)) padding-box,
+    linear-gradient(115deg, var(--as-sky-400), var(--as-teal-700), var(--as-sky-100)) border-box;
   box-shadow: 0 24px 64px -24px #000f3699;
 }
-.ms-search-field { transition: border-color 180ms ease, box-shadow 180ms ease; }
-.ms-search-field:focus-within {
-  border-color: var(--ms-sky-700);
+.as-search-field { transition: border-color 180ms ease, box-shadow 180ms ease; }
+.as-search-field:focus-within {
+  border-color: var(--as-sky-700);
   box-shadow: none;
-  background-color: var(--ms-panel);
+  background-color: var(--as-panel);
 }
-.ms-hero-search label { color: var(--ms-sky-700); }
+.as-hero-search label { color: var(--as-sky-700); }
 
 
 /* The enclosing field supplies one focus boundary; avoid nested input rings. */
-.ms-hero-search .ms-search-field :is(input, select):focus-visible {
+.as-hero-search .as-search-field :is(input, select):focus-visible {
   outline: none;
   box-shadow: none;
 }
@@ -783,7 +783,7 @@ body {
    ocean language as the header links. Without JavaScript they open on hover and
    keyboard focus (`:not([data-enhanced])`); once hydrated only the buttons open
    them, so a submenu never flickers open under a passing pointer. */
-.ms-nav-toggle {
+.as-nav-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -791,32 +791,32 @@ body {
   min-width: 2rem;
   margin-left: -0.25rem;
   border-radius: 0.5rem;
-  color: var(--ms-text);
+  color: var(--as-text);
   background: transparent;
   cursor: pointer;
 }
-.ms-nav-toggle:focus-visible {
-  outline: 2px solid var(--ms-sky-700);
+.as-nav-toggle:focus-visible {
+  outline: 2px solid var(--as-sky-700);
   outline-offset: 2px;
 }
-.ms-nav-toggle[aria-expanded='true'] {
-  color: var(--ms-sky-700);
-  background: var(--ms-sky-50);
+.as-nav-toggle[aria-expanded='true'] {
+  color: var(--as-sky-700);
+  background: var(--as-sky-50);
 }
-.ms-nav-chevron { transition: transform 200ms ease; }
-.ms-nav-toggle[aria-expanded='true'] > .ms-nav-chevron { transform: rotate(180deg); }
-.ms-nav-toggle--sub { margin-left: 0; min-width: 2.5rem; }
-.ms-nav-toggle--sub[aria-expanded='true'] > .ms-nav-chevron { transform: none; }
+.as-nav-chevron { transition: transform 200ms ease; }
+.as-nav-toggle[aria-expanded='true'] > .as-nav-chevron { transform: rotate(180deg); }
+.as-nav-toggle--sub { margin-left: 0; min-width: 2.5rem; }
+.as-nav-toggle--sub[aria-expanded='true'] > .as-nav-chevron { transform: none; }
 @media (hover: hover) {
-  .ms-nav-toggle:hover { color: var(--ms-sky-700); background: var(--ms-sky-50); }
+  .as-nav-toggle:hover { color: var(--as-sky-700); background: var(--as-sky-50); }
 }
 /* The top-level item that holds the current page, when the page itself is deeper. */
-.ms-nav-item[data-active-trail] > div > .ms-header-link:not([aria-current='page']) {
-  box-shadow: inset 0 -2px 0 var(--ms-sky-700);
+.as-nav-item[data-active-trail] > div > .as-header-link:not([aria-current='page']) {
+  box-shadow: inset 0 -2px 0 var(--as-sky-700);
 }
 
-.ms-submenu,
-.ms-flyout {
+.as-submenu,
+.as-flyout {
   display: none;
   position: absolute;
   z-index: 50;
@@ -825,30 +825,30 @@ body {
   margin: 0;
   padding: 0.5rem;
   list-style: none;
-  border: 1px solid var(--ms-border);
-  border-radius: var(--ms-radius-lg);
-  background: var(--ms-surface);
-  color: var(--ms-text);
-  box-shadow: var(--ms-shadow-lg);
+  border: 1px solid var(--as-border);
+  border-radius: var(--as-radius-lg);
+  background: var(--as-surface);
+  color: var(--as-text);
+  box-shadow: var(--as-shadow-lg);
 }
-.ms-submenu { top: calc(100% + 0.375rem); left: 0; }
+.as-submenu { top: calc(100% + 0.375rem); left: 0; }
 /* A bridge over the gap, so moving the pointer down to the panel does not close it. */
-.ms-submenu::before {
+.as-submenu::before {
   content: '';
   position: absolute;
   inset-inline: 0;
   top: -0.5rem;
   height: 0.5rem;
 }
-.ms-flyout { top: -0.5rem; left: calc(100% + 0.25rem); }
-.ms-flyout[data-flip] { left: auto; right: calc(100% + 0.25rem); }
-.ms-submenu[data-open],
-.ms-flyout[data-open],
-.ms-primary-nav:not([data-enhanced]) li:is(:hover, :focus-within) > .ms-submenu,
-.ms-primary-nav:not([data-enhanced]) li:is(:hover, :focus-within) > .ms-flyout {
+.as-flyout { top: -0.5rem; left: calc(100% + 0.25rem); }
+.as-flyout[data-flip] { left: auto; right: calc(100% + 0.25rem); }
+.as-submenu[data-open],
+.as-flyout[data-open],
+.as-primary-nav:not([data-enhanced]) li:is(:hover, :focus-within) > .as-submenu,
+.as-primary-nav:not([data-enhanced]) li:is(:hover, :focus-within) > .as-flyout {
   display: block;
 }
-.ms-submenu-link {
+.as-submenu-link {
   display: flex;
   align-items: flex-start;
   gap: 0.625rem;
@@ -858,35 +858,35 @@ body {
   font-size: 0.9375rem;
   font-weight: 600;
   line-height: 1.35;
-  color: var(--ms-text);
+  color: var(--as-text);
 }
-.ms-submenu-link > svg { margin-top: 0.125rem; }
-.ms-submenu-heading { cursor: default; }
-.ms-submenu-description {
+.as-submenu-link > svg { margin-top: 0.125rem; }
+.as-submenu-heading { cursor: default; }
+.as-submenu-description {
   margin-top: 0.125rem;
   font-size: 0.8125rem;
   font-weight: 400;
-  color: var(--ms-text-muted, #475569);
+  color: var(--as-text-muted, #475569);
 }
-a.ms-submenu-link:focus-visible,
-a.ms-submenu-link[aria-current='page'] {
+a.as-submenu-link:focus-visible,
+a.as-submenu-link[aria-current='page'] {
   color: white;
   text-decoration: none;
-  background: linear-gradient(110deg, var(--ms-sky-700), var(--ms-teal-700));
+  background: linear-gradient(110deg, var(--as-sky-700), var(--as-teal-700));
 }
-a.ms-submenu-link:focus-visible .ms-submenu-description,
-a.ms-submenu-link[aria-current='page'] .ms-submenu-description { color: #e5ebf8; }
+a.as-submenu-link:focus-visible .as-submenu-description,
+a.as-submenu-link[aria-current='page'] .as-submenu-description { color: #e5ebf8; }
 @media (hover: hover) {
-  a.ms-submenu-link:hover {
+  a.as-submenu-link:hover {
     color: white;
     text-decoration: none;
-    background: linear-gradient(110deg, var(--ms-sky-700), var(--ms-teal-700));
+    background: linear-gradient(110deg, var(--as-sky-700), var(--as-teal-700));
   }
-  a.ms-submenu-link:hover .ms-submenu-description { color: #e5ebf8; }
+  a.as-submenu-link:hover .as-submenu-description { color: #e5ebf8; }
 }
 
 /* The compact navigation: a native modal dialog pinned to the right edge. */
-.ms-drawer {
+.as-drawer {
   position: fixed;
   inset: 0 0 0 auto;
   margin: 0;
@@ -896,13 +896,13 @@ a.ms-submenu-link[aria-current='page'] .ms-submenu-description { color: #e5ebf8;
   max-width: 100vw;
   height: 100dvh;
   max-height: 100dvh;
-  background: var(--ms-surface);
-  color: var(--ms-text);
-  box-shadow: var(--ms-shadow-lg);
+  background: var(--as-surface);
+  color: var(--as-text);
+  box-shadow: var(--as-shadow-lg);
 }
-.ms-drawer[open] { animation: ms-drawer-in 220ms cubic-bezier(.22, 1, .36, 1); }
-.ms-drawer::backdrop { background: rgb(15 23 42 / 0.55); }
-.ms-drawer-panel {
+.as-drawer[open] { animation: as-drawer-in 220ms cubic-bezier(.22, 1, .36, 1); }
+.as-drawer::backdrop { background: rgb(15 23 42 / 0.55); }
+.as-drawer-panel {
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -910,33 +910,33 @@ a.ms-submenu-link[aria-current='page'] .ms-submenu-description { color: #e5ebf8;
   overflow-y: auto;
 }
 /* The page behind a modal drawer does not scroll. */
-html:has(dialog.ms-drawer[open]) { overflow: hidden; }
-@keyframes ms-drawer-in {
+html:has(dialog.as-drawer[open]) { overflow: hidden; }
+@keyframes as-drawer-in {
   from { transform: translateX(100%); }
   to { transform: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ms-nav-chevron { transition: none; }
-  .ms-drawer[open] { animation: none; }
+  .as-nav-chevron { transition: none; }
+  .as-drawer[open] { animation: none; }
 }
 
 
 /* ---- Article figures, embeds and business cards (SRS 1.10 BLOG 004) -------- */
-.ms-prose-article figure.ms-figure:not(.ms-figure--wide) { max-width: 40rem; margin-inline: auto; }
-.ms-prose-article figure.ms-figure img { width: 100%; height: auto; }
-.ms-embed-frame { margin: 0; }
-.ms-embed-frame__box {
+.as-prose-article figure.as-figure:not(.as-figure--wide) { max-width: 40rem; margin-inline: auto; }
+.as-prose-article figure.as-figure img { width: 100%; height: auto; }
+.as-embed-frame { margin: 0; }
+.as-embed-frame__box {
   position: relative;
   width: 100%;
   overflow: hidden;
-  border-radius: var(--ms-radius-lg);
-  border: 1px solid var(--ms-border);
-  background: var(--ms-band-deep);
+  border-radius: var(--as-radius-lg);
+  border: 1px solid var(--as-border);
+  background: var(--as-band-deep);
 }
-.ms-embed-frame--video .ms-embed-frame__box { aspect-ratio: 16 / 9; }
-.ms-embed-frame--map .ms-embed-frame__box { aspect-ratio: 4 / 3; }
-.ms-embed-frame__box iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-.ms-embed-placeholder {
+.as-embed-frame--video .as-embed-frame__box { aspect-ratio: 16 / 9; }
+.as-embed-frame--map .as-embed-frame__box { aspect-ratio: 4 / 3; }
+.as-embed-frame__box iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.as-embed-placeholder {
   position: absolute;
   inset: 0;
   display: flex;
@@ -945,67 +945,67 @@ html:has(dialog.ms-drawer[open]) { overflow: hidden; }
   justify-content: center;
   gap: 0.75rem;
   padding: clamp(1rem, 4vw, 2rem);
-  color: var(--ms-band-text);
-  background-image: radial-gradient(120% 90% at 85% 0%, color-mix(in srgb, var(--ms-sky-500) 30%, transparent), transparent 60%), linear-gradient(180deg, var(--ms-band), var(--ms-band-deep));
+  color: var(--as-band-text);
+  background-image: radial-gradient(120% 90% at 85% 0%, color-mix(in srgb, var(--as-sky-500) 30%, transparent), transparent 60%), linear-gradient(180deg, var(--as-band), var(--as-band-deep));
 }
-.ms-embed-placeholder__title { margin: 0; font-size: 1.125rem; font-weight: 700; color: white; }
-.ms-embed-placeholder__note { margin: 0; max-width: 32rem; font-size: 0.875rem; color: var(--ms-band-muted); }
-.ms-embed-placeholder__always { display: inline-flex; min-height: 2.75rem; align-items: center; gap: 0.5rem; font-size: 0.8125rem; color: var(--ms-band-muted); }
-.ms-embed-placeholder__always input { width: 1.1rem; height: 1.1rem; }
+.as-embed-placeholder__title { margin: 0; font-size: 1.125rem; font-weight: 700; color: white; }
+.as-embed-placeholder__note { margin: 0; max-width: 32rem; font-size: 0.875rem; color: var(--as-band-muted); }
+.as-embed-placeholder__always { display: inline-flex; min-height: 2.75rem; align-items: center; gap: 0.5rem; font-size: 0.8125rem; color: var(--as-band-muted); }
+.as-embed-placeholder__always input { width: 1.1rem; height: 1.1rem; }
 @media (max-width: 480px) {
-  .ms-embed-frame--video .ms-embed-frame__box { aspect-ratio: auto; min-height: 15rem; }
-  .ms-embed-frame--video .ms-embed-frame__box:has(iframe) { aspect-ratio: 16 / 9; min-height: 0; }
+  .as-embed-frame--video .as-embed-frame__box { aspect-ratio: auto; min-height: 15rem; }
+  .as-embed-frame--video .as-embed-frame__box:has(iframe) { aspect-ratio: 16 / 9; min-height: 0; }
 }
 
 /* ---- Article table of contents (SRS 1.10 BLOG 004) ------------------------ */
 /* A section reached from the contents lands below the sticky site header. */
-.ms-prose-article :is(h2, h3)[id^="section-"] { scroll-margin-top: 6rem; }
-.ms-toc-link {
+.as-prose-article :is(h2, h3)[id^="section-"] { scroll-margin-top: 6rem; }
+.as-toc-link {
   display: inline-block;
   padding-block: 0.3rem;
   line-height: 1.35;
   text-decoration: none;
   text-underline-offset: 2px;
 }
-.ms-toc-link:hover { color: var(--ms-sky-700); text-decoration: underline; }
-.ms-toc-link:focus-visible { outline: 2px solid var(--ms-sky-700); outline-offset: 2px; border-radius: 4px; }
-.ms-toc summary::-webkit-details-marker { display: none; }
-.ms-toc summary::after { content: '+'; margin-left: auto; font-size: 1.1rem; color: var(--ms-sky-700); }
-.ms-toc[open] summary::after { content: '−'; }
-@media (prefers-reduced-motion: no-preference) { html:has(.ms-toc) { scroll-behavior: smooth; } }
+.as-toc-link:hover { color: var(--as-sky-700); text-decoration: underline; }
+.as-toc-link:focus-visible { outline: 2px solid var(--as-sky-700); outline-offset: 2px; border-radius: 4px; }
+.as-toc summary::-webkit-details-marker { display: none; }
+.as-toc summary::after { content: '+'; margin-left: auto; font-size: 1.1rem; color: var(--as-sky-700); }
+.as-toc[open] summary::after { content: '−'; }
+@media (prefers-reduced-motion: no-preference) { html:has(.as-toc) { scroll-behavior: smooth; } }
 
 /* ---- Map above the footer (SRS 1.11 BUS 003) ------------------------------ */
 /* Edge to edge, with its height reserved so the page does not move when it loads. */
-.ms-site-map { width: 100%; height: clamp(18rem, 42vw, 32rem); background: var(--ms-band-deep); }
-.ms-site-map iframe { display: block; width: 100%; height: 100%; border: 0; }
+.as-site-map { width: 100%; height: clamp(18rem, 42vw, 32rem); background: var(--as-band-deep); }
+.as-site-map iframe { display: block; width: 100%; height: 100%; border: 0; }
 
 /* ---- Pricing plans (SRS 1.12) ------------------------------------------------- */
-.ms-pricing-card {
-  border-radius: var(--ms-radius-lg);
-  border: 1px solid var(--ms-border);
+.as-pricing-card {
+  border-radius: var(--as-radius-lg);
+  border: 1px solid var(--as-border);
   box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.ms-pricing-card:hover { transform: translateY(-3px); box-shadow: 0 22px 44px -22px rgb(15 23 42 / 0.28); }
+.as-pricing-card:hover { transform: translateY(-3px); box-shadow: 0 22px 44px -22px rgb(15 23 42 / 0.28); }
 /* The emphasised plan: a 2px gradient frame around the same white card. */
-.ms-pricing-card--featured {
+.as-pricing-card--featured {
   border: 0;
   padding: 2px;
-  background-image: linear-gradient(135deg, var(--ms-sky-500), var(--ms-sky-700));
+  background-image: linear-gradient(135deg, var(--as-sky-500), var(--as-sky-700));
   box-shadow: 0 26px 52px -26px rgb(11 58 164 / 0.5);
 }
-.ms-pricing-card--featured > div { border-radius: calc(var(--ms-radius-lg) - 2px); }
+.as-pricing-card--featured > div { border-radius: calc(var(--as-radius-lg) - 2px); }
 @media (prefers-reduced-motion: reduce) {
-  .ms-pricing-card { transition: none; }
-  .ms-pricing-card:hover { transform: none; }
+  .as-pricing-card { transition: none; }
+  .as-pricing-card:hover { transform: none; }
 }
 
 /* Links to PDF documents from the media library (change log 1.16): a file
    icon before and the file type after, so a reader knows a download follows. */
-.ms-doc-link {
+.as-doc-link {
   font-weight: 600;
 }
-.ms-doc-link::before {
+.as-doc-link::before {
   content: "";
   display: inline-block;
   width: 0.85em;

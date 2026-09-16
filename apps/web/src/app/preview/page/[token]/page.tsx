@@ -27,7 +27,7 @@ export default async function PagePreviewPage({ params }: PageProps<'/preview/pa
   return (
     <>
       <div className="border-b border-amber-300 bg-amber-100 text-amber-950">
-        <p className="ms-container py-3 text-sm font-semibold">
+        <p className="as-container py-3 text-sm font-semibold">
           Preview — this may include changes that are not saved or published yet. Only people with this link can see it, and it stops working ten minutes after it was created.
         </p>
       </div>

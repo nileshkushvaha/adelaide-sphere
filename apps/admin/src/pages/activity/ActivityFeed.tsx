@@ -9,7 +9,7 @@ import { ActivityRow } from './ActivityRow';
 export function ActivityFeed({ entries, variant = 'full', byDay = true, onShowRequest }: { entries: ActivityItem[]; variant?: 'full' | 'compact'; byDay?: boolean; onShowRequest?: (requestId: string) => void }) {
   if (!byDay) {
     return (
-      <ol className="ms-activity-list">
+      <ol className="as-activity-list">
         {entries.map((entry) => (
           <ActivityRow key={entry.id} entry={entry} variant={variant} onShowRequest={onShowRequest} />
         ))}
@@ -26,14 +26,14 @@ export function ActivityFeed({ entries, variant = 'full', byDay = true, onShowRe
   }
 
   return (
-    <div className="ms-activity-feed">
+    <div className="as-activity-feed">
       {days.map((day, index) => (
         // The same day can reappear after a gap when the list is sorted oldest first; the index keeps keys unique.
         <section key={`${day.key}-${index}`} aria-labelledby={`activity-day-${day.key}-${index}`}>
-          <h2 id={`activity-day-${day.key}-${index}`} className="ms-activity-day">
+          <h2 id={`activity-day-${day.key}-${index}`} className="as-activity-day">
             {dayHeading(day.key)}
           </h2>
-          <ol className="ms-activity-list">
+          <ol className="as-activity-list">
             {day.items.map((entry) => (
               <ActivityRow key={entry.id} entry={entry} variant={variant} onShowRequest={onShowRequest} />
             ))}

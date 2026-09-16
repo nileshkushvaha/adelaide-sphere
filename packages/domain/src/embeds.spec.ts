@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_ADELAIDE_MAP_SRC, isMapEmbedSrc, isRecordId, isSiteMapSrc, isYoutubeId, parseEmbedUrl } from './embeds.js';
 
-const PB = '!1m18!1m12!1m3!1d3151.8!2d144.96!3d-37.81!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6ad642b%3A0x5045675218ce6e0!2sFlinders%20Street!5e0!3m2!1sen!2sau!4v1700000000000';
+const PB = '!1m18!1m12!1m3!1d3151.8!2d138.6007!3d-34.9285!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6ad642b%3A0x5045675218ce6e0!2sRundle%20Mall!5e0!3m2!1sen!2sau!4v1700000000000';
 
 describe('parseEmbedUrl', () => {
   it('reads every usual form of a YouTube address', () => {
@@ -18,7 +18,7 @@ describe('parseEmbedUrl', () => {
 
   it('explains what to paste instead of a share link, a playlist or anything else', () => {
     expect(parseEmbedUrl('https://maps.app.goo.gl/abc123')).toMatchObject({ ok: false, reason: expect.stringMatching(/Embed a map/) });
-    expect(parseEmbedUrl('https://www.google.com/maps/place/Flinders+St')).toMatchObject({ ok: false });
+    expect(parseEmbedUrl('https://www.google.com/maps/place/Rundle+Mall')).toMatchObject({ ok: false });
     expect(parseEmbedUrl('https://www.youtube.com/playlist?list=PL123')).toMatchObject({ ok: false, reason: expect.stringMatching(/single video/) });
     expect(parseEmbedUrl('https://vimeo.com/123')).toMatchObject({ ok: false, reason: expect.stringMatching(/Only YouTube/) });
   });

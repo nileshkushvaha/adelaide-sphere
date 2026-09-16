@@ -29,7 +29,7 @@ interface Props {
   priority?: boolean;
 }
 
-const SHELL = 'ms-card-lift group relative isolate overflow-hidden rounded-card-lg border border-border bg-surface-raised shadow-sm';
+const SHELL = 'as-card-lift group relative isolate overflow-hidden rounded-card-lg border border-border bg-surface-raised shadow-sm';
 
 function Author({ post, size = 28 }: { post: PostCardData; size?: number }) {
   return (

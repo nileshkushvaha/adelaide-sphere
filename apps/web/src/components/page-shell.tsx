@@ -8,13 +8,13 @@ import type { ReactNode } from 'react';
  * in one place, instead of repeating container classes per route.
  */
 export function PageShell({ children, width = 'wide', className = '' }: { children: ReactNode; width?: 'wide' | 'tight'; className?: string }) {
-  return <div className={`${width === 'tight' ? 'ms-container-tight' : 'ms-container'} py-10 sm:py-12 ${className}`}>{children}</div>;
+  return <div className={`${width === 'tight' ? 'as-container-tight' : 'as-container'} py-10 sm:py-12 ${className}`}>{children}</div>;
 }
 
 /**
  * A full-bleed section. `tone` picks its place in the light/dark rhythm:
  * `page` (pale blue), `plain` (white), `soft` (cool neutral) and the dark
- * bands, which carry `.ms-on-dark` so focus rings stay visible on them.
+ * bands, which carry `.as-on-dark` so focus rings stay visible on them.
  */
 export function Band({
   tone = 'page',
@@ -25,13 +25,13 @@ export function Band({
   const tones = {
     page: 'bg-surface-muted text-text',
     plain: 'bg-surface text-text',
-    soft: 'ms-dot-grid bg-surface-sunken text-text',
-    dark: 'ms-on-dark ms-ocean-band bg-band text-band-text',
-    deep: 'ms-on-dark bg-band-deep text-band-text [background-image:radial-gradient(circle_at_10%_10%,rgba(169,193,247,.1),transparent_32%)]',
+    soft: 'as-dot-grid bg-surface-sunken text-text',
+    dark: 'as-on-dark as-ocean-band bg-band text-band-text',
+    deep: 'as-on-dark bg-band-deep text-band-text [background-image:radial-gradient(circle_at_10%_10%,rgba(169,193,247,.1),transparent_32%)]',
   } as const;
   return (
-    <section className={`ms-section ${tones[tone]} ${className}`} {...rest}>
-      <div className="ms-container">{children}</div>
+    <section className={`as-section ${tones[tone]} ${className}`} {...rest}>
+      <div className="as-container">{children}</div>
     </section>
   );
 }
@@ -60,7 +60,7 @@ export function SectionHeading({ id, eyebrow, title, description, href, linkLabe
         {description && <p className={`mt-3 text-base leading-relaxed sm:text-lg ${muted}`}>{description}</p>}
       </div>
       {href && (
-        <Link href={href} className={`inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold underline-offset-4 ms-text-link ${link}`}>
+        <Link href={href} className={`inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold underline-offset-4 as-text-link ${link}`}>
           {linkLabel ?? 'See all'}
           <span aria-hidden="true">→</span>
         </Link>

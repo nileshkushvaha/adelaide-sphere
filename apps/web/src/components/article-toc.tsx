@@ -24,14 +24,14 @@ function Links({ headings }: { headings: OutlineHeading[] }) {
     <ol className="flex flex-col gap-1 text-sm">
       {group(headings).map(({ heading, children }) => (
         <li key={heading.id}>
-          <a href={`#${heading.id}`} className="ms-toc-link">
+          <a href={`#${heading.id}`} className="as-toc-link">
             {heading.text}
           </a>
           {children.length > 0 && (
             <ol className="mt-1 flex flex-col gap-1 border-l border-border pl-3">
               {children.map((child) => (
                 <li key={child.id}>
-                  <a href={`#${child.id}`} className="ms-toc-link text-text-muted">
+                  <a href={`#${child.id}`} className="as-toc-link text-text-muted">
                     {child.text}
                   </a>
                 </li>
@@ -54,7 +54,7 @@ export function ArticleToc({ headings, variant }: { headings: OutlineHeading[]; 
   if (headings.length < TOC_MIN_HEADINGS) return null;
   if (variant === 'inline') {
     return (
-      <details data-track="toc_click" className="ms-toc rounded-card border border-border bg-surface-raised shadow-sm lg:hidden">
+      <details data-track="toc_click" className="as-toc rounded-card border border-border bg-surface-raised shadow-sm lg:hidden">
         <summary className="flex min-h-11 cursor-pointer items-center px-5 text-sm font-semibold">In this article</summary>
         <nav aria-label="In this article" className="border-t border-border px-5 py-4">
           <Links headings={headings} />
@@ -63,7 +63,7 @@ export function ArticleToc({ headings, variant }: { headings: OutlineHeading[]; 
     );
   }
   return (
-    <nav aria-labelledby="article-toc-heading" data-track="toc_click" className="ms-toc hidden rounded-card border border-border bg-surface-raised p-5 shadow-sm lg:block">
+    <nav aria-labelledby="article-toc-heading" data-track="toc_click" className="as-toc hidden rounded-card border border-border bg-surface-raised p-5 shadow-sm lg:block">
       <h2 id="article-toc-heading" className="text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-sky-700">
         In this article
       </h2>

@@ -5,10 +5,10 @@ Purpose: prove that each failure the audit cared about produces a signal, and
 record how long detection takes.
 
 **Environment:** local Docker Compose project `adelaide-sphere` (MySQL 3317,
-Redis 6380, Mailpit, MinIO). No other container, database or Homebrew service was
+Redis 6390, Mailpit, MinIO). No other container, database or Homebrew service was
 touched; Homebrew MySQL on 3306 was not read, restarted or modified. The
-user-started API on port 3001 was left running throughout; drills used a separate
-API instance on 3011 and a worker started by the drill, both stopped afterwards.
+user-started API on port 4001 was left running throughout; drills used a separate
+API instance on 4011 and a worker started by the drill, both stopped afterwards.
 
 Each drill records: failure introduced → detection signal → alert condition →
 what an admin sees → recovery → time to detection → cleanup.
@@ -23,7 +23,7 @@ what an admin sees → recovery → time to detection → cleanup.
 * **Detection signal.** `assertQueueJobId` throws at the enqueue boundary with
   `enqueue enquiry.email: a job id must not contain ":" (got …)`. The worker's
   start-up failure is a single JSON line on stderr before exit.
-* **Alert condition.** C4 (`ms_worker_heartbeats == 0` for 3m).
+* **Alert condition.** C4 (`as_worker_heartbeats == 0` for 3m).
 * **What an admin sees.** Queue Monitor → **Workers**: "Nothing is processing
   work — No worker has checked in. Nothing is consuming adelaide-sphere:
   enquiries are stored but not delivered, uploads are not processed and scheduled
@@ -40,7 +40,7 @@ what an admin sees → recovery → time to detection → cleanup.
 * **Failure introduced.** `SIGTERM` to a running worker replica.
 * **Detection signal.** Heartbeat key removed on clean shutdown (expires within
   45 s if the process is killed). Observed on the API's `/metrics`:
-  `ms_worker_heartbeats` 1 → 0, `ms_worker_heartbeat_age_seconds` rising to the
+  `as_worker_heartbeats` 1 → 0, `as_worker_heartbeat_age_seconds` rising to the
   sentinel.
 * **Alert condition.** C4.
 * **What an admin sees.** As D1, plus the replica disappearing from the Workers
@@ -80,21 +80,21 @@ what an admin sees → recovery → time to detection → cleanup.
 
 ## D5 — Redis unreachable — **executed 2026-09-09**
 
-* **Failure introduced.** A TCP forwarder (`127.0.0.1:6399 → 6380`) sat between a
+* **Failure introduced.** A TCP forwarder (`127.0.0.1:6399 → 6390`) sat between a
   drill API instance and Redis; stopping the forwarder made Redis unreachable for
   that instance only. The shared container was never stopped, so nothing else on
   the machine was affected.
 * **Detection signal.** `/api/v1/health/ready` → **503 in 1.1 s**, body
   `{"error":{"code":"SERVICE_UNAVAILABLE","message":"Redis unavailable"}}`.
-  `ms_dependency_up{dependency="redis"}` → **0 after 11.1 s**;
-  `ms_dependency_failures_total{dependency="redis",reason="error"|"timeout"}` rose.
-* **Alert condition.** C3 (`ms_dependency_up{dependency="redis"} == 0` for 5m) —
+  `as_dependency_up{dependency="redis"}` → **0 after 11.1 s**;
+  `as_dependency_failures_total{dependency="redis",reason="error"|"timeout"}` rose.
+* **Alert condition.** C3 (`as_dependency_up{dependency="redis"} == 0` for 5m) —
   true throughout the outage on the recorded series.
 * **What an admin sees.** Queue Monitor: queue unreachable; Workers card:
   "Redis is unreachable, so worker liveness is unknown."
 * **Failed safely.** Sign-in fails closed (the throttle cannot be consulted); no
   request served stale data; the API stayed up and answered every probe.
-* **Recovery.** Forwarder restarted: readiness 200 and `ms_dependency_up` back to
+* **Recovery.** Forwarder restarted: readiness 200 and `as_dependency_up` back to
   1 **after 7.2 s**, with no restart of the API.
 * **Time to detection.** 1.1 s (readiness), 11.1 s (metric).
 * **Defect found and fixed by this drill.** With Redis down, `/metrics` **hung
@@ -106,11 +106,11 @@ what an admin sees → recovery → time to detection → cleanup.
 
 ## D6 — Database unreachable — **executed 2026-09-09**
 
-* **Failure introduced.** The same technique on MySQL (`127.0.0.1:3399 → 3307`).
+* **Failure introduced.** The same technique on MySQL (`127.0.0.1:3399 → 3317`).
   Homebrew MySQL on 3306 was not touched, and the Compose container kept running.
 * **Detection signal.** Readiness **503 in 0.9 s** naming the database;
-  `ms_dependency_up{dependency="database"}` → **0 after 7.6 s**;
-  `ms_dependency_failures_total{dependency="database",reason="backoff"}` 1.
+  `as_dependency_up{dependency="database"}` → **0 after 7.6 s**;
+  `as_dependency_failures_total{dependency="database",reason="backoff"}` 1.
 * **Alert condition.** C2 — true on the recorded series.
 * **What an admin sees.** Every admin screen fails with the standard envelope and
   a request id; nothing renders stale content.
@@ -125,9 +125,9 @@ what an admin sees → recovery → time to detection → cleanup.
   `422`, echoing the API key back in its message. The drill API ran with
   `MAIL_TRANSPORT=resend` pointed at it; a password-reset request drove the real
   send path over real HTTP.
-* **Detection signal.** `ms_email_deliveries_total{provider="api",outcome=
+* **Detection signal.** `as_email_deliveries_total{provider="api",outcome=
   "failed_permanent_provider"}` 1 within **6.5 s** of the request;
-  `ms_auth_events_total{event="password_reset_requested"}` 1.
+  `as_auth_events_total{event="password_reset_requested"}` 1.
 * **Classification.** Over a real round trip: 503 → `TransientDeliveryError`
   (retried), 422 → `PermanentDeliveryError` (not retried).
 * **Redaction, checked on the wire.** The provider echoed the key; the resulting
@@ -154,17 +154,17 @@ what an admin sees → recovery → time to detection → cleanup.
   schedule is not running.
 * **Detection signal.** With no worker: `healthy=false`, "No worker has checked
   in…", five tasks stale. With the worker running: heartbeat fresh
-  (`ms_worker_heartbeats` 1, age 4 s) **and** `scheduler.healthy=false` —
+  (`as_worker_heartbeats` 1, age 4 s) **and** `scheduler.healthy=false` —
   the fourth state, told apart from the other three:
 
   > "1 worker is alive, but 4 tasks have not succeeded within the expected
   > window. Scheduled publication and retention may have stopped."
-* **Alert condition.** C5 (`ms_scheduled_task_last_success_age_seconds` past the
+* **Alert condition.** C5 (`as_scheduled_task_last_success_age_seconds` past the
   task's window while heartbeats are fresh) — true on the recorded series.
 * **What an admin sees.** Workers card lists the replica (instance, version, last
   report) and names every stale task with its last success and expected window.
 * **Recovery.** Each task run from the Scheduled Tasks screen (`202` dispatch);
-  `ms_scheduled_task_runs_total{task=…,outcome="succeeded"}` 1 for all five, and
+  `as_scheduled_task_runs_total{task=…,outcome="succeeded"}` 1 for all five, and
   the card returned to "1 worker checked in within the heartbeat window", stale
   list empty.
 * **Time to detection.** Immediate on the first read after the window passes;
@@ -176,11 +176,11 @@ what an admin sees → recovery → time to detection → cleanup.
 * **Failure introduced.** The queue was paused from the admin API while five task
   jobs were dispatched — a live worker that is not draining, which is what a
   wedged consumer looks like from the outside.
-* **Detection signal.** `ms_queue_jobs{state="waiting"}` 0 → **5**;
-  `ms_queue_oldest_waiting_seconds` rising (8 s, then 66 s);
-  `ms_worker_jobs_total{outcome="completed"}` flat at 5 throughout;
-  `ms_worker_heartbeats` 1 (the worker was alive the whole time).
-* **Alert condition.** W1 (depth and age) then W3 (`increase(ms_worker_jobs_total
+* **Detection signal.** `as_queue_jobs{state="waiting"}` 0 → **5**;
+  `as_queue_oldest_waiting_seconds` rising (8 s, then 66 s);
+  `as_worker_jobs_total{outcome="completed"}` flat at 5 throughout;
+  `as_worker_heartbeats` 1 (the worker was alive the whole time).
+* **Alert condition.** W1 (depth and age) then W3 (`increase(as_worker_jobs_total
   [15m]) == 0` while heartbeats are fresh) — both true on the recorded series.
 * **What an admin sees.** Queue Monitor: paused state, waiting 5, oldest waiting
   37 s, workers reporting — the operator can tell "nothing is arriving" from
@@ -189,7 +189,7 @@ what an admin sees → recovery → time to detection → cleanup.
 * **Recovery.** Resumed from the same screen; **drained in 10 s**, waiting back to
   0 and completions 5 → 10.
 * **Time to detection.** 8 s to a visible backlog signal.
-* **Defect found and fixed by this drill.** `ms_queue_oldest_waiting_seconds` kept
+* **Defect found and fixed by this drill.** `as_queue_oldest_waiting_seconds` kept
   its last value after the backlog drained (the queue's waiting list lags the
   counts by a scrape), which would have held an alert warm. The gauge is now
   forced to 0 whenever the waiting count is 0.
@@ -204,23 +204,23 @@ Dependencies were broken with a **TCP forwarder** between the drill process and
 the service, never by stopping a container. Stopping the forwarder is
 indistinguishable from the dependency being unreachable, and affects only the
 process that was pointed at it — so the shared MySQL, Redis, Mailpit and MinIO
-containers ran untouched throughout, as did the user's own API on port 3001 and
+containers ran untouched throughout, as did the user's own API on port 4001 and
 Homebrew MySQL on 3306.
 
-The drills ran against their own database (`melbourne_sphere_drill`), Redis
+The drills ran against their own database (`adelaide_sphere_drill`), Redis
 database 9, a drill API on port 3012, a drill worker on metrics port 9466, and a
 temporary Super Admin created for the run.
 
 ## Cleanup performed after this session's drills
 
 * Drill worker and drill API stopped; heartbeat keys removed with them.
-* `melbourne_sphere_drill` dropped, taking the temporary administrator, its
+* `adelaide_sphere_drill` dropped, taking the temporary administrator, its
   session and the email-log row with it.
 * Redis database 9 flushed (queue and heartbeat keys from the drills).
 * TCP forwarders and the provider stub stopped; their scratch files hold no
   credential that outlives the run.
-* Earlier drill API instance on port 3011 and the two metrics workers stopped.
-* The user's API on port 3001, the admin dev server on 3002 and every Compose
+* Earlier drill API instance on port 4011 and the two metrics workers stopped.
+* The user's API on port 4001, the admin dev server on 4002 and every Compose
   container were left running and unmodified. Homebrew MySQL on 3306 was never
   read, restarted or modified.
 * Two defects the drills found (a hanging `/metrics` under a Redis outage, a

@@ -1,7 +1,7 @@
 # SRS compliance matrix
 
 **Audit date:** 8 September 2026 · **closure addendum:** 9 September 2026 (MON 001 and MON 002 re-classified after the monitoring work and the failure drills; the counts table reflects the addendum, and the original verdicts are quoted in each row)
-**Authority:** `docs/Melbourne_Sphere_Technical_SRS_v1.md` revision 1.7 (205 numbered requirements across 42 families).
+**Authority:** `docs/Adelaide_Sphere_Technical_SRS_v1.md` revision 1.7 (205 numbered requirements across 42 families).
 **Auditor's rule:** *Verified* means something was run, probed or requested **in this audit** and the result was observed. A passing test written by an earlier phase is evidence, but on its own it makes a requirement *Implemented but unverified* — the point of this audit is that previous completion reports are not proof.
 
 ## Method
@@ -31,12 +31,12 @@
 
 | ID | Requirement (abridged) | Classification | Evidence and limits |
 | --- | --- | --- | --- |
-| SCP 001 | The MVP shall serve Melbourne, Victoria, Australia only | Verified | Melbourne-only enforced server side; `/site/context` is fixed and not editable. Runtime probe: no city route exists, area allowlist seeded. |
-| SCP 002 | Only administrator accounts shall exist | Verified | Melbourne-only enforced server side; `/site/context` is fixed and not editable. Runtime probe: no city route exists, area allowlist seeded. |
-| SCP 003 | MVP includes directory browsing, categories, Melbourne local are | Verified | Melbourne-only enforced server side; `/site/context` is fixed and not editable. Runtime probe: no city route exists, area allowlist seeded. |
-| SCP 004 | Listing eligibility shall be checked against a client approved b | Blocked by client decision | Boundary baseline is the City of Melbourne council area pending decision D01. |
+| SCP 001 | The MVP shall serve Adelaide, South Australia, Australia only | Verified | Adelaide-only enforced server side; `/site/context` is fixed and not editable. Runtime probe: no city route exists, area allowlist seeded. |
+| SCP 002 | Only administrator accounts shall exist | Verified | Adelaide-only enforced server side; `/site/context` is fixed and not editable. Runtime probe: no city route exists, area allowlist seeded. |
+| SCP 003 | MVP includes directory browsing, categories, Adelaide local are | Verified | Adelaide-only enforced server side; `/site/context` is fixed and not editable. Runtime probe: no city route exists, area allowlist seeded. |
+| SCP 004 | Listing eligibility shall be checked against a client approved b | Blocked by client decision | Boundary baseline is Inner Adelaide pending decision D01. |
 | SCP 005 | Product approval shall record final boundary, brand assets, cont | Blocked by client decision | Final boundary, brand assets and contact details are D01/D02/D10. |
-| UX 001 | Use original Melbourne branding, licensed Melbourne photography  | Partial | Interim licensed photography is in place; commissioned Melbourne photography and brand assets are outstanding client content. |
+| UX 001 | Use original Adelaide branding, licensed Adelaide photography  | Partial | Interim licensed photography is in place; commissioned Adelaide photography and brand assets are outstanding client content. |
 | UX 002 | Public navigation shall include Home, Businesses, Blog, About an | Verified | Visual sweep of 9 routes x 5 widths in this audit: 200, one h1, one main, zero overflow, zero console errors. |
 | UX 003 | No generic city route shall be introduced | Verified | Visual sweep of 9 routes x 5 widths in this audit: 200, one h1, one main, zero overflow, zero console errors. |
 | ARC 001 | Implement a pnpm workspace monorepo with TypeScript throughout | Verified | One pnpm workspace, one lockfile, no nested repos; browser bundles scanned for Prisma/driver/secret leakage (0 hits). |
@@ -44,7 +44,7 @@
 | ARC 003 | Use MySQL with utf8mb4, Redis for distributed limits/cache and B | Verified | One pnpm workspace, one lockfile, no nested repos; browser bundles scanned for Prisma/driver/secret leakage (0 hits). |
 | ARC 004 | Route browser traffic through one HTTPS origin: / for Next | Verified | One pnpm workspace, one lockfile, no nested repos; browser bundles scanned for Prisma/driver/secret leakage (0 hits). |
 | ARC 005 | Refine is the agreed admin framework | Verified | One pnpm workspace, one lockfile, no nested repos; browser bundles scanned for Prisma/driver/secret leakage (0 hits). |
-| HERO 001 | The homepage shall render a full width Melbourne background imag | Implemented but unverified | Rendered and scanned in the visual sweep; rotation/pause behaviour covered by hero-banner tests, not re-driven here. |
+| HERO 001 | The homepage shall render a full width Adelaide background imag | Implemented but unverified | Rendered and scanned in the visual sweep; rotation/pause behaviour covered by hero-banner tests, not re-driven here. |
 | HERO 002 | Provide one semantic H1 with a stable accessible meaning such as | Implemented but unverified | Rendered and scanned in the visual sweep; rotation/pause behaviour covered by hero-banner tests, not re-driven here. |
 | HERO 003 | A persistent keyboard accessible pause/resume control shall acco | Implemented but unverified | Rendered and scanned in the visual sweep; rotation/pause behaviour covered by hero-banner tests, not re-driven here. |
 | HERO 004 | The rounded search panel shall contain a visibly fixed "Melbourn | Implemented but unverified | Rendered and scanned in the visual sweep; rotation/pause behaviour covered by hero-banner tests, not re-driven here. |

@@ -10,7 +10,7 @@ import { theme as antTheme, type ThemeConfig } from 'antd';
  *  * **Ant Design** needs real colours — its dark algorithm and hover states are
  *    computed from them — so `createAdminTheme` reads the active palette.
  *  * **Everything else** reads `brand`, whose adaptive entries are CSS variables
- *    (`var(--ms-text)`), written onto the document from the same palette by
+ *    (`var(--as-text)`), written onto the document from the same palette by
  *    `applyThemeVariables`. An inline style written as `brand.text` therefore
  *    follows the theme without the screen knowing a theme exists.
  *
@@ -154,8 +154,8 @@ const darkPalette: Palette = {
 
 export const palettes: Record<ThemeMode, Palette> = { light: lightPalette, dark: darkPalette };
 
-/** `textMuted` → `--ms-text-muted`. */
-export const cssVariableName = (key: string) => `--ms-${key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
+/** `textMuted` → `--as-text-muted`. */
+export const cssVariableName = (key: string) => `--as-${key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
 
 /**
  * The tokens screens use. Adaptive colours are CSS variables, so they follow the

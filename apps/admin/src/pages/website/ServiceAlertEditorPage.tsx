@@ -86,7 +86,7 @@ export function ServiceAlertEditorPage() {
     submit(async (values) => {
       // Adelaide time in, an instant out — converted once, here. Reading the
       // picker's value as browser-local time scheduled an alert at the wrong
-      // hour for anyone editing from outside Victoria (SRS 1.2 ALRT 003).
+      // hour for anyone editing from outside South Australia (SRS 1.2 ALRT 003).
       const startsAt = values.startsLocal ? adelaideLocalToUtc(values.startsLocal) : null;
       if (values.startsLocal && !startsAt) {
         setError('Enter a valid start date and time, or leave it empty');

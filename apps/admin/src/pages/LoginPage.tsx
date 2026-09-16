@@ -149,7 +149,7 @@ export function LoginPage() {
             {locked ? `Try again in ${clock(remaining)}` : isPending ? 'Checking…' : 'Verify and sign in'}
           </Button>
         </Form>
-        <div className="ms-auth-secondary">
+        <div className="as-auth-secondary">
           <Button
             type="link"
             style={{ padding: 0, height: 'auto' }}
@@ -193,7 +193,7 @@ export function LoginPage() {
           // capitals is the commonest reason for "not right".
           extra={
             capsLock ? (
-              <span className="ms-auth-hint" role="status">
+              <span className="as-auth-hint" role="status">
                 <WarningOutlined aria-hidden="true" /> Caps Lock is on
               </span>
             ) : undefined
@@ -205,7 +205,7 @@ export function LoginPage() {
           {locked ? `Try again in ${clock(remaining)}` : isPending ? 'Signing in…' : 'Sign in'}
         </Button>
       </Form>
-      <div className="ms-auth-secondary">
+      <div className="as-auth-secondary">
         <Link to="/forgot-password">Forgotten your password?</Link>
       </div>
     </AuthScreen>

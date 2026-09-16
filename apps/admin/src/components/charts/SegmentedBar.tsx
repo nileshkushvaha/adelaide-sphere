@@ -14,11 +14,11 @@ export interface Segment {
 
 /** Status colours are reserved for state, and never carry meaning without an icon and a label. */
 const TONES: Record<SegmentTone, { color: string; icon: ReactNode }> = {
-  good: { color: 'var(--ms-status-good)', icon: <CheckCircleFilled /> },
-  warning: { color: 'var(--ms-status-warning)', icon: <ClockCircleFilled /> },
-  serious: { color: 'var(--ms-status-serious)', icon: <ExclamationCircleFilled /> },
-  critical: { color: 'var(--ms-status-critical)', icon: <CloseCircleFilled /> },
-  neutral: { color: 'var(--ms-status-neutral)', icon: <MinusCircleFilled /> },
+  good: { color: 'var(--as-status-good)', icon: <CheckCircleFilled /> },
+  warning: { color: 'var(--as-status-warning)', icon: <ClockCircleFilled /> },
+  serious: { color: 'var(--as-status-serious)', icon: <ExclamationCircleFilled /> },
+  critical: { color: 'var(--as-status-critical)', icon: <CloseCircleFilled /> },
+  neutral: { color: 'var(--as-status-neutral)', icon: <MinusCircleFilled /> },
 };
 
 const count = new Intl.NumberFormat('en-AU');
@@ -45,7 +45,7 @@ export function SegmentedBar({ segments, label, emptyText }: { segments: Segment
           .filter((segment) => segment.value > 0)
           .map((segment) => (
             <Tooltip key={segment.key} title={`${segment.label}: ${count.format(segment.value)} (${share(segment.value)})`}>
-              <span className="ms-segment" style={{ flexGrow: segment.value, flexBasis: 0, minWidth: 4, background: TONES[segment.tone].color }} />
+              <span className="as-segment" style={{ flexGrow: segment.value, flexBasis: 0, minWidth: 4, background: TONES[segment.tone].color }} />
             </Tooltip>
           ))}
       </div>

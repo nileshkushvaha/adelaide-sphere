@@ -115,6 +115,13 @@ describe('API foundation (e2e)', () => {
       expect(res.headers['cache-control']).toBe('no-store');
     });
 
+    it('a differently-cased admin path is not a route (no way past the path-based guards)', async () => {
+      for (const path of ['/api/v1/Admin/enquiries', '/api/v1/ADMIN/roles', '/api/v1/admin/Enquiries']) {
+        const res = await request(app.getHttpServer()).get(path).expect(404);
+        expect(res.body.error.code).toBe('NOT_FOUND');
+      }
+    });
+
     it('login without a trusted Origin is refused (login CSRF)', async () => {
       const res = await request(app.getHttpServer()).post('/api/v1/admin/auth/login').send({ email: 'a@example.com', password: 'whatever-password-1' }).expect(403);
       expect(res.body.error.code).toBe('CSRF_ORIGIN_REJECTED');
@@ -156,7 +163,7 @@ describe('API foundation (e2e)', () => {
       name: 'Jamie',
       email: 'jamie@example.com',
       rating: 4,
-      address: { suburb: 'Carlton' },
+      address: { suburb: 'Norwood' },
     };
 
     it('accepts a valid DTO', async () => {

@@ -19,8 +19,8 @@ describe('Home settings and search suggestions (integration)', () => {
     const redis = app.get(RedisService);
     await redis.ensureConnected();
     // keyPrefix applies to commands but not to KEYS patterns/results (see clearThrottleKeys).
-    const keys = await redis.client.keys('ms:public:suggestions:*');
-    if (keys.length > 0) await redis.client.del(...keys.map((k) => k.replace(/^ms:/, '')));
+    const keys = await redis.client.keys('as:public:suggestions:*');
+    if (keys.length > 0) await redis.client.del(...keys.map((k) => k.replace(/^as:/, '')));
   };
 
   beforeAll(async () => {
@@ -47,7 +47,7 @@ describe('Home settings and search suggestions (integration)', () => {
     const inactive = await mk('/api/v1/admin/categories', { name: 'Cafes retired' });
     const inactiveRow = await db.category.findUniqueOrThrow({ where: { id: inactive } });
     await admin(agent().post(`/api/v1/admin/categories/${inactive}/deactivate`)).send({ expectedVersion: inactiveRow.version }).expect(200);
-    const area = await mk('/api/v1/admin/areas', { name: 'Melbourne CBD', eligibilitySource: 'council list' });
+    const area = await mk('/api/v1/admin/areas', { name: 'Adelaide CBD', eligibilitySource: 'council list' });
     for (const name of ['Cafe Lumen', 'Cafeteria Nine', 'Draft Cafe']) {
       const b = (await admin(agent().post('/api/v1/admin/businesses')).send({ name, description: 'A listing used by the suggestion tests, long enough to publish.', primaryCategoryId: cafes, localAreaId: area, publicPhone: '03 9000 1111', eligibilitySource: 'council list', contentRightsReviewed: true }).expect(201)).body.data;
       if (name !== 'Draft Cafe') await admin(agent().post(`/api/v1/admin/businesses/${b.id}/publish`)).send({ expectedVersion: b.version, duplicateOverrideReason: 'distinct fixtures with similar names' }).expect(200);
@@ -100,7 +100,7 @@ describe('Home settings and search suggestions (integration)', () => {
     const { categories, services, businesses } = res.body.data;
     expect(categories.map((c: { label: string }) => c.label)).toEqual(['Cafes', 'Cafeteria supplies']); // inactive category excluded
     expect(services.map((s: { label: string; hint: string | null }) => [s.label, s.hint])).toEqual([['Specialty coffee', 'cafe latte']]); // matched via synonym
-    expect(businesses.map((b: { label: string; hint: string | null }) => [b.label, b.hint])).toEqual([['Cafe Lumen', 'Melbourne CBD'], ['Cafeteria Nine', 'Melbourne CBD']]); // draft excluded
+    expect(businesses.map((b: { label: string; hint: string | null }) => [b.label, b.hint])).toEqual([['Cafe Lumen', 'Adelaide CBD'], ['Cafeteria Nine', 'Adelaide CBD']]); // draft excluded
     expect(categories.length + services.length + businesses.length).toBeLessThanOrEqual(8);
 
     const short = await agent().get('/api/v1/search/suggestions?q=c').expect(200);
@@ -152,7 +152,7 @@ describe('Home settings and search suggestions (integration)', () => {
     const saved = await admin(agent().put('/api/v1/admin/settings/general'))
       .send({
         expectedVersion: 0,
-        applicationName: '  Melbourne   Sphere ',
+        applicationName: '  Adelaide   Sphere ',
         shortName: 'Sphere',
         tagline: 'Find local businesses across Adelaide',
         supportEmail: 'Listings@AdelaideSphere.com.au',

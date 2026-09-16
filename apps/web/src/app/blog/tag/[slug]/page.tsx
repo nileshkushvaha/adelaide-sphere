@@ -48,7 +48,7 @@ export default async function BlogTagPage({ params, searchParams }: PageProps<'/
         bodyHtml={tag.landingContent}
         meta={posts.meta.total > 0 ? `${posts.meta.total} article${posts.meta.total === 1 ? '' : 's'}` : undefined}
       />
-      <div className="ms-container py-12 sm:py-16">
+      <div className="as-container py-12 sm:py-16">
         {posts.data.length === 0 ? (
           <BlogEmptyState message="No stories carry this tag yet." action={{ href: '/blog', label: 'Browse all stories' }} />
         ) : (

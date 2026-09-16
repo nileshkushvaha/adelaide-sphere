@@ -10,6 +10,7 @@ import { useLocation, useNavigate } from 'react-router';
 export const SIGN_IN_NOTICES = {
   'password-changed': 'Your password has been changed and every earlier session has been signed out. Sign in with your new password.',
   'account-activated': 'Your account is active. Sign in with the password you have just chosen.',
+  'reset-link-sent': 'If that email belongs to an administrator account, a reset link has been sent. It is valid for 30 minutes.',
 } as const;
 
 export type SignInNotice = keyof typeof SIGN_IN_NOTICES;

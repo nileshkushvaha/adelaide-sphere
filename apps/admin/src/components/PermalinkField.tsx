@@ -80,7 +80,7 @@ export function PermalinkField({ base, value = '', placeholder, disabled = false
 
   if (!editing) {
     return (
-      <div className="ms-permalink" style={{ marginBottom: 20, display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 8 }}>
+      <div className="as-permalink" style={{ marginBottom: 20, display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 8 }}>
         <Typography.Text type="secondary" style={{ fontSize: 13 }}>
           Address:
         </Typography.Text>
@@ -99,7 +99,7 @@ export function PermalinkField({ base, value = '', placeholder, disabled = false
   }
 
   return (
-    <div className="ms-permalink" style={{ marginBottom: 20 }}>
+    <div className="as-permalink" style={{ marginBottom: 20 }}>
       <Space.Compact style={{ width: '100%', maxWidth: 520 }}>
         <Input
           addonBefore={`${base}/`}

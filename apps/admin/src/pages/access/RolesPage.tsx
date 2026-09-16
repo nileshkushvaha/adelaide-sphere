@@ -93,7 +93,7 @@ export function RolesPage() {
             dataSource={rows}
             loading={state.status === 'loading'}
             pagination={tablePagination(meta ?? { page, pageSize: list.pageSize, total: 0 }, list)}
-            className="ms-scroll-table"
+            className="as-scroll-table"
             // A fixed floor rather than max-content: the columns then share the
             // card's width instead of the table dictating it, so nothing is
             // clipped on a desktop and it still scrolls on a phone.

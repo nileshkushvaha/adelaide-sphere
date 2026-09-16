@@ -34,7 +34,7 @@ export function AuthorCard({ author }: { author: PostDetail['author'] }) {
           {meta && <p className="mt-1 text-sm text-text-muted">{meta}</p>}
           {author.bio ? (
             // Sanitised by the API with the editorial allowlist before storage (SRS SEC 001).
-            <div className="ms-prose ms-prose-fill mt-3 text-sm" dangerouslySetInnerHTML={{ __html: author.bio }} />
+            <div className="as-prose as-prose-fill mt-3 text-sm" dangerouslySetInnerHTML={{ __html: author.bio }} />
           ) : (
             author.shortBio && <p className="mt-3 text-sm leading-relaxed text-text-muted">{author.shortBio}</p>
           )}
@@ -71,7 +71,7 @@ export function AuthorCard({ author }: { author: PostDetail['author'] }) {
             </ul>
           )}
           {author.profilePath && (
-            <Link href={author.profilePath} className="ms-text-link mt-4 inline-flex min-h-11 items-center text-sm font-semibold">
+            <Link href={author.profilePath} className="as-text-link mt-4 inline-flex min-h-11 items-center text-sm font-semibold">
               More articles by {author.displayName}
             </Link>
           )}

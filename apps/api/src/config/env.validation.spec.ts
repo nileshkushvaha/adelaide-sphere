@@ -1,10 +1,10 @@
 import { MAIL_TRANSPORTS, PRODUCTION_MAIL_TRANSPORTS } from '@adelaide-sphere/mail';
 import { validateEnv } from './env.validation.js';
 
-const DB = 'mysql://app:secret@127.0.0.1:3307/adelaide_sphere_dev';
+const DB = 'mysql://app:secret@127.0.0.1:3317/adelaide_sphere_dev';
 /** Production requires verified TLS, so production cases use a URL that has it. */
 const DB_TLS = `${DB}?sslmode=verify-identity`;
-const REDIS = 'redis://:pw@127.0.0.1:6380/0';
+const REDIS = 'redis://:pw@127.0.0.1:6390/0';
 const SECRET = 'a-test-secret-that-is-at-least-32-characters-long';
 /** Required settings beyond the one under test. */
 const KEY = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
@@ -197,7 +197,7 @@ describe('validateEnv', () => {
     it('refuses a production database connection without verified TLS', () => {
       const prod = { ...BASE, NODE_ENV: 'production', TRUSTED_ORIGINS: 'https://example.com', PUBLIC_ADMIN_URL: 'https://example.com/admin', METRICS_TOKEN: 'm'.repeat(32), TRUST_PROXY: '1' };
       for (const url of [
-        'mysql://app:secret@db.internal:3306/melbourne_sphere',
+        'mysql://app:secret@db.internal:3306/adelaide_sphere',
         'mysql://app:secret@db.internal:3306/adelaide_sphere?sslmode=disabled',
         'mysql://app:secret@db.internal:3306/adelaide_sphere?sslmode=required',
       ]) {

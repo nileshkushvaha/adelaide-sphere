@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { POST_TRANSITIONS, deriveExcerpt, postPublicationBlockers, postPublicationChecklist, scheduleBlockers } from './posts.js';
 
-const complete = { title: 'Melbourne laneway cafes', slug: 'melbourne-laneway-cafes', excerpt: 'A guide to the best laneway cafes.', plainBody: 'Some article body. '.repeat(20), authorActive: true, categoryActive: true };
+const complete = { title: 'Adelaide laneway cafes', slug: 'adelaide-laneway-cafes', excerpt: 'A guide to the best laneway cafes.', plainBody: 'Some article body. '.repeat(20), authorActive: true, categoryActive: true };
 
 describe('post publication rules (SRS BLOG 002)', () => {
   it('accepts a complete article', () => {
@@ -50,8 +50,8 @@ describe('deriveExcerpt', () => {
   });
 
   it('ends at a sentence when one fits, otherwise at a word, never mid-word', () => {
-    const sentences = `Carlton has more cafés than most suburbs. ${'Each one roasts its own beans and bakes its own pastries every single morning '.repeat(3)}`;
-    expect(deriveExcerpt(sentences)).toBe('Carlton has more cafés than most suburbs.');
+    const sentences = `Norwood has more cafés than most suburbs. ${'Each one roasts its own beans and bakes its own pastries every single morning '.repeat(3)}`;
+    expect(deriveExcerpt(sentences)).toBe('Norwood has more cafés than most suburbs.');
     const oneLongSentence = 'word '.repeat(60);
     const derived = deriveExcerpt(oneLongSentence);
     expect(derived.endsWith('word…')).toBe(true);

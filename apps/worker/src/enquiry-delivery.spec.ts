@@ -35,7 +35,7 @@ const baseEnquiry: TestEnquiry = {
   message: 'Do you cater for office breakfasts? We need about twenty serves.',
   deliveryStatus: 'queued',
   createdAt: new Date('2026-09-06T02:30:00Z'),
-  business: { id: 'biz-1', name: 'Carlton Corner Bakery', status: 'published', privateEnquiryEmailEncrypted: 'enc:owner@example.com' },
+  business: { id: 'biz-1', name: 'Norwood Corner Bakery', status: 'published', privateEnquiryEmailEncrypted: 'enc:owner@example.com' },
 };
 
 function deps(overrides: Partial<TestEnquiry> & { mailer?: RecordingMailer } = {}) {

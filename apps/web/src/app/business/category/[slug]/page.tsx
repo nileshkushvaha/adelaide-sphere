@@ -60,7 +60,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps<'
       />
       {category.children.length > 0 && (
         <nav aria-label="Subcategories" className="border-b border-border bg-surface">
-          <ul className="ms-container flex flex-wrap gap-2 py-4 text-sm">
+          <ul className="as-container flex flex-wrap gap-2 py-4 text-sm">
             {category.children.map((child) => (
               <li key={child.id}>
                 <Link href={`/business/category/${child.slug}`} className="inline-flex min-h-9 items-center rounded-full border border-border px-3.5 transition-colors hover:border-border-strong hover:bg-sky-50">
@@ -71,7 +71,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps<'
           </ul>
         </nav>
       )}
-      <div className="ms-container py-10 sm:py-12">
+      <div className="as-container py-10 sm:py-12">
         <BusinessResults basePath={basePath} state={{ ...state, category: null }} fixed={{ category: category.slug }} />
       </div>
     </>

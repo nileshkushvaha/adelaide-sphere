@@ -15,12 +15,12 @@ export function TextComparison({ before, after }: { before: string; after: strin
     <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
       {parts.map((part, index) =>
         part.added ? (
-          <ins key={index} className="ms-diff-added">
+          <ins key={index} className="as-diff-added">
             <span className="sr-only">[added] </span>
             {part.value}
           </ins>
         ) : part.removed ? (
-          <del key={index} className="ms-diff-removed">
+          <del key={index} className="as-diff-removed">
             <span className="sr-only">[removed] </span>
             {part.value}
           </del>

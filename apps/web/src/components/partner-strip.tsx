@@ -75,7 +75,7 @@ export function PartnerStrip({ partners, tone = 'light' }: { partners: PublicPar
           ref={strip}
           tabIndex={0}
           aria-label="Organisations we work with"
-          className={`ms-gallery-strip flex flex-1 snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 focus-visible:outline-2 focus-visible:outline-offset-4 motion-reduce:scroll-auto ${dark ? 'focus-visible:outline-sky-400' : 'focus-visible:outline-link'}`}
+          className={`as-gallery-strip flex flex-1 snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 focus-visible:outline-2 focus-visible:outline-offset-4 motion-reduce:scroll-auto ${dark ? 'focus-visible:outline-sky-400' : 'focus-visible:outline-link'}`}
         >
           {partners.map((partner) => {
             const inside = (
@@ -85,7 +85,7 @@ export function PartnerStrip({ partners, tone = 'light' }: { partners: PublicPar
                 <img src={partner.logo.url} alt="" width={partner.logo.width} height={partner.logo.height} className={`size-12 shrink-0 rounded-xl object-contain ${dark ? 'bg-white p-1' : ''}`} />
                 <span className="min-w-0">
                   {/* Wrapped to two lines rather than truncated: an organisation
-                      cut off mid-word ("Victoria Small Business …") is not a name. */}
+                      cut off mid-word ("South Australian Small Business …") is not a name. */}
                   <span className={`block font-semibold leading-snug ${dark ? 'text-white' : 'text-navy-900'}`}>{partner.name}</span>
                   {partner.relationshipLabel && <span className={`mt-0.5 block text-xs ${dark ? 'text-band-muted' : 'text-text-muted'}`}>{partner.relationshipLabel}</span>}
                 </span>

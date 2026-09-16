@@ -29,7 +29,7 @@ export function FeaturedImageBox({ post, readOnly, resetKey }: Props) {
         </Typography.Text>
       )}
       <Form.Item label="Image description" name="coverAlt" extra="What the picture shows, read aloud to people who cannot see it." style={{ marginBottom: 0 }}>
-        <Input maxLength={255} placeholder="e.g. Coffee being poured at a Carlton café" />
+        <Input maxLength={255} placeholder="e.g. Coffee being poured at a Norwood café" />
       </Form.Item>
     </SectionCard>
   );

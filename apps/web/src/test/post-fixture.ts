@@ -10,7 +10,7 @@ export function post(overrides: Partial<PostCardData> = {}): PostCardData {
     id: 'p1',
     title: 'Where to find laneway coffee',
     slug: 'where-to-find-laneway-coffee',
-    excerpt: 'The lanes off Flinders Lane hold more roasters than any block in the city.',
+    excerpt: 'The lanes off Peel Street hold more roasters than any block in the city.',
     category: { name: 'City guides', slug: 'city-guides' },
     author: { displayName: 'Dev Editor', slug: 'dev-editor', role: 'Editor', shortBio: null, bio: null, pronouns: null, location: null, websiteUrl: null, expertise: [], links: [], image: null, profilePath: null },
     tags: [],

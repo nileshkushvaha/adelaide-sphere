@@ -6,7 +6,7 @@ import type { CookieOptions, Response } from 'express';
 import { DatabaseService } from '../database/database.service.js';
 import type { EnvironmentVariables } from '../config/env.validation.js';
 
-export const SESSION_COOKIE_NAME = 'ms_admin_session';
+export const SESSION_COOKIE_NAME = 'as_admin_session';
 /** Narrowest path that covers every admin route (SRS AUTH 002). */
 export const SESSION_COOKIE_PATH = '/api/v1/admin';
 /** lastSeenAt/idle deadline are persisted at most this often to limit writes. */

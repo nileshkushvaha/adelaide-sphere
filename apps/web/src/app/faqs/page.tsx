@@ -73,7 +73,7 @@ export default async function FaqsPage() {
 
   const { email } = contactChannelFrom(settings);
   const { phone } = settings.contact;
-  const contactLinkClass = 'flex min-h-11 items-center gap-2.5 break-words font-medium text-link underline-offset-4 ms-text-link [overflow-wrap:anywhere]';
+  const contactLinkClass = 'flex min-h-11 items-center gap-2.5 break-words font-medium text-link underline-offset-4 as-text-link [overflow-wrap:anywhere]';
 
   return (
     <article>
@@ -82,7 +82,7 @@ export default async function FaqsPage() {
         title="Frequently asked questions"
         eyebrow="Help centre"
         intro={`Answers about listing a business, reviews, enquiries and how ${settings.name} works.`}
-        className="ms-editorial-band"
+        className="as-editorial-band"
       />
 
       <ProductPageLayout
@@ -161,7 +161,7 @@ export default async function FaqsPage() {
                       </span>
                     </summary>
                     {/* Sanitised server-side by the same allowlist as articles (SEC 001). */}
-                    <div className="ms-prose border-t border-border px-5 pt-4 pb-5 text-text-muted" dangerouslySetInnerHTML={{ __html: faq.answerHtml }} />
+                    <div className="as-prose border-t border-border px-5 pt-4 pb-5 text-text-muted" dangerouslySetInnerHTML={{ __html: faq.answerHtml }} />
                   </details>
                 </li>
               ))}

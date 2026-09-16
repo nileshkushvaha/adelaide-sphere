@@ -78,7 +78,7 @@ test.describe('Admin interface', () => {
 
   test('every page family passes an accessibility scan in the dark theme too', async ({ page }) => {
     // The toggle's own storage key, set before any page script runs.
-    await page.addInitScript(() => window.localStorage.setItem('ms.admin.theme', 'dark'));
+    await page.addInitScript(() => window.localStorage.setItem('as.admin.theme', 'dark'));
     await signIn(page, fixture.superAdmin);
     for (const family of FAMILIES) {
       await page.goto(`${ADMIN_URL}/${family.path}`);

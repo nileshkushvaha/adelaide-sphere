@@ -30,18 +30,18 @@ describe('route metadata overrides', () => {
   });
 
   it('replaces only the fields that were set', async () => {
-    fetchSiteSettings.mockResolvedValue(withSeo({ blog: entry({ metaTitle: 'Melbourne stories' }) }));
+    fetchSiteSettings.mockResolvedValue(withSeo({ blog: entry({ metaTitle: 'Adelaide stories' }) }));
     const result = await routeMetadata('blog', base);
-    expect(result.title).toBe('Melbourne stories');
+    expect(result.title).toBe('Adelaide stories');
     expect(result.description).toBe('Written text');
     expect(result.alternates?.canonical).toBe('/blog');
   });
 
   it('applies a canonical, keywords and a robots directive', async () => {
-    fetchSiteSettings.mockResolvedValue(withSeo({ blog: entry({ canonicalUrl: 'https://example.com.au/blog', metaKeywords: 'cafes, melbourne', robots: 'noindex,follow' }) }));
+    fetchSiteSettings.mockResolvedValue(withSeo({ blog: entry({ canonicalUrl: 'https://example.com.au/blog', metaKeywords: 'cafes, adelaide', robots: 'noindex,follow' }) }));
     const result = await routeMetadata('blog', base);
     expect(result.alternates?.canonical).toBe('https://example.com.au/blog');
-    expect(result.keywords).toEqual(['cafes', 'melbourne']);
+    expect(result.keywords).toEqual(['cafes', 'adelaide']);
     expect(result.robots).toEqual({ index: false, follow: true });
   });
 

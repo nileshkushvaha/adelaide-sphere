@@ -60,8 +60,8 @@ describe('Authentication artifact cleanup (integration)', () => {
   });
 
   it('refuses production and databases not marked as development, test or e2e', () => {
-    expect(() => assertRevocableTarget('production', 'mysql://u:p@db/melbourne_sphere_test')).toThrow(/NODE_ENV=production/);
-    expect(() => assertRevocableTarget('development', 'mysql://u:p@db/melbourne_sphere')).toThrow(/must end in _dev, _test or _e2e/);
-    expect(() => assertRevocableTarget('development', 'mysql://u:p@db/melbourne_sphere_dev?sslmode=disabled')).not.toThrow();
+    expect(() => assertRevocableTarget('production', 'mysql://u:p@db/adelaide_sphere_test')).toThrow(/NODE_ENV=production/);
+    expect(() => assertRevocableTarget('development', 'mysql://u:p@db/adelaide_sphere')).toThrow(/must end in _dev, _test or _e2e/);
+    expect(() => assertRevocableTarget('development', 'mysql://u:p@db/adelaide_sphere_dev?sslmode=disabled')).not.toThrow();
   });
 });

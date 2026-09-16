@@ -48,7 +48,7 @@ export default async function AreaPage({ params, searchParams }: PageProps<'/bus
         description={area.editorialIntro ?? `Published businesses located in ${area.name}, Adelaide.`}
         image={area.image}
       />
-      <div className="ms-container py-10 sm:py-12">
+      <div className="as-container py-10 sm:py-12">
         <BusinessResults basePath={basePath} state={{ ...state, area: null }} fixed={{ area: area.slug }} />
       </div>
     </>

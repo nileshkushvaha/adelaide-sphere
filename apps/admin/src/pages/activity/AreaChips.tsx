@@ -35,7 +35,7 @@ export function AreaChips({ areas, value, onChange }: { areas: Area[] | null; va
   };
 
   return (
-    <div role="radiogroup" aria-label="Activity area" className="ms-activity-chips">
+    <div role="radiogroup" aria-label="Activity area" className="as-activity-chips">
       {options.map((option, index) => {
         const selected = index === selectedIndex;
         return (
@@ -48,14 +48,14 @@ export function AreaChips({ areas, value, onChange }: { areas: Area[] | null; va
             role="radio"
             aria-checked={selected}
             tabIndex={selected ? 0 : -1}
-            className={`ms-activity-chip${selected ? ' is-selected' : ''}`}
+            className={`as-activity-chip${selected ? ' is-selected' : ''}`}
             onClick={() => onChange(option.category)}
             onKeyDown={(event) => move(event, index)}
           >
-            <span className={`ms-activity-chip__icon ms-activity-icon--${option.category ?? 'all'}`}>{activityAreaIcon(option.category ?? 'all')}</span>
+            <span className={`as-activity-chip__icon as-activity-icon--${option.category ?? 'all'}`}>{activityAreaIcon(option.category ?? 'all')}</span>
             {option.label}
             {option.count !== null && (
-              <span className="ms-activity-chip__count">
+              <span className="as-activity-chip__count">
                 {option.count}
                 <span className="sr-only"> today</span>
               </span>

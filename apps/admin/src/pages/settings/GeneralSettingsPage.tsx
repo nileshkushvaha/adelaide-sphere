@@ -149,7 +149,7 @@ export function GeneralSettingsPage() {
         expectedVersion: record.version,
       });
       message.success('General settings saved');
-      window.dispatchEvent(new Event('ms-branding-updated'));
+      window.dispatchEvent(new Event('as-branding-updated'));
       setDirty(false);
       reload();
     } catch (err) {

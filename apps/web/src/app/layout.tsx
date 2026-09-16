@@ -60,7 +60,7 @@ export async function generateMetadata(): Promise<Metadata> {
 /**
  * Public shell: skip link, landmarks, header and footer (SRS UX 002, NFR 011).
  * `main` carries no width of its own — sections are full-bleed and bound their
- * own content with `.ms-container`, so the page can alternate light and dark
+ * own content with `.as-container`, so the page can alternate light and dark
  * bands across the whole viewport instead of living in one narrow column.
  */
 export default function RootLayout({ children }: LayoutProps<'/'>) {
@@ -71,7 +71,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
           ignores attribute differences on this one element only; its
           children are still checked. */}
       <body suppressHydrationWarning className="flex min-h-full flex-col font-sans">
-        <a className="ms-skip-link" href="#main-content">
+        <a className="as-skip-link" href="#main-content">
           Skip to main content
         </a>
         {/* Reads the current address, so it needs its own boundary; it adds an
