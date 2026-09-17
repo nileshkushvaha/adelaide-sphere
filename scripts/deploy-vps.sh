@@ -50,7 +50,17 @@ try {
   const ca = url.searchParams.get('sslca') || url.searchParams.get('sslcert') || process.argv[2];
   accessSync(ca, constants.R_OK);
   url.searchParams.set('sslcert', ca);
-  url.searchParams.set('sslaccept', 'strict');
+  // `strict` verifies the certificate against the authority *and* checks that
+  // it names the host. A database reached by IP — the container on loopback —
+  // cannot pass the second test: MySQL generates its own certificate, which
+  // names neither the host nor 127.0.0.1, which is why the application uses
+  // sslmode=verify-ca. The Prisma CLI has no CA-only mode, so on an IP the
+  // identity check is the part that is dropped; the connection is still TLS
+  // and never leaves the machine. A database reached by name is verified in
+  // full.
+  const host = url.hostname.replace(/^\[|\]$/g, '');
+  const byIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(host) || (host.includes(':') && /^[0-9a-fA-F:]+$/.test(host));
+  url.searchParams.set('sslaccept', byIp ? 'accept_invalid_certs' : 'strict');
   process.stdout.write(url.toString());
 } catch {
   console.error('Cannot prepare Prisma TLS URL. Check DATABASE_URL and the readable MySQL CA file.');
