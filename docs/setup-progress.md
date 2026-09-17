@@ -2492,3 +2492,9 @@ Fixes for three findings from the production-readiness audit of the same day.
 - **Fix (user decision, 17 Sep):** the identity check is applied only when the database is reached by a hostname. Reached by IP — the container on loopback — the certificate authority is still supplied and the connection is still TLS; only the name check is dropped, on a connection that never leaves the machine.
 - Host classification was checked against loopback, private, IPv6 and named hosts; the shell was syntax-checked. Not run against a VPS from here.
 - **Also outstanding on that server:** `MEDIA_S3_ENDPOINT` must be the public `https://media.adelaidesphere.com` host, never `127.0.0.1:9020` — the API signs upload URLs for it and the admin browser uploads directly, so a loopback endpoint produces URLs no browser can reach and every upload stays "processing" (fixed on the server on 17 Sep; the guide §8.2 already warned).
+
+## Deploy script: no assumed service account (17 Sep 2026)
+- **Symptom:** after migrations and the RBAC seed, `deploy.sh` stopped with `sudo: unknown user adelaide-sphere`, leaving the release built but not switched.
+- **Why:** the version stamp was written with `sudo -u adelaide-sphere`. The deployment guide's layout gives the environment files to a service account of that name; this server has no such user and runs the services as `deploy`, which owns `shared/`.
+- **Fix:** the stamp is written as whoever owns `shared/worker.env` — directly when that is the deploying user, through `sudo -u <owner>` otherwise. Both layouts work and neither is assumed.
+- Syntax-checked, and the rewrite (delete the old `APP_VERSION` line, append the new one) was exercised on a scratch file. Not run against a VPS from here.

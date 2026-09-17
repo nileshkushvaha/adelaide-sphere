@@ -198,9 +198,17 @@ rollback() {
   exit 1
 }
 printf '%s\n' "$PREVIOUS" > "$ROOT/previous-release"
-# The version the Workers card and error reports show.
-sudo -u adelaide-sphere sed -i '/^APP_VERSION=/d' "$ROOT/shared/worker.env"
-printf 'APP_VERSION=%s\n' "$SHA" | sudo -u adelaide-sphere tee -a "$ROOT/shared/worker.env" >/dev/null
+# The version the Workers card and error reports show. Written as whoever owns
+# the file: a deployment that assumes a service account by name fails outright
+# where the environment files belong to the deploying user instead.
+WORKER_ENV_OWNER=$(stat -c '%U' "$ROOT/shared/worker.env")
+if [[ "$WORKER_ENV_OWNER" == "$(id -un)" ]]; then
+  sed -i '/^APP_VERSION=/d' "$ROOT/shared/worker.env"
+  printf 'APP_VERSION=%s\n' "$SHA" >> "$ROOT/shared/worker.env"
+else
+  sudo -u "$WORKER_ENV_OWNER" sed -i '/^APP_VERSION=/d' "$ROOT/shared/worker.env"
+  printf 'APP_VERSION=%s\n' "$SHA" | sudo -u "$WORKER_ENV_OWNER" tee -a "$ROOT/shared/worker.env" >/dev/null
+fi
 trap rollback ERR INT TERM
 switch_link "$DIR"
 restart_apps
