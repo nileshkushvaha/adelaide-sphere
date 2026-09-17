@@ -44,7 +44,14 @@ describe('parseMysqlUrl', () => {
       expect(sslOptionFor({ sslMode: 'disabled', sslCaPath: null })).toBe(false);
       expect(sslOptionFor({ sslMode: 'required', sslCaPath: null })).toEqual({ rejectUnauthorized: false });
       expect(sslOptionFor({ sslMode: 'verify-identity', sslCaPath: null })).toEqual({ rejectUnauthorized: true });
-      expect(sslOptionFor({ sslMode: 'verify-ca', sslCaPath: null })).toEqual({ rejectUnauthorized: true });
+      // verify-ca checks the chain but not the server's name: MySQL's generated
+      // certificate names neither the host nor 127.0.0.1, and checking it there
+      // refuses every connection the MySQL client itself accepts.
+      const verifyCa = sslOptionFor({ sslMode: 'verify-ca', sslCaPath: null });
+      expect(verifyCa).toMatchObject({ rejectUnauthorized: true });
+      expect(typeof (verifyCa as { checkServerIdentity?: unknown }).checkServerIdentity).toBe('function');
+      expect((verifyCa as { checkServerIdentity: () => undefined }).checkServerIdentity()).toBeUndefined();
+      expect(sslOptionFor({ sslMode: 'verify-identity', sslCaPath: null })).not.toHaveProperty('checkServerIdentity');
     });
   });
 

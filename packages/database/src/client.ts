@@ -4,24 +4,37 @@ import { PrismaClient } from './generated/prisma/client.js';
 import { parseMysqlUrl, type MysqlConnectionSettings } from './url.js';
 
 /**
- * Translates the URL's `sslmode` into the driver's `ssl` option.
+ * Translates the URL's `sslmode` into the driver's `ssl` option, with MySQL's
+ * own meanings:
  *
- * The mariadb connector treats an `ssl` object as verifying by default
- * (`rejectUnauthorized !== false`), so `verify-ca` and `verify-identity` both
- * check the certificate — against the supplied authority when `sslca` names
- * one, otherwise against the system store. `required` explicitly opts out of
- * verification and is refused in production by the API's configuration check.
+ *  - `disabled` — no TLS.
+ *  - `required` — encrypted, certificate not verified (refused in production
+ *    by the API's configuration check).
+ *  - `verify-ca` — encrypted, the certificate is verified against the
+ *    authority, and **the server's name is not checked**.
+ *  - `verify-identity` — as above, and the certificate must also name the host.
+ *
+ * The distinction is what makes `verify-ca` usable at all here: MySQL
+ * generates its own certificate on first start, and that certificate names
+ * neither the host nor `127.0.0.1`. Node's TLS stack checks the name by
+ * default, so without `checkServerIdentity` every connection failed the
+ * identity check and the application could not reach a database the MySQL
+ * client connected to happily. The certificate chain is still verified.
  */
-export function sslOptionFor(settings: Pick<MysqlConnectionSettings, 'sslMode' | 'sslCaPath'>): boolean | { rejectUnauthorized: boolean; ca?: string } {
+export function sslOptionFor(
+  settings: Pick<MysqlConnectionSettings, 'sslMode' | 'sslCaPath'>,
+): boolean | { rejectUnauthorized: boolean; ca?: string; checkServerIdentity?: () => undefined } {
+  const ca = settings.sslCaPath ? readFileSync(settings.sslCaPath, 'utf8') : undefined;
   switch (settings.sslMode) {
     case 'disabled':
       return false;
     case 'required':
       return { rejectUnauthorized: false };
-    default: {
-      const ca = settings.sslCaPath ? readFileSync(settings.sslCaPath, 'utf8') : undefined;
-      return ca ? { rejectUnauthorized: true, ca } : { rejectUnauthorized: true };
-    }
+    case 'verify-ca':
+      // Returning undefined means "no objection": the chain is still checked.
+      return { rejectUnauthorized: true, ...(ca ? { ca } : {}), checkServerIdentity: () => undefined };
+    case 'verify-identity':
+      return { rejectUnauthorized: true, ...(ca ? { ca } : {}) };
   }
 }
 
