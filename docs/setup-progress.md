@@ -2448,3 +2448,18 @@ Fixes for three findings from the production-readiness audit of the same day.
 - **Open:**
   - The SMTP password goes into the server's `shared/api.env` only.
   - Confirm `smtp@` may send as `noreply@`, that `noreply@` accepts mail (bounces arrive there, since SMTP has no delivery webhook), that DKIM signs for `adelaidesphere.com`, and the host's sending limits.
+
+## Migration: stored `adelaidesphere.com.au` rewritten to `adelaidesphere.com` (17 Sep 2026)
+- **Why:** production was restored from a backup taken while the old domain was in use, so settings, page and listing content still carried it. The code and configuration were changed earlier the same day; this is the stored data.
+- **`packages/database/prisma/migrations/20260917190000_domain_com_au_to_com/migration.sql`:** 22 guarded `UPDATE` statements over settings, pages and their autosaves and revisions, posts and autosaves, businesses and their links and media, categories, local areas, blog categories and tags, authors and their links, FAQs, service alerts, menu items, redirects, partners, testimonials and media assets. Data only; nothing is added, removed or emptied.
+  - `REGEXP_REPLACE` under `utf8mb4_unicode_ci` also corrects `AdelaideSphere.com.au` and `ADELAIDESPHERE.COM.AU`.
+  - JSON columns (`settings.data`, page `sections`, `sectionsSnapshot`, author `expertise`) are cast with `AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci` and parsed back. Both parts are needed: `CAST(json AS CHAR)` takes the client connection's character set (latin1 from the `mysql` CLI) and collation `utf8mb4_bin`, and MySQL then refuses to mix it with the text columns beside it. Both mistakes were caught by testing, not by review.
+  - Each statement is guarded by a `LIKE` over the columns it rewrites, so it is safe to re-run and a clean database is untouched.
+  - Excluded: visitor-submitted text (reviews, comments, enquiries, abuse reports), logs and audit history, `admin_users.email` (a login identity), and encrypted columns, whose ciphertext cannot be searched — a private enquiry address on the old domain must be re-entered in the admin. `updatedAt` is not bumped, so sitemap last-modified times keep describing real content changes.
+  - Unrelated `.com.au` addresses (a listing's own website, `example.com.au` placeholders) are deliberately left alone; the user confirmed this on 17 Sep.
+- **Tested** against a scratch database (`adelaide_sphere_migcheck`, created and dropped) on the local MySQL 8.4, with all 53 migrations applied and rows seeded with the old domain:
+  - `prisma migrate deploy` applied it as a pending migration, exactly as production will.
+  - Mixed-case spellings corrected; JSON escaping and non-ASCII text (`café — ☕`, `\"`, `&`) preserved; an unrelated `example.com.au` listing untouched.
+  - Re-running the file changed 0 rows and reported no error, with both latin1 and utf8mb4 client connections.
+  - `pnpm db:migrations:check`: policy OK.
+- **After deploying:** restart the API, worker and web so the cached settings and pages reload.
