@@ -6,14 +6,18 @@ ROOT=/srv/adelaide-sphere
 REF=${1:-master}
 [[ $# -le 1 && "$REF" != -* ]] || { echo 'Usage: bash deploy-vps.sh [branch-or-commit]' >&2; exit 2; }
 [[ $(id -un) == deploy ]] || { echo 'Run as deploy, not root.' >&2; exit 1; }
-for tool in git flock curl sudo gzip; do command -v "$tool" >/dev/null; done
+for tool in git flock curl sudo gzip; do command -v "$tool" >/dev/null || { echo "Required command not found: $tool" >&2; exit 1; }; done
 exec 9>"$ROOT/.deploy.lock"
 flock -n 9 || { echo 'Another deployment is running.' >&2; exit 1; }
 [[ -L "$ROOT/current" ]] || { echo 'Expected current to be a release symlink.' >&2; exit 1; }
 PREVIOUS=$(readlink -f "$ROOT/current")
 [[ "$PREVIOUS" == "$ROOT/releases/"* && -d "$PREVIOUS" ]]
-for env in api web worker backup; do test -r "$ROOT/shared/$env.env"; done
-test -r "$ROOT/shared/backup-recipient.txt"
+# Named one by one: `set -e` on a bare `test` ends the deployment with no
+# output at all, which reads as "nothing happened" rather than "this is missing".
+for env in api web worker backup; do
+  test -r "$ROOT/shared/$env.env" || { echo "Missing or unreadable: $ROOT/shared/$env.env" >&2; exit 1; }
+done
+test -r "$ROOT/shared/backup-recipient.txt" || { echo "Missing or unreadable: $ROOT/shared/backup-recipient.txt" >&2; exit 1; }
 sudo -v
 sudo nginx -t
 for service in adelaide-sphere-api adelaide-sphere-worker adelaide-sphere-web; do sudo systemctl is-active --quiet "$service"; done
@@ -95,6 +99,24 @@ sudo -v
 BACKUP_DIR="$ROOT/backups/before-deploy"
 mkdir -p "$BACKUP_DIR"
 BACKUP_LOG=$(mktemp)
+# Where the database actually is, taken from the URL the application itself
+# uses: assuming 127.0.0.1:3306 backs up whatever answers on the default port,
+# which on a host that also runs another MySQL is a different server — the
+# backup then fails to authenticate, or silently dumps the wrong database.
+DB_TARGET=$(
+  set -a
+  . "$ROOT/shared/api.env"
+  set +a
+  node --input-type=module <<'NODE'
+const url = new URL(process.env.DATABASE_URL);
+const database = decodeURIComponent(url.pathname.replace(/^\//, ''));
+if (!database) { console.error('DATABASE_URL has no database name.'); process.exit(1); }
+process.stdout.write(`${url.hostname} ${url.port || '3306'} ${database}`);
+NODE
+)
+read -r DB_HOST DB_PORT DB_NAME <<<"$DB_TARGET"
+[[ -n "$DB_HOST" && -n "$DB_PORT" && -n "$DB_NAME" ]] || { echo 'Could not read the database host, port and name from DATABASE_URL.' >&2; exit 1; }
+printf 'Backing up %s from %s:%s\n' "$DB_NAME" "$DB_HOST" "$DB_PORT"
 (
   umask 077
   set -a
@@ -102,7 +124,7 @@ BACKUP_LOG=$(mktemp)
   set +a
   export MYSQL_PWD="$MYSQL_BACKUP_PASSWORD"
   "$DIR/infrastructure/backup/backup-database.sh" \
-    --host 127.0.0.1 --user adelaide_sphere_backup --database adelaide_sphere \
+    --host "$DB_HOST" --port "$DB_PORT" --user adelaide_sphere_backup --database "$DB_NAME" \
     --out "$BACKUP_DIR" --recipient "$(cat "$ROOT/shared/backup-recipient.txt")"
 ) | tee "$BACKUP_LOG"
 BACKUP=$(ls -t "$BACKUP_DIR"/*.age "$BACKUP_DIR"/*.gpg 2>/dev/null | head -1 || true)

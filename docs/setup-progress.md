@@ -2463,3 +2463,9 @@ Fixes for three findings from the production-readiness audit of the same day.
   - Re-running the file changed 0 rows and reported no error, with both latin1 and utf8mb4 client connections.
   - `pnpm db:migrations:check`: policy OK.
 - **After deploying:** restart the API, worker and web so the cached settings and pages reload.
+
+## Deploy script: backup target and silent preflight (17 Sep 2026)
+- **Found while deploying:** `scripts/deploy-vps.sh` backed up `--host 127.0.0.1` with the default port 3306, but the application's MySQL is the Compose container on **3317** (`DATABASE_URL` in `shared/api.env`); the VPS also runs an unrelated `mysqld` on 3306. The pre-deploy backup authenticated against the wrong server and failed, so the deployment stopped before migrating (the site was unaffected).
+- **Fix:** the backup now takes the host, port and database name from the application's own `DATABASE_URL` and prints them before dumping. A host with a second MySQL can no longer be backed up by accident, and the file can no longer be a dump of the wrong database.
+- **Also:** the preflight checks ran as bare `test`/`command -v` under `set -e`, so a missing tool or env file ended the deployment with **no output at all**. Each check now names what is missing. This is what made the first failed run look like nothing had happened.
+- Untested against a VPS from here; the changed shell was syntax-checked and the URL parsing was run against a URL of the same shape (credentials percent-encoded, TLS parameters present).
