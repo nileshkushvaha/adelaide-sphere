@@ -171,43 +171,52 @@ export function SeoSettingsPage() {
             {route.description}
           </Typography.Paragraph>
 
-          <Row gutter={20}>
-            <Col xs={24} lg={12}>
-              <Form.Item label="Meta title" name={['routes', routeKey, 'metaTitle']} extra={`Up to ${LIMITS.metaTitle} characters. The browser tab and the headline in search results.`}>
-                <Input maxLength={LIMITS.metaTitle} showCount placeholder="e.g. Adelaide business directory" />
-              </Form.Item>
-            </Col>
-            <Col xs={24} lg={12}>
-              <Form.Item
-                label="Meta keywords"
-                name={['routes', routeKey, 'metaKeywords']}
-                extra="Comma separated. Search engines ignore this tag; it will not affect ranking."
-              >
-                <Input maxLength={LIMITS.metaKeywords} placeholder="e.g. cafes, trades, adelaide" />
-              </Form.Item>
-            </Col>
-          </Row>
+          {/* Every page's fields stay mounted and only the chosen one is shown.
+              Rendering one set whose `name` follows the picker loses the pages
+              left behind: their values disappear from the form, and the save —
+              which writes the whole document — stored only the page on screen
+              and cleared the rest. */}
+          {SEO_ROUTES.map((entry) => (
+            <div key={entry.key} hidden={entry.key !== routeKey}>
+              <Row gutter={20}>
+                <Col xs={24} lg={12}>
+                  <Form.Item label="Meta title" name={['routes', entry.key, 'metaTitle']} extra={`Up to ${LIMITS.metaTitle} characters. The browser tab and the headline in search results.`}>
+                    <Input maxLength={LIMITS.metaTitle} showCount placeholder="e.g. Adelaide business directory" />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} lg={12}>
+                  <Form.Item
+                    label="Meta keywords"
+                    name={['routes', entry.key, 'metaKeywords']}
+                    extra="Comma separated. Search engines ignore this tag; it will not affect ranking."
+                  >
+                    <Input maxLength={LIMITS.metaKeywords} placeholder="e.g. cafes, trades, adelaide" />
+                  </Form.Item>
+                </Col>
+              </Row>
 
-          <Form.Item label="Meta description" name={['routes', routeKey, 'metaDescription']} extra={`Up to ${LIMITS.metaDescription} characters. The snippet under the link in search results.`}>
-            <Input.TextArea rows={3} maxLength={LIMITS.metaDescription} showCount placeholder="e.g. Browse cafes, trades and services across Adelaide, with hours and contact details." />
-          </Form.Item>
-
-          <Row gutter={20}>
-            <Col xs={24} lg={12}>
-              <Form.Item label="Canonical URL" name={['routes', routeKey, 'canonicalUrl']} extra="Leave empty to use the page's own address.">
-                <Input placeholder="https://adelaidesphere.com/business" inputMode="url" />
+              <Form.Item label="Meta description" name={['routes', entry.key, 'metaDescription']} extra={`Up to ${LIMITS.metaDescription} characters. The snippet under the link in search results.`}>
+                <Input.TextArea rows={3} maxLength={LIMITS.metaDescription} showCount placeholder="e.g. Browse cafes, trades and services across Adelaide, with hours and contact details." />
               </Form.Item>
-            </Col>
-            <Col xs={24} lg={12}>
-              <Form.Item label="Search engines" name={['routes', routeKey, 'robots']} extra="Hiding removes it from search results, not from the site.">
-                <Select options={ROBOTS_DIRECTIVES.map((value) => ({ value, label: ROBOTS_LABELS[value] }))} />
-              </Form.Item>
-            </Col>
-          </Row>
 
-          <Form.Item label="Share image" name={['routes', routeKey, 'ogImageMediaId']} extra="Shown when this page is shared. Ideally 1200 × 630. Empty uses the site image.">
-            <MediaField current={record?.shareImages?.[routeKey] ?? null} emptyLabel="The site image is used" clearLabel="Use the site image" aspectRatio="1.91 / 1" />
-          </Form.Item>
+              <Row gutter={20}>
+                <Col xs={24} lg={12}>
+                  <Form.Item label="Canonical URL" name={['routes', entry.key, 'canonicalUrl']} extra="Leave empty to use the page's own address.">
+                    <Input placeholder="https://adelaidesphere.com/business" inputMode="url" />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} lg={12}>
+                  <Form.Item label="Search engines" name={['routes', entry.key, 'robots']} extra="Hiding removes it from search results, not from the site.">
+                    <Select options={ROBOTS_DIRECTIVES.map((value) => ({ value, label: ROBOTS_LABELS[value] }))} />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Form.Item label="Share image" name={['routes', entry.key, 'ogImageMediaId']} extra="Shown when this page is shared. Ideally 1200 × 630. Empty uses the site image.">
+                <MediaField current={record?.shareImages?.[entry.key] ?? null} emptyLabel="The site image is used" clearLabel="Use the site image" aspectRatio="1.91 / 1" />
+              </Form.Item>
+            </div>
+          ))}
         </SectionCard>
 
         <SectionCard

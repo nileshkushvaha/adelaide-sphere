@@ -212,8 +212,12 @@ async function main() {
   start('web', 'pnpm', ['--filter', 'web', 'exec', 'next', 'start', '-p', String(webPort)], { API_ORIGIN: apiUrl });
   await waitFor(webUrl, 'web');
 
-  log('running the browser suite');
-  const result = spawnSync('pnpm', ['--filter', '@adelaide-sphere/e2e', 'exec', 'playwright', 'test', '--reporter=list,json'], {
+  // Arguments are passed on to Playwright, so one spec or one -g pattern can be
+  // run against the same provisioned stack while working on it. With none, the
+  // whole suite runs, which is what the gate does.
+  const selection = process.argv.slice(2);
+  log(selection.length > 0 ? `running the browser suite (${selection.join(' ')})` : 'running the browser suite');
+  const result = spawnSync('pnpm', ['--filter', '@adelaide-sphere/e2e', 'exec', 'playwright', 'test', '--reporter=list,json', ...selection], {
     cwd: root,
     stdio: ['ignore', 'pipe', 'inherit'],
     env: {
