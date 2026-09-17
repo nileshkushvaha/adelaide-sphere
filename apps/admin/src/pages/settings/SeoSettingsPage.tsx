@@ -195,7 +195,7 @@ export function SeoSettingsPage() {
           <Row gutter={20}>
             <Col xs={24} lg={12}>
               <Form.Item label="Canonical URL" name={['routes', routeKey, 'canonicalUrl']} extra="Leave empty to use the page's own address.">
-                <Input placeholder="https://adelaidesphere.com.au/business" inputMode="url" />
+                <Input placeholder="https://adelaidesphere.com/business" inputMode="url" />
               </Form.Item>
             </Col>
             <Col xs={24} lg={12}>

@@ -1,6 +1,6 @@
 import 'server-only';
 import type { BusinessDetail, PostDetail } from './api';
-import { SITE_NAME, absoluteUrl, siteOrigin } from './site';
+import { BRAND_ICON, SITE_ALTERNATE_NAMES, SITE_NAME, absoluteUrl, siteOrigin } from './site';
 
 /**
  * JSON-LD builders (SRS SEO 005–007). Every value comes from what the page
@@ -31,27 +31,38 @@ function compact(input: JsonLd): JsonLd {
   return out;
 }
 
-/** Organisation identity (SRS SEO 005). The name and logo come from the published general settings when they are available. */
+/**
+ * Organisation identity (SRS SEO 005). The name and logo come from the
+ * published general settings when they are available; without an uploaded
+ * logo the shipped square brand mark stands in, so the entity always has one.
+ */
 export function organizationJsonLd(options: { name?: string; logoUrl?: string | null; sameAs?: string[] } = {}): JsonLd {
+  const logoUrl = options.logoUrl ? (options.logoUrl.startsWith('/') ? absoluteUrl(options.logoUrl) : options.logoUrl) : null;
   return compact({
     '@context': 'https://schema.org',
     '@type': 'Organization',
     '@id': `${siteOrigin()}/#organization`,
     name: options.name ?? SITE_NAME,
     sameAs: options.sameAs ?? [],
-    url: siteOrigin(),
-    logo: options.logoUrl ?? undefined,
+    url: absoluteUrl('/'),
+    logo: logoUrl ?? { '@type': 'ImageObject', url: absoluteUrl(BRAND_ICON.logo), width: BRAND_ICON.logoSize, height: BRAND_ICON.logoSize },
     areaServed: compact({ '@type': 'City', name: 'Adelaide', addressRegion: 'SA', addressCountry: 'AU' }),
   });
 }
 
+/**
+ * The one WebSite entity (SRS SEO 005). `name` and `alternateName` are what
+ * search engines read for the site name shown in results; the URL is the home
+ * page, written with its slash.
+ */
 export function webSiteJsonLd(name: string = SITE_NAME): JsonLd {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     '@id': `${siteOrigin()}/#website`,
+    url: absoluteUrl('/'),
     name,
-    url: siteOrigin(),
+    alternateName: SITE_ALTERNATE_NAMES.filter((alternate) => alternate !== name),
     inLanguage: 'en-AU',
     publisher: { '@id': `${siteOrigin()}/#organization` },
   };

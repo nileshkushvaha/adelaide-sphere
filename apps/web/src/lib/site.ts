@@ -9,6 +9,13 @@ import type { SiteSettings } from './api';
  */
 export const SITE_NAME = 'Adelaide Sphere';
 export const SITE_TAGLINE = 'Find local businesses across Adelaide';
+/**
+ * Other names the site is known by, declared on the WebSite entity so search
+ * engines show the brand rather than the bare domain (SRS SEO 005).
+ */
+export const SITE_ALTERNATE_NAMES = ['AdelaideSphere', 'adelaidesphere.com'] as const;
+/** The shipped square brand mark: the browser icon's source and the organisation's default logo. */
+export const BRAND_ICON = { favicon: '/brand-favicon.png', faviconSize: 96, appleTouch: '/apple-touch-icon.png', logo: '/brand-logo.png', logoSize: 512 } as const;
 
 const ORIGIN_RE = /^https?:\/\/[^/\s]+$/;
 

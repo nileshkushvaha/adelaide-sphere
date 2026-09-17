@@ -40,7 +40,7 @@ Retries follow the shared policy in `@adelaide-sphere/domain`: five attempts wit
 
 ## Configuration
 
-Reads the same variables as the API (`DATABASE_URL`, `REDIS_URL`, `FIELD_ENCRYPTION_KEY`, `MAIL_TRANSPORT`, `SMTP_HOST`/`SMTP_PORT`/`SMTP_SECURE`/`SMTP_USER`/`SMTP_PASSWORD`, `MAIL_FROM_ADDRESS`, `SITE_ENQUIRY_RECIPIENT`, `MEDIA_S3_*`, `WORKER_CONCURRENCY`, `WEB_REVALIDATE_*`). Startup validation lists every problem at once, names variables but never values, and **refuses to run in production** unless `MAIL_TRANSPORT=smtp` with an authenticated, TLS-protected, non-loopback relay and a verified sender.
+Reads the same variables as the API (`DATABASE_URL`, `REDIS_URL`, `FIELD_ENCRYPTION_KEY`, `MAIL_TRANSPORT`, `SMTP_HOST`/`SMTP_PORT`/`SMTP_SECURE`/`SMTP_USER`/`SMTP_PASSWORD`, `MAIL_FROM_NAME`, `MAIL_FROM_ADDRESS`, `SITE_ENQUIRY_RECIPIENT`, `MEDIA_S3_*`, `WORKER_CONCURRENCY`, `WEB_REVALIDATE_*`). Startup validation lists every problem at once, names variables but never values, and **refuses to run in production** unless `MAIL_TRANSPORT=smtp` with an authenticated, TLS-protected, non-loopback relay and a verified sender.
 
 Transports: `console` prints the message (development only); `smtp` sends through `@adelaide-sphere/mail`, the provider-independent adapter that any relay chosen under decision D03 plugs into. Locally `smtp` points at the Compose Mailpit catcher (inbox at http://127.0.0.1:8025). One attempt per job: the adapter classifies the failure and the queue decides whether to retry. The `Message-ID` is the enquiry's stable id, so a retry after an ambiguous timeout carries the same identifier. Error text stored on the enquiry is redacted of addresses before it is thrown.
 

@@ -17,17 +17,18 @@ Covers SRS 1.2 **MAIL 001–010**. The provider decision is **D03b / D09** in `d
 
 | Variable | Local | Staging | Production |
 | --- | --- | --- | --- |
-| `MAIL_TRANSPORT` | `smtp` (Mailpit) | `resend` | `resend` |
-| `SMTP_HOST` / `SMTP_PORT` | `127.0.0.1` / `1035` | — | — |
-| `RESEND_API_KEY` | — | staging key | production key |
-| `MAIL_FROM_ADDRESS` | anything | verified staging sender | verified production sender |
-| `MAIL_FROM_NAME` | optional | `Adelaide Sphere` | `Adelaide Sphere` |
-| `MAIL_REPLY_TO_ADDRESS` | optional | monitored address | monitored address |
-| `RESEND_WEBHOOK_SECRET` | optional | required to test events | **required** |
+| `MAIL_TRANSPORT` | `smtp` (Mailpit) | `smtp` | `smtp` |
+| `SMTP_HOST` / `SMTP_PORT` | `127.0.0.1` / `1035` | staging mailbox's host / `587` | `mail.adelaidesphere.com` / `587` |
+| `SMTP_SECURE` | `false` | `false` (STARTTLS) | `false` (STARTTLS, enforced) |
+| `SMTP_USER` / `SMTP_PASSWORD` | empty | staging mailbox | `smtp@adelaidesphere.com` / secret store only |
+| `MAIL_FROM_ADDRESS` | anything | staging sender | `noreply@adelaidesphere.com` |
+| `MAIL_FROM_NAME` | `Adelaide Sphere` | `Adelaide Sphere` | `Adelaide Sphere` |
+
+Production uses the domain's own SMTP server (user decision, 17 Sep 2026). Resend stays supported as an alternative (`MAIL_TRANSPORT=resend` with `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, optional `MAIL_REPLY_TO_ADDRESS`); with SMTP those variables are unused and there is no delivery webhook, so the log records acceptance by the relay but never *delivered*, *bounced* or *complained*.
 
 Automated tests use an isolated test transport and never reach a provider. Every one of these values is environment-managed: none is a setting, none is returned by any endpoint, and none appears in a log line or an error message (SET 004, MAIL 002).
 
-Production start-up **fails** — it does not warn and continue — when the API key is missing or malformed, the sender is absent or sits on a development or reserved domain, the webhook secret is missing, the API base URL has been overridden, or a development transport is selected. That is deliberate: a transport that silently discards mail is worse than a service that refuses to start.
+Production start-up **fails** — it does not warn and continue — when, with SMTP, the host is loopback, the credentials are missing or the From name is multi-line; with Resend, when the API key is missing or malformed, the sender is absent or sits on a development or reserved domain, the webhook secret is missing, the API base URL has been overridden, or a development transport is selected. That is deliberate: a transport that silently discards mail is worse than a service that refuses to start.
 
 ## Domain set-up before launch (client action, D09)
 
@@ -59,6 +60,7 @@ The endpoint verifies the Svix-style signature over the raw body before parsing 
 
 ## Still outstanding
 
-- **D09** — the account, verified domain, DNS records, approved addresses and webhook secret.
+- **D09** — production mail uses `mail.adelaidesphere.com` (SMTP, 587 STARTTLS, `smtp@adelaidesphere.com`), sending as `Adelaide Sphere <noreply@adelaidesphere.com>`. Still to confirm on the mail host: SPF, DKIM and DMARC for `adelaidesphere.com` align with that server, `smtp@` may send as `noreply@`, and `noreply@` accepts mail (item 5 above: a sender that bounces replies harms reputation), plus the host's sending limits (item 9).
+- **Bounces with SMTP** — without a provider webhook, bounces arrive as mail to the sender. Monitor the `noreply@` mailbox (or the host's bounce reports) until a webhook-capable provider is used.
 - **Retention** — delivery records are kept for 180 days and the protected recipient removed at 90 (MAIL 010). The scheduled job that enforces this lands with the scheduled tasks module (TASK 001–006); until then no record is purged automatically.
 - **Staging verification** — the webhook, DKIM alignment and inbox placement can only be proven against the real provider once D09 is answered.

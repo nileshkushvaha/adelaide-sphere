@@ -69,7 +69,7 @@ export function AdminInvitePage() {
       }
     >
       <Form.Item label="Email" name="email" rules={[{ required: true, type: 'email', message: 'Enter a valid email address' }]} extra="The setup link is sent here.">
-        <Input type="email" maxLength={254} autoComplete="off" placeholder="e.g. sam@adelaidesphere.com.au" />
+        <Input type="email" maxLength={254} autoComplete="off" placeholder="e.g. sam@adelaidesphere.com" />
       </Form.Item>
       <Form.Item label="Display name" name="displayName" rules={[{ required: true, min: 2, max: 80, message: '2–80 characters' }]}>
         <Input maxLength={80} placeholder="e.g. Sam Taylor" />

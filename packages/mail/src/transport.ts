@@ -93,7 +93,7 @@ export class SmtpTransport {
   }
 
   async send(message: MailMessage): Promise<MailSendResult> {
-    const options = toSendOptions(message);
+    const options = toSendOptions(message, this.config.fromName);
     let info: { messageId?: string; accepted?: unknown[]; rejected?: unknown[] };
     try {
       info = (await this.transporter.sendMail(options)) as typeof info;
@@ -111,11 +111,16 @@ export class SmtpTransport {
   }
 }
 
-/** Builds the nodemailer options, refusing anything that could inject a header (SRS ENQ 005). */
-export function toSendOptions(message: MailMessage): SendMailOptions {
+/**
+ * Builds the nodemailer options, refusing anything that could inject a header
+ * (SRS ENQ 005). A sender display name is handed over as a structured address,
+ * so nodemailer quotes and encodes it rather than it being spliced into text.
+ */
+export function toSendOptions(message: MailMessage, fromName?: string): SendMailOptions {
   for (const [name, value] of [
     ['to', message.to],
     ['from', message.from],
+    ['fromName', fromName ?? ''],
     ['replyTo', message.replyTo ?? ''],
     ['subject', message.subject],
     ['messageId', message.messageId],
@@ -124,6 +129,7 @@ export function toSendOptions(message: MailMessage): SendMailOptions {
   }
   if (!ADDRESS_SHAPE.test(message.to)) throw new PermanentMailError('Refusing to send: recipient address is not valid');
   if (!ADDRESS_SHAPE.test(message.from)) throw new PermanentMailError('Refusing to send: sender address is not valid');
+  if (fromName !== undefined && fromName.length > 78) throw new PermanentMailError('Refusing to send: sender name is too long');
   if (message.replyTo !== undefined && message.replyTo !== '' && !ADDRESS_SHAPE.test(message.replyTo)) throw new PermanentMailError('Refusing to send: reply-to address is not valid');
   if (!MESSAGE_ID_SHAPE.test(message.messageId)) throw new PermanentMailError('Refusing to send: message id must look like local-part@domain');
   if (message.subject.trim().length === 0 || message.subject.length > 998) throw new PermanentMailError('Refusing to send: subject is empty or too long');
@@ -132,7 +138,7 @@ export function toSendOptions(message: MailMessage): SendMailOptions {
   if (message.html !== undefined && Buffer.byteLength(message.html, 'utf8') > MAX_TEXT_BYTES) throw new PermanentMailError('Refusing to send: HTML body exceeds the size limit');
   return {
     to: message.to,
-    from: message.from,
+    from: fromName ? { name: fromName, address: message.from } : message.from,
     ...(message.replyTo ? { replyTo: message.replyTo } : {}),
     subject: message.subject,
     text: message.text,

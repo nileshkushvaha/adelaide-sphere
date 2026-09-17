@@ -23,6 +23,15 @@ describe('smtpConfigFromEnv (SRS ENQ 005, SEC 004)', () => {
     expect(ok.config).toMatchObject({ requireTls: true, secure: false, auth: { user: 'AKIA-placeholder', pass: 'placeholder' } });
   });
 
+  it('carries MAIL_FROM_NAME for the From header and refuses a multi-line one', () => {
+    const env = { SMTP_HOST: 'mail.example.net', SMTP_PORT: '587', SMTP_USER: 'smtp@example.net', SMTP_PASSWORD: 'placeholder' };
+    expect(smtpConfigFromEnv({ ...env, MAIL_FROM_NAME: ' Adelaide Sphere ' }, { production: true }).config).toMatchObject({ fromName: 'Adelaide Sphere', requireTls: true });
+    expect(smtpConfigFromEnv(env, { production: true }).config).not.toHaveProperty('fromName');
+    const bad = smtpConfigFromEnv({ ...env, MAIL_FROM_NAME: 'Adelaide\nBcc: x@example.com' }, { production: true });
+    expect(bad.config).toBeNull();
+    expect(bad.problems).toEqual(['MAIL_FROM_NAME: must be a single short line with no control characters']);
+  });
+
   it('lists every problem at once and names variables, never values', () => {
     const result = smtpConfigFromEnv({ SMTP_HOST: 'smtp://bad host', SMTP_PORT: 'abc', SMTP_SECURE: 'maybe', SMTP_USER: 'only-user', SMTP_PASSWORD: '' }, { production: false });
     expect(result.config).toBeNull();

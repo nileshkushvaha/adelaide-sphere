@@ -47,6 +47,19 @@ describe('SmtpTransport', () => {
     expect(calls[0]).toEqual({ ...MESSAGE, messageId: '<enq_123@adelaide-sphere>', disableFileAccess: true, disableUrlAccess: true });
   });
 
+  it('sends the configured display name as a structured From address', async () => {
+    const calls: { from?: unknown }[] = [];
+    const { factory } = fakeTransporter(async (options) => {
+      calls.push(options as { from?: unknown });
+      return { messageId: '<m@y>', accepted: ['owner@example.com'], rejected: [] };
+    });
+    const transport = new SmtpTransport({ host: 'mail.example.net', port: 587, secure: false, requireTls: true, auth: { user: 'u', pass: 'p' }, fromName: 'Adelaide Sphere' }, factory);
+    await transport.send(MESSAGE);
+    expect(calls[0]?.from).toEqual({ name: 'Adelaide Sphere', address: 'no-reply@example.com' });
+    expect(() => toSendOptions(MESSAGE, 'Adelaide Sphere\r\nBcc: x@example.com')).toThrow(/fromName contains a line break/);
+    expect(() => toSendOptions(MESSAGE, 'x'.repeat(79))).toThrow(/sender name is too long/);
+  });
+
   it('refuses header injection and malformed addresses before contacting the relay (ENQ 005)', () => {
     expect(() => toSendOptions({ ...MESSAGE, subject: 'Hi\r\nBcc: x@example.com' })).toThrow(PermanentMailError);
     expect(() => toSendOptions({ ...MESSAGE, to: 'not-an-address' })).toThrow(/recipient address/);

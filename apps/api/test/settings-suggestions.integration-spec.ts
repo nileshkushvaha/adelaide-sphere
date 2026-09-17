@@ -155,7 +155,7 @@ describe('Home settings and search suggestions (integration)', () => {
         applicationName: '  Adelaide   Sphere ',
         shortName: 'Sphere',
         tagline: 'Find local businesses across Adelaide',
-        supportEmail: 'Listings@AdelaideSphere.com.au',
+        supportEmail: 'Listings@AdelaideSphere.com',
         supportPhone: '03 9000 0000',
         websiteUrl: 'https://adelaidesphere.com',
         address: 'Level 2, 100 King William Street\nAdelaide SA 5000',
@@ -165,7 +165,7 @@ describe('Home settings and search suggestions (integration)', () => {
         footerText: 'An independent directory for Adelaide, South Australia.',
       })
       .expect(200);
-    expect(saved.body.data).toMatchObject({ applicationName: 'Adelaide Sphere', version: 1, supportEmail: 'listings@adelaidesphere.com.au' });
+    expect(saved.body.data).toMatchObject({ applicationName: 'Adelaide Sphere', version: 1, supportEmail: 'listings@adelaidesphere.com' });
     expect(saved.body.data.supportPhoneDisplay).toEqual({ display: '03 9000 0000', telHref: 'tel:+61390000000' });
 
     // A second writer with the stale version is refused rather than overwriting.
@@ -179,7 +179,7 @@ describe('Home settings and search suggestions (integration)', () => {
       footer: { copyrightText: '© {year} {name}. All rights reserved.', text: 'An independent directory for Adelaide, South Australia.' },
     });
     expect(publicPayload.body.data.contact).toEqual({
-      email: 'listings@adelaidesphere.com.au',
+      email: 'listings@adelaidesphere.com',
       phone: { display: '03 9000 0000', telHref: 'tel:+61390000000' },
       websiteUrl: 'https://adelaidesphere.com/',
       address: 'Level 2, 100 King William Street\nAdelaide SA 5000',

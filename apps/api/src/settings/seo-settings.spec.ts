@@ -41,9 +41,9 @@ describe('SEO settings validation', () => {
       const { errors } = validateSeoSettings({ routes: { directory: { canonicalUrl: bad } } });
       expect(errors[at('directory', 'canonicalUrl')], bad).toBeDefined();
     }
-    const { errors, value } = validateSeoSettings({ routes: { directory: { canonicalUrl: 'https://adelaidesphere.com.au/business' } } });
+    const { errors, value } = validateSeoSettings({ routes: { directory: { canonicalUrl: 'https://adelaidesphere.com/business' } } });
     expect(errors).toEqual({});
-    expect(value.routes.directory?.canonicalUrl).toBe('https://adelaidesphere.com.au/business');
+    expect(value.routes.directory?.canonicalUrl).toBe('https://adelaidesphere.com/business');
   });
 
   it('accepts only the offered robots directives and card types', () => {

@@ -174,8 +174,8 @@ switch_link "$DIR"
 restart_apps
 # Verify this VPS directly, even when Cloudflare proxies the public hostname.
 for path in / /admin/ /api/v1/health/ready; do
-  curl --resolve adelaidesphere.com.au:443:127.0.0.1 \
-    --connect-timeout 3 --max-time 15 -fsS -o /dev/null "https://adelaidesphere.com.au$path"
+  curl --resolve adelaidesphere.com:443:127.0.0.1 \
+    --connect-timeout 3 --max-time 15 -fsS -o /dev/null "https://adelaidesphere.com$path"
 done
 trap - ERR INT TERM
 printf '\nDeployment successful: %s\nPrevious release: %s\nDatabase backup: %s\n' "$SHA" "$PREVIOUS" "$BACKUP"

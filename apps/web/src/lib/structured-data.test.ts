@@ -18,6 +18,45 @@ describe('serialiseJsonLd', () => {
   });
 });
 
+describe('site identity', () => {
+  it('declares one WebSite with the brand name, its alternates and the home page URL', async () => {
+    const { webSiteJsonLd } = await load();
+    expect(webSiteJsonLd('Adelaide Sphere')).toEqual({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      '@id': 'https://adelaidesphere.example/#website',
+      url: 'https://adelaidesphere.example/',
+      name: 'Adelaide Sphere',
+      alternateName: ['AdelaideSphere', 'adelaidesphere.com'],
+      inLanguage: 'en-AU',
+      publisher: { '@id': 'https://adelaidesphere.example/#organization' },
+    });
+  });
+
+  it('never repeats the name as an alternate', async () => {
+    const { webSiteJsonLd } = await load();
+    expect(webSiteJsonLd('AdelaideSphere').alternateName).toEqual(['adelaidesphere.com']);
+  });
+
+  it('links the Organization by id and falls back to the square brand mark as its logo', async () => {
+    const { organizationJsonLd } = await load();
+    const org = organizationJsonLd({ name: 'Adelaide Sphere' });
+    expect(org).toMatchObject({
+      '@id': 'https://adelaidesphere.example/#organization',
+      name: 'Adelaide Sphere',
+      url: 'https://adelaidesphere.example/',
+      logo: { '@type': 'ImageObject', url: 'https://adelaidesphere.example/brand-logo.png', width: 512, height: 512 },
+    });
+    expect(org).not.toHaveProperty('sameAs');
+  });
+
+  it('keeps an uploaded logo and makes a relative one absolute', async () => {
+    const { organizationJsonLd } = await load();
+    expect(organizationJsonLd({ logoUrl: 'https://media.example/logo.png' }).logo).toBe('https://media.example/logo.png');
+    expect(organizationJsonLd({ logoUrl: '/uploads/logo.png' }).logo).toBe('https://adelaidesphere.example/uploads/logo.png');
+  });
+});
+
 describe('localBusinessJsonLd', () => {
   const base = {
     id: 'b1',

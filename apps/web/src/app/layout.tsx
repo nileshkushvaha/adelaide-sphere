@@ -11,7 +11,7 @@ import { SiteHeader } from '@/components/site-header';
 import { PageMotion } from '@/components/page-motion';
 import { RouteProgress } from '@/components/route-progress';
 import Script from 'next/script';
-import { siteOrigin, siteTitle, turnstileSiteKey, siteNoindex } from '@/lib/site';
+import { BRAND_ICON, siteOrigin, siteTitle, turnstileSiteKey, siteNoindex } from '@/lib/site';
 import { fetchSiteSettings } from '@/lib/api';
 import './globals.css';
 
@@ -49,7 +49,15 @@ export async function generateMetadata(): Promise<Metadata> {
     // Declared explicitly rather than through the app-directory file convention:
     // the generated icon module is pulled into every render, including error and
     // not-found responses, where it prevented the HTML from being produced.
-    icons: { icon: favicon ? favicon.url : '/brand-favicon.png' },
+    // One icon link, typed and sized, so search engines and browsers agree on
+    // the artwork. /favicon.ico is served from public/ with the same mark for
+    // clients that request it without reading the page.
+    icons: {
+      icon: favicon
+        ? { url: favicon.url, ...(favicon.width && favicon.height ? { sizes: `${favicon.width}x${favicon.height}` } : {}) }
+        : { url: BRAND_ICON.favicon, type: 'image/png', sizes: `${BRAND_ICON.faviconSize}x${BRAND_ICON.faviconSize}` },
+      apple: { url: BRAND_ICON.appleTouch, sizes: '180x180' },
+    },
     // A verification tag proves ownership to Google; it loads nothing and sets
     // no cookie. The analytics identifiers beside it in the settings are
     // deliberately not rendered — see the note on the SEO settings screen.

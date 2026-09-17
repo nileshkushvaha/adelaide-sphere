@@ -641,7 +641,7 @@ Client instructions that shaped it: an editable general-settings screen; social 
 
 ### Defects found and fixed
 
-- Two assertions in the in-progress settings work expected `listings@adelaidesphere.com.au` for the input `Listings@AdelaideSphere.com.au` (unit and integration); the normaliser only folds case, so the expectations were wrong, not the code.
+- Two assertions in the in-progress settings work expected `listings@adelaidesphere.com` for the input `Listings@AdelaideSphere.com` (unit and integration); the normaliser only folds case, so the expectations were wrong, not the code.
 - `link-in-text-block`: the review and comment acknowledgements, the hours-correction mailto and the 404 body used colour-only links inside sentences. They are underlined now — a genuine WCAG 2.2 AA failure that only surfaced once a Turnstile site key made the forms render.
 - The axe journey waited for `networkidle`, which never arrives once the Turnstile widget holds a connection open. It now waits for `load` and for the images to decode, which is what the contrast check actually needs.
 - A broken `@icons-pack/react-simple-icons` link in `apps/admin/node_modules` (pnpm recorded the dependency without its React peer while skipping resolution); the lockfile entry was corrected and the install repaired.
@@ -2340,7 +2340,7 @@ At the user's request, the logo colours now match the theme, and the footer logo
 At the user's instruction, every former city reference and name was removed so the project stands on its own. This is a deliberate scope instruction and includes the SRS.
 
 - **Renamed:** the SRS is now `docs/Adelaide_Sphere_Technical_SRS_v1.md` (wording updated to Adelaide, South Australia, Australia/Adelaide and Greater Adelaide; heading positions unchanged; `docs/ai/srs-index.md` checksum refreshed), and the boundary document is now `docs/launch/adelaide-boundary.md`, rewritten around the Inner Adelaide baseline (108 localities researched, 16 seeded; D01 open; Keswick's split disputed).
-- **Docs:** product names, database and bucket names, package scope, example domains (`adelaidesphere.com.au`), state and timezone wording, and local port mentions now describe this project only. Place-specific facts that did not apply (suburb lists, landmarks, photo credits) were rewritten or removed rather than swapped; lineage statements were removed.
+- **Docs:** product names, database and bucket names, package scope, example domains (`adelaidesphere.com`), state and timezone wording, and local port mentions now describe this project only. Place-specific facts that did not apply (suburb lists, landmarks, photo credits) were rewritten or removed rather than swapped; lineage statements were removed.
 - **Deploy guide (`docs/operations/deployment-vps.md`):** systemd units `adelaide-sphere-api` / `adelaide-sphere-worker` / `adelaide-sphere-web`, service account `adelaide-sphere`, backup database user `adelaide_sphere_backup`, database `adelaide_sphere`, app ports 4000/4001/4002, worker metrics port 9474 (`WORKER_METRICS_PORT` set explicitly), repository `git@github.com:nileshkushvaha/adelaide-sphere.git`, `MAIL_FROM_NAME=Adelaide Sphere`, server timezone Australia/Adelaide.
 - **Internal prefix `ms` → `as`** (2,216 replacements in 182 files, lockfile excluded):
   - CSS classes and tokens `as-*` / `--as-*`, DOM event names, deploy container, nginx and snippet names;
@@ -2397,3 +2397,54 @@ Fixes for three findings from the production-readiness audit of the same day.
     - This predates today's changes.
     - `/faqs` is now `force-dynamic`, like home, contact and about, and the web app builds with no API running.
   - `pnpm test:browser`: 75 passed, 0 failed, 0 skipped.
+
+## Search identity: site name, favicon and robots (17 Sep 2026)
+- **Why:** Google showed the bare domain and an old icon for adelaidesphere.com.
+- **Live finding (not fixable in code):** on 17 Sep 2026, adelaidesphere.com (behind Cloudflare) was not serving this application.
+  - Responses were either Cloudflare 522 (origin timeout) or a GoDaddy Website Builder site (`lang="en-US"`, GoDaddy's default `logo-default.png` as its apple-touch icons, `canonical` pointing to `/404`).
+  - `robots.txt` is Cloudflare-managed content plus GoDaddy's rules.
+  - This is what Google has crawled: the site name and icon it shows come from that site, not from this code.
+- **Domain conflict (resolved the same day by the user):** production is `adelaidesphere.com`; the `.com.au` form is not used.
+  - `scripts/deploy-vps.sh` (post-switch smoke check) and `docs/operations/deployment-vps.md` (DNS, certbot, nginx, CSP) used the `.com.au` name. Now changed to `adelaidesphere.com`, together with the admin placeholders (invite email, SEO canonical example) and the API settings test fixtures.
+  - Other `.com.au` addresses (generic `example.com.au` placeholders, seeded businesses' own sites) are unrelated and unchanged.
+- **Changes (web):**
+  - `lib/structured-data.ts`: the existing WebSite entity gains `alternateName` (`AdelaideSphere`, `adelaidesphere.com`), and its `url` is the home page with its slash.
+  - The Organization `url` is the same home page URL. Its `logo` falls back to the square brand mark (`/brand-logo.png`, 512×512 `ImageObject`) when no logo is uploaded, and a relative uploaded logo URL is made absolute.
+  - Still one WebSite and one Organization, on the home page only.
+  - `lib/site.ts`: `SITE_ALTERNATE_NAMES` and `BRAND_ICON`.
+  - `app/layout.tsx`: one icon link (`/brand-favicon.png`, `image/png`, `96x96`; an uploaded favicon keeps its own size) plus `apple-touch-icon` 180×180.
+  - `public/`: `brand-favicon.png` resized from 512 px (343 KB) to 96 px (18 KB), same URL and artwork. New files: `apple-touch-icon.png` (180 px, flattened on white) and `brand-logo.png` (512 px master), all generated with the `sharp` already installed for Next.js. `favicon.ico` (16/32/48, rebuilt from the same master on 15 Sep) is unchanged.
+  - `app/robots.ts`: now `force-dynamic`. It was prerendered at build time, so the `Sitemap:` origin and `SITE_NOINDEX` came from the build machine (a staging-built image would keep `Disallow: /`). The rules are unchanged. `/business?` matches only query URLs under `/business`, never `/business/...`.
+- **Left as is (deliberate):**
+  - Next 16.3.4 writes the home canonical and `og:url` as `https://adelaidesphere.com` without the slash unless `trailingSlash` is enabled site-wide. That form is equivalent to the version with the slash, so routing is unchanged.
+  - The sitemap already lists `https://…/` with real last-modified times.
+  - No web manifest (the project has none).
+  - Header and footer logo alt text is the site name.
+- **Verified:**
+  - `pnpm --filter web typecheck` and `lint` are clean. `pnpm --filter web test`: 260 passed, including 4 new site-identity cases (run at the user's request).
+  - `pnpm --filter web build` passes with `SITE_ORIGIN` unset.
+  - `next start` with `SITE_ORIGIN=https://adelaidesphere.com`: the home page has exactly one title, description, canonical, application-name, `og:site_name`, `og:url`, icon and apple icon, and Organization + WebSite JSON-LD with the expected values.
+  - `/about`, `/blog`, `/contact`, `/business` and `/faqs` each have a self-referencing canonical.
+  - The icons return 200 `image/png` / `image/x-icon`, and `robots.txt` names `https://adelaidesphere.com/sitemap.xml`.
+
+## Production mail over the domain's SMTP server (17 Sep 2026)
+- **Decision (user):** outbound mail uses `mail.adelaidesphere.com:587` with STARTTLS, authenticated as `smtp@adelaidesphere.com`, sending as `Adelaide Sphere <noreply@adelaidesphere.com>`. This replaces Resend as the documented production transport; Resend stays supported. It partly answers D03b/D09.
+- **Code gap fixed:** the SMTP path ignored `MAIL_FROM_NAME` (only the Resend path used it), so mail would have gone out as a bare address.
+  - `packages/mail`: `smtpConfigFromEnv` reads and validates `MAIL_FROM_NAME` (single line, ≤ 78 characters) into `SmtpConfig.fromName`.
+  - `SmtpTransport` passes it to nodemailer as `{ name, address }`, so it is quoted and encoded rather than spliced into the header. `toSendOptions` refuses a name with a line break or longer than 78 characters.
+  - The API's `SmtpMailer` passes `MAIL_FROM_NAME`; the worker already hands its whole environment to `smtpConfigFromEnv`.
+  - Port 587 with `SMTP_SECURE=false` was already right: production sets `requireTLS`, TLS 1.2 minimum.
+- **Configuration:**
+  - `docs/operations/deployment-vps.md`: prerequisites, DNS note (the `mail.` record is DNS-only), §8.2 `api.env` block with the SMTP values and a password placeholder, §13 mail check, staging note.
+  - `email-deliverability.md`: environment table and open items.
+  - `apps/api/.env.example`: production values as comments and `MAIL_FROM_NAME`. `apps/worker/.env.example` and the mail and worker READMEs updated.
+  - Local `apps/api/.env` and `apps/worker/.env` (git-ignored) gain `MAIL_FROM_NAME` only; local mail still goes to Mailpit.
+  - No password is stored anywhere in the repository.
+- **Checked (17 Sep):**
+  - `mail.adelaidesphere.com` → 200.141.8.30. MX points to it, SPF `v=spf1 ip4:200.141.8.30 -all`, DMARC `p=quarantine`.
+  - Port 587 STARTTLS negotiates TLS 1.3 with a valid certificate for `mail.adelaidesphere.com`.
+  - DKIM was not checked: the selector is unknown.
+- **Verified:** mail typecheck, build and oxlint; api and worker typecheck and oxlint. `@adelaide-sphere/mail` tests: 40 passed, including 2 new cases. API and worker suites not run.
+- **Open:**
+  - The SMTP password goes into the server's `shared/api.env` only.
+  - Confirm `smtp@` may send as `noreply@`, that `noreply@` accepts mail (bounces arrive there, since SMTP has no delivery webhook), that DKIM signs for `adelaidesphere.com`, and the host's sending limits.

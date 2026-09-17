@@ -6,7 +6,7 @@ const complete = {
   organisationName: 'Adelaide Sphere Pty Ltd',
   tagline: 'Find local businesses across Adelaide',
   metaDescription: 'An independent directory of Adelaide businesses.',
-  supportEmail: 'Listings@AdelaideSphere.com.au',
+  supportEmail: 'Listings@AdelaideSphere.com',
   supportPhone: '03 9000 0000',
   websiteUrl: 'https://adelaidesphere.com',
   address: 'Level 2, 100 King William Street\nAdelaide SA 5000',
@@ -32,7 +32,7 @@ describe('validateGeneralSettings', () => {
     // Addresses are stored as typed (up to four lines); everything else is one line.
     expect(value.address).toBe('Level 2, 100 King William Street\nAdelaide SA 5000');
     // The email is the identity of a mailbox: case is folded so it never differs between saves.
-    expect(value.supportEmail).toBe('listings@adelaidesphere.com.au');
+    expect(value.supportEmail).toBe('listings@adelaidesphere.com');
     // Phone numbers are stored ready to render and dial (SRS BUS 003 formats).
     expect(value.supportPhone).toEqual({ display: '03 9000 0000', telHref: 'tel:+61390000000' });
     expect(value.social.facebook).toBe('https://www.facebook.com/adelaidesphere');

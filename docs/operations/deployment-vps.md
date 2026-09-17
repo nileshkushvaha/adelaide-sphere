@@ -10,9 +10,9 @@ Read `docs/operations/runbook.md` alongside this guide. It holds the rules this
 procedure implements (environments, health, backups, alerts). This guide is the
 "how, on one machine" version.
 
-> **Conventions.** `adelaidesphere.com.au` is the production domain
+> **Conventions.** `adelaidesphere.com` is the production domain
 > (`PUBLIC_SITE_URL` / `SITE_ORIGIN` in the example files). Replace it, and
-> `media.adelaidesphere.com.au`, if yours differ. Commands prefixed with `sudo`
+> `media.adelaidesphere.com`, if yours differ. Commands prefixed with `sudo`
 > run as your administrative user; everything else runs as the `adelaide-sphere` service
 > user unless the step says otherwise. `<…>` marks a value you supply. Never
 > paste a real secret into a tracked file, a ticket or a chat.
@@ -27,7 +27,7 @@ procedure implements (environments, health, backups, alerts). This guide is the
                  ┌──────┴───────┐
                  │  nginx (host) │  TLS (Let's Encrypt), routing, 404 document
                  └──┬───┬───┬───┬┘
-   /api/v1/*  ──────┘   │   │   └────── media.adelaidesphere.com.au
+   /api/v1/*  ──────┘   │   │   └────── media.adelaidesphere.com
    /admin/*  (static) ──┘   │                       │
    /*          ─────────────┘                       │
         │           │                               │
@@ -71,8 +71,8 @@ Collect these first; several steps cannot complete without them.
 | --- | --- | --- |
 | Domain with DNS access | TLS, canonical URLs | Section 2 |
 | VPS with Ubuntu Server 24.04 LTS, root or sudo SSH access | Everything | Section 3 |
-| Cloudflare Turnstile widget (site key + secret key), hostname `adelaidesphere.com.au` | Review, contact and enquiry forms | `TURNSTILE_SITE_KEY` (web), `TURNSTILE_SECRET_KEY` (api) |
-| Resend account with a **verified sending domain** (e.g. `mail.adelaidesphere.com.au`), API key, webhook signing secret | Password resets, enquiry delivery | `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `MAIL_FROM_ADDRESS` (see `email-deliverability.md`). An authenticated TLS SMTP relay also works (`MAIL_TRANSPORT=smtp`) |
+| Cloudflare Turnstile widget (site key + secret key), hostname `adelaidesphere.com` | Review, contact and enquiry forms | `TURNSTILE_SITE_KEY` (web), `TURNSTILE_SECRET_KEY` (api) |
+| The SMTP mailbox `smtp@adelaidesphere.com` on `mail.adelaidesphere.com` (port 587, STARTTLS) and its password; the sender `noreply@adelaidesphere.com` must be allowed to send through it | Password resets, enquiry delivery | `MAIL_TRANSPORT=smtp`, `SMTP_*`, `MAIL_FROM_ADDRESS`, `MAIL_FROM_NAME` (section 8.2; `email-deliverability.md`). Resend remains supported (`MAIL_TRANSPORT=resend`) |
 | Mailbox that receives general site enquiries | `/contact` | `SITE_ENQUIRY_RECIPIENT` |
 | The first administrator's email and name | Admin bootstrap | Section 11 |
 | An `age` key pair for backup encryption, private key kept **off** the server | Backups | Section 15 |
@@ -87,22 +87,25 @@ Create these records at your DNS provider (TTL 300 while setting up):
 
 | Type | Name | Value |
 | --- | --- | --- |
-| A | `adelaidesphere.com.au` | `<VPS IPv4>` |
-| A | `www.adelaidesphere.com.au` | `<VPS IPv4>` |
-| A | `media.adelaidesphere.com.au` | `<VPS IPv4>` |
+| A | `adelaidesphere.com` | `<VPS IPv4>` |
+| A | `www.adelaidesphere.com` | `<VPS IPv4>` |
+| A | `media.adelaidesphere.com` | `<VPS IPv4>` |
 | AAAA | same three names | `<VPS IPv6>` (only if the VPS has one and you open IPv6 in the firewall) |
 
-Plus the email records Resend gives you (SPF, DKIM, DMARC `p=none` to start) on
-the sending subdomain — `email-deliverability.md` §"Domain set-up".
+Plus the email records for `adelaidesphere.com` from the mail host that runs
+`mail.adelaidesphere.com`: MX, SPF that authorises that host, DKIM, and DMARC
+(`p=none` to start). `email-deliverability.md` §"Domain set-up" explains each.
+If Cloudflare proxies the domain, the `mail.` record must be **DNS only** (grey
+cloud): Cloudflare does not proxy SMTP.
 
 Check before continuing (from your laptop):
 
 ```bash
-dig +short adelaidesphere.com.au
+dig +short adelaidesphere.com
 ```
 
 ```bash
-dig +short media.adelaidesphere.com.au
+dig +short media.adelaidesphere.com
 ```
 
 Both must print the VPS address; Let's Encrypt fails otherwise.
@@ -414,7 +417,7 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?}
       # Browsers upload straight to the quarantine bucket with a signed URL
       # issued by the API, so the admin origin must be allowed.
-      MINIO_API_CORS_ALLOW_ORIGIN: https://adelaidesphere.com.au
+      MINIO_API_CORS_ALLOW_ORIGIN: https://adelaidesphere.com
     volumes:
       - minio-data:/data
     ports:
@@ -599,32 +602,34 @@ REDIS_URL=redis://:${REDIS_PASSWORD}@127.0.0.1:6379/0
 APP_SECRET_KEY=${APP_SECRET_KEY}
 FIELD_ENCRYPTION_KEY=${FIELD_ENCRYPTION_KEY}
 
-TRUSTED_ORIGINS=https://adelaidesphere.com.au
+TRUSTED_ORIGINS=https://adelaidesphere.com
 SESSION_COOKIE_SECURE=true
 SESSION_IDLE_MINUTES=30
 SESSION_ABSOLUTE_HOURS=12
-PUBLIC_ADMIN_URL=https://adelaidesphere.com.au/admin
-PUBLIC_SITE_URL=https://adelaidesphere.com.au
+PUBLIC_ADMIN_URL=https://adelaidesphere.com/admin
+PUBLIC_SITE_URL=https://adelaidesphere.com
 OPENAPI_ENABLED=false
 
-MAIL_TRANSPORT=resend
-RESEND_API_KEY=<re_… from Resend>
-RESEND_WEBHOOK_SECRET=<whsec_… from Resend>
-MAIL_FROM_ADDRESS=<hello@mail.adelaidesphere.com.au>
+MAIL_TRANSPORT=smtp
+SMTP_HOST=mail.adelaidesphere.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=smtp@adelaidesphere.com
+SMTP_PASSWORD=<password of smtp@adelaidesphere.com>
+MAIL_FROM_ADDRESS=noreply@adelaidesphere.com
 MAIL_FROM_NAME=Adelaide Sphere
-MAIL_REPLY_TO_ADDRESS=<monitored mailbox>
 SITE_ENQUIRY_RECIPIENT=<mailbox that receives /contact enquiries>
 
 TURNSTILE_SECRET_KEY=<Turnstile secret key>
 SUBMISSION_TERMS_VERSION=2026-09-01
 
-MEDIA_S3_ENDPOINT=https://media.adelaidesphere.com.au
+MEDIA_S3_ENDPOINT=https://media.adelaidesphere.com
 MEDIA_S3_REGION=us-east-1
 MEDIA_S3_ACCESS_KEY_ID=${MEDIA_S3_ACCESS_KEY_ID}
 MEDIA_S3_SECRET_ACCESS_KEY=${MEDIA_S3_SECRET_ACCESS_KEY}
 MEDIA_QUARANTINE_BUCKET=adelaide-sphere-quarantine
 MEDIA_PUBLIC_BUCKET=adelaide-sphere-media
-MEDIA_PUBLIC_BASE_URL=https://media.adelaidesphere.com.au/adelaide-sphere-media
+MEDIA_PUBLIC_BASE_URL=https://media.adelaidesphere.com/adelaide-sphere-media
 
 WORKER_CONCURRENCY=2
 METRICS_TOKEN=${METRICS_TOKEN}
@@ -642,10 +647,18 @@ Replace every remaining `<…>` in the editor. Notes that matter:
   browser uploads to it directly; a loopback endpoint produces upload URLs no
   browser can reach. The API and worker reach it through nginx on the same
   machine.
-- `MAIL_TRANSPORT=smtp` is the alternative to Resend: then set `SMTP_HOST`,
-  `SMTP_PORT=587` (or `465` with `SMTP_SECURE=true`), `SMTP_USER`,
-  `SMTP_PASSWORD` instead of the `RESEND_*` lines. Production refuses `console`
-  and `none`.
+- Mail goes through `mail.adelaidesphere.com:587`. `SMTP_SECURE=false` is
+  correct for port 587: the connection starts in plain text and is upgraded
+  with STARTTLS, which production **requires** (the send fails rather than
+  continuing unencrypted; TLS 1.2 minimum). Use `SMTP_PORT=465` with
+  `SMTP_SECURE=true` only if the mail host offers implicit TLS instead.
+  Recipients see `Adelaide Sphere <noreply@adelaidesphere.com>`; a visitor's
+  address is only ever the Reply-To of an enquiry.
+- The SMTP password goes only in this file (mode 600). If it contains `$`,
+  `` ` `` or `\`, type it in the editor after the heredoc, not inside it.
+- Resend is the alternative: `MAIL_TRANSPORT=resend` with `RESEND_API_KEY`,
+  `RESEND_WEBHOOK_SECRET` and optionally `MAIL_REPLY_TO_ADDRESS` instead of the
+  `SMTP_*` lines. Production refuses `console` and `none`.
 - The API refuses to start in production if any of these is wrong: insecure
   cookies, missing Turnstile secret, missing site URL, missing sender, missing
   media credentials or base URL, public-key retrieval on, an unverified database
@@ -656,7 +669,7 @@ Replace every remaining `<…>` in the editor. Notes that matter:
 
 ```bash
 cd /srv/adelaide-sphere/shared && . ./generated.env && cat > worker.env <<EOF
-WEB_REVALIDATE_URL=https://adelaidesphere.com.au/api/revalidate
+WEB_REVALIDATE_URL=https://adelaidesphere.com/api/revalidate
 WEB_REVALIDATE_TOKEN=${REVALIDATE_TOKEN}
 WORKER_METRICS_PORT=9474
 WORKER_METRICS_BIND=127.0.0.1
@@ -675,9 +688,9 @@ cd /srv/adelaide-sphere/shared && . ./generated.env && cat > web.env <<EOF
 NODE_ENV=production
 PORT=4000
 API_ORIGIN=http://127.0.0.1:4001
-SITE_ORIGIN=https://adelaidesphere.com.au
+SITE_ORIGIN=https://adelaidesphere.com
 TURNSTILE_SITE_KEY=<Turnstile site key>
-MEDIA_PUBLIC_BASE_URL=https://media.adelaidesphere.com.au/adelaide-sphere-media
+MEDIA_PUBLIC_BASE_URL=https://media.adelaidesphere.com/adelaide-sphere-media
 REVALIDATE_TOKEN=${REVALIDATE_TOKEN}
 REVIEW_RICH_RESULTS=false
 FAQ_RICH_RESULTS=false
@@ -710,7 +723,7 @@ steps need `sudo`.
 ### 9.1 Certificates
 
 ```bash
-sudo systemctl stop nginx && sudo certbot certonly --standalone -d adelaidesphere.com.au -d www.adelaidesphere.com.au -d media.adelaidesphere.com.au --agree-tos -m <ops email> --no-eff-email && sudo systemctl start nginx
+sudo systemctl stop nginx && sudo certbot certonly --standalone -d adelaidesphere.com -d www.adelaidesphere.com -d media.adelaidesphere.com --agree-tos -m <ops email> --no-eff-email && sudo systemctl start nginx
 ```
 
 Renewal is installed as a systemd timer by the package. Make it reload nginx:
@@ -802,12 +815,12 @@ rename the header to `Content-Security-Policy`.
 sudo tee /etc/nginx/snippets/as-csp-site.conf >/dev/null <<'EOF'
 add_header X-Frame-Options "SAMEORIGIN" always;
 add_header Content-Security-Policy "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'" always;
-add_header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://media.adelaidesphere.com.au https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://i.ytimg.com; font-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://www.facebook.com; frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com https://www.google.com; frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'" always;
+add_header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.googletagmanager.com https://connect.facebook.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://media.adelaidesphere.com https://www.google-analytics.com https://www.googletagmanager.com https://www.facebook.com https://i.ytimg.com; font-src 'self' data:; connect-src 'self' https://www.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://www.facebook.com; frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com https://www.google.com; frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'" always;
 EOF
 sudo tee /etc/nginx/snippets/as-csp-admin.conf >/dev/null <<'EOF'
 add_header X-Frame-Options "DENY" always;
 add_header Content-Security-Policy "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'" always;
-add_header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://media.adelaidesphere.com.au; font-src 'self' data:; connect-src 'self' https://media.adelaidesphere.com.au; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'" always;
+add_header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://media.adelaidesphere.com; font-src 'self' data:; connect-src 'self' https://media.adelaidesphere.com; frame-src 'none'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'" always;
 EOF
 ```
 
@@ -833,7 +846,7 @@ map $http_upgrade $connection_upgrade { default upgrade; '' ''; }
 server {
   listen 80;
   listen [::]:80;
-  server_name adelaidesphere.com.au www.adelaidesphere.com.au media.adelaidesphere.com.au;
+  server_name adelaidesphere.com www.adelaidesphere.com media.adelaidesphere.com;
   location /.well-known/acme-challenge/ { root /var/www/html; }
   location / { return 301 https://$host$request_uri; }
 }
@@ -842,20 +855,20 @@ server {
   listen 443 ssl;
   listen [::]:443 ssl;
   http2 on;
-  server_name www.adelaidesphere.com.au;
-  ssl_certificate     /etc/letsencrypt/live/adelaidesphere.com.au/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/adelaidesphere.com.au/privkey.pem;
-  return 301 https://adelaidesphere.com.au$request_uri;
+  server_name www.adelaidesphere.com;
+  ssl_certificate     /etc/letsencrypt/live/adelaidesphere.com/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/adelaidesphere.com/privkey.pem;
+  return 301 https://adelaidesphere.com$request_uri;
 }
 
 server {
   listen 443 ssl;
   listen [::]:443 ssl;
   http2 on;
-  server_name adelaidesphere.com.au;
+  server_name adelaidesphere.com;
 
-  ssl_certificate     /etc/letsencrypt/live/adelaidesphere.com.au/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/adelaidesphere.com.au/privkey.pem;
+  ssl_certificate     /etc/letsencrypt/live/adelaidesphere.com/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/adelaidesphere.com/privkey.pem;
   ssl_protocols TLSv1.2 TLSv1.3;
   include snippets/as-security-headers.conf;
   include snippets/as-csp-site.conf;
@@ -946,10 +959,10 @@ server {
   listen 443 ssl;
   listen [::]:443 ssl;
   http2 on;
-  server_name media.adelaidesphere.com.au;
+  server_name media.adelaidesphere.com;
 
-  ssl_certificate     /etc/letsencrypt/live/adelaidesphere.com.au/fullchain.pem;
-  ssl_certificate_key /etc/letsencrypt/live/adelaidesphere.com.au/privkey.pem;
+  ssl_certificate     /etc/letsencrypt/live/adelaidesphere.com/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/adelaidesphere.com/privkey.pem;
   ssl_protocols TLSv1.2 TLSv1.3;
   include snippets/as-security-headers.conf;
   server_tokens off;
@@ -1011,7 +1024,7 @@ Check the media host now (MinIO answers an anonymous bucket listing with
 `AccessDenied` XML — that is correct):
 
 ```bash
-curl -s https://media.adelaidesphere.com.au/adelaide-sphere-quarantine/ | head -c 200
+curl -s https://media.adelaidesphere.com/adelaide-sphere-quarantine/ | head -c 200
 ```
 
 ---
@@ -1319,18 +1332,23 @@ Confirm from your laptop that `curl -m 5 http://<VPS IPv4>:4001/api/v1/health`
 ## 13. Connect the third-party services
 
 1. **Turnstile** (Cloudflare dashboard): the widget's hostnames list contains
-   `adelaidesphere.com.au`. The API checks the hostname against `PUBLIC_SITE_URL`.
-2. **Resend**: sending domain shows *Verified*. Add a webhook to
-   `https://adelaidesphere.com.au/api/v1/webhooks/email` for all email events; its
-   signing secret must equal `RESEND_WEBHOOK_SECRET` (restart `adelaide-sphere-api` and
-   `adelaide-sphere-worker` if you changed it).
+   `adelaidesphere.com`. The API checks the hostname against `PUBLIC_SITE_URL`.
+2. **Mail**: from the VPS, `openssl s_client -starttls smtp -connect
+   mail.adelaidesphere.com:587 -crlf -quiet </dev/null` shows a valid
+   certificate for `mail.adelaidesphere.com`. Then use *Forgot password* on
+   `/admin/` and confirm the message arrives from
+   `Adelaide Sphere <noreply@adelaidesphere.com>` with SPF and DKIM passing
+   (the recipient's "show original"). The API and worker logs name the relay
+   as `smtp mail.adelaidesphere.com:587 (starttls, authenticated)`. With SMTP
+   there is no delivery webhook: the email log records acceptance by the relay,
+   not delivery or bounces.
 3. **Admin → Configuration**: General settings (support email, phone, social
    links), SEO settings (default title, description, share image), Home page
    settings (banner slides). Media library uploads must reach *Ready* within a
    minute — that proves the signed upload URL, MinIO CORS, the worker and the
    public bucket all work together.
 4. **Google Search Console** (optional but recommended): verify the domain and
-   submit `https://adelaidesphere.com.au/sitemap.xml`.
+   submit `https://adelaidesphere.com/sitemap.xml`.
 
 ---
 
@@ -1339,7 +1357,7 @@ Confirm from your laptop that `curl -m 5 http://<VPS IPv4>:4001/api/v1/health`
 Run from your laptop. Every line must match the expectation.
 
 ```bash
-for path in / /business /about /faqs /contact /blog /business/x-not-real /blog/x-not-real /api/v1/health /api/v1/health/ready /api/v1/does-not-exist /admin/ /_next/static/nope.js /metrics /robots.txt /sitemap.xml; do curl -s -o /dev/null -w "%{http_code} %{size_download} %{content_type} $path\n" "https://adelaidesphere.com.au$path"; done
+for path in / /business /about /faqs /contact /blog /business/x-not-real /blog/x-not-real /api/v1/health /api/v1/health/ready /api/v1/does-not-exist /admin/ /_next/static/nope.js /metrics /robots.txt /sitemap.xml; do curl -s -o /dev/null -w "%{http_code} %{size_download} %{content_type} $path\n" "https://adelaidesphere.com$path"; done
 ```
 
 | Path | Expected |
@@ -1351,18 +1369,18 @@ for path in / /business /about /faqs /contact /blog /business/x-not-real /blog/x
 | `/admin/` | `200` HTML |
 | `/_next/static/nope.js` | small `404`, not the HTML not-found page |
 | `/metrics` | `404` |
-| `/robots.txt`, `/sitemap.xml` | `200`; robots names the sitemap on `https://adelaidesphere.com.au` |
+| `/robots.txt`, `/sitemap.xml` | `200`; robots names the sitemap on `https://adelaidesphere.com` |
 
 Also check:
 
 ```bash
-curl -sI http://adelaidesphere.com.au | head -3 && curl -sI https://www.adelaidesphere.com.au | head -3
+curl -sI http://adelaidesphere.com | head -3 && curl -sI https://www.adelaidesphere.com | head -3
 ```
 
-(both `301` to `https://adelaidesphere.com.au`)
+(both `301` to `https://adelaidesphere.com`)
 
 ```bash
-curl -s https://adelaidesphere.com.au/ | grep -o 'https://media.adelaidesphere.com.au[^"]*' | head -3
+curl -s https://adelaidesphere.com/ | grep -o 'https://media.adelaidesphere.com[^"]*' | head -3
 ```
 
 (image URLs on the media host; open one — it must load)
@@ -1509,8 +1527,8 @@ manual checks it prints, record the result in
 
 | What | How |
 | --- | --- |
-| Site up | External uptime monitor (UptimeRobot, Better Stack, …) on `https://adelaidesphere.com.au/` and `https://adelaidesphere.com.au/api/v1/health/ready`, alerting after 3 minutes |
-| Worker alive | Monitor `https://adelaidesphere.com.au/admin/` screens daily, or scrape `http://127.0.0.1:9474/metrics` (`as_worker_up`, heartbeats) with a local Prometheus — `infrastructure/monitoring/` |
+| Site up | External uptime monitor (UptimeRobot, Better Stack, …) on `https://adelaidesphere.com/` and `https://adelaidesphere.com/api/v1/health/ready`, alerting after 3 minutes |
+| Worker alive | Monitor `https://adelaidesphere.com/admin/` screens daily, or scrape `http://127.0.0.1:9474/metrics` (`as_worker_up`, heartbeats) with a local Prometheus — `infrastructure/monitoring/` |
 | Operational thresholds | `GET /api/v1/admin/operations/status` (queue age, failed enquiries, stuck media…) — runbook §5 |
 | TLS expiry | `sudo certbot certificates`; the uptime monitor's certificate check |
 | Disk | `df -h /` weekly, alert at 80% (images, backups, Docker volumes) |
@@ -1622,8 +1640,8 @@ by hand.
 | Uploads stay *Processing* | Worker stopped, or wrong S3 credentials | `systemctl status adelaide-sphere-worker`; Queue monitor → Workers; runbook "If uploads are stuck" |
 | Upload fails in the browser (CORS / 403 `SignatureDoesNotMatch`) | `MEDIA_S3_ENDPOINT` not the public media host, `Host` not passed unchanged, or `MINIO_API_CORS_ALLOW_ORIGIN` wrong | Section 8.2 note, section 9.3 media server, section 6.3 |
 | Images missing, pages 500 | Web built without `MEDIA_PUBLIC_BASE_URL` | Rebuild with `web.env` loaded (10.5), restart `adelaide-sphere-web` |
-| Edits take up to 5 minutes to appear | Revalidation not reaching the web tier | `WEB_REVALIDATE_TOKEN` equals `REVALIDATE_TOKEN`; `curl -X POST https://adelaidesphere.com.au/api/revalidate` answers `401` (not `503`) |
-| Admin sign-in rejected with an origin error | `TRUSTED_ORIGINS` does not match the address in the browser | Must be exactly `https://adelaidesphere.com.au` |
+| Edits take up to 5 minutes to appear | Revalidation not reaching the web tier | `WEB_REVALIDATE_TOKEN` equals `REVALIDATE_TOKEN`; `curl -X POST https://adelaidesphere.com/api/revalidate` answers `401` (not `503`) |
+| Admin sign-in rejected with an origin error | `TRUSTED_ORIGINS` does not match the address in the browser | Must be exactly `https://adelaidesphere.com` |
 | Client IPs all `127.0.0.1` in audit and rate limits | `TRUST_PROXY` not `1` | Set it; restart API |
 | Unknown public URL shows an empty page | Not-found interception missing | Section 9.3 `@not_found`; `_not-found.html` exists under `current/apps/web/.next/server/app/` |
 | Contact form says submissions are closed | `TURNSTILE_SITE_KEY` missing at web runtime, or the secret missing on the API | Both env files; restart both |
@@ -1635,11 +1653,11 @@ by hand.
 ## 20. A staging server
 
 Identical procedure on a second VPS with its own domain (e.g.
-`staging.adelaidesphere.com.au`), its own database, buckets and **every secret
+`staging.adelaidesphere.com`), its own database, buckets and **every secret
 regenerated** (runbook §1: nothing shared). Additionally:
 
 - Never copy production personal data into staging.
 - Protect it with nginx basic auth or an IP allow-list, and make it
   non-indexable: add `add_header X-Robots-Tag "noindex, nofollow" always;` to the
   site server block and a `location = /robots.txt { return 200 "User-agent: *\nDisallow: /\n"; }`.
-- Use Resend's staging key and a staging sender.
+- Use a separate SMTP mailbox (or a catcher) and a staging sender, never the production `smtp@` credentials.

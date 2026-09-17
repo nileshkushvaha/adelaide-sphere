@@ -17,6 +17,8 @@ export interface SmtpConfig {
   /** Refuse to continue when the server does not offer STARTTLS (always true in production unless `secure`). */
   requireTls: boolean;
   auth: { user: string; pass: string } | null;
+  /** Display name on the From header (`MAIL_FROM_NAME`); absent means the bare address. */
+  fromName?: string;
 }
 
 export interface SmtpEnv {
@@ -25,6 +27,7 @@ export interface SmtpEnv {
   SMTP_SECURE?: string | undefined;
   SMTP_USER?: string | undefined;
   SMTP_PASSWORD?: string | undefined;
+  MAIL_FROM_NAME?: string | undefined;
 }
 
 export interface SmtpConfigResult {
@@ -36,7 +39,7 @@ export interface SmtpConfigResult {
 const trim = (value: string | undefined): string => (value ?? '').trim();
 
 /**
- * Validates the SMTP_* variables. Outside production a plaintext connection to
+ * Validates the SMTP_* variables and the sender display name. Outside production a plaintext connection to
  * a loopback catcher (Mailpit) is allowed; in production authentication and
  * transport encryption are required so credentials and visitor content never
  * cross the network in clear.
@@ -60,6 +63,9 @@ export function smtpConfigFromEnv(env: SmtpEnv, options: { production: boolean }
   if ((user === '') !== (pass === '')) problems.push('SMTP_USER / SMTP_PASSWORD: set both or neither');
   if (options.production && (!user || !pass)) problems.push('SMTP_USER / SMTP_PASSWORD: required in production (authenticated relay only)');
 
+  const fromName = trim(env.MAIL_FROM_NAME);
+  if (fromName && (/[\r\n\0]/.test(fromName) || fromName.length > 78)) problems.push('MAIL_FROM_NAME: must be a single short line with no control characters');
+
   const loopback = /^(127\.\d+\.\d+\.\d+|localhost|::1)$/i.test(host);
   if (options.production && loopback) problems.push('SMTP_HOST: a loopback host is not a production mail relay');
 
@@ -72,6 +78,7 @@ export function smtpConfigFromEnv(env: SmtpEnv, options: { production: boolean }
       // STARTTLS is mandatory in production; locally Mailpit speaks plaintext on 1025.
       requireTls: options.production && !secure,
       auth: user && pass ? { user, pass } : null,
+      ...(fromName ? { fromName } : {}),
     },
     problems: [],
   };

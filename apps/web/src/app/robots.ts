@@ -1,6 +1,11 @@
 import type { MetadataRoute } from 'next';
 import { siteNoindex, siteOrigin } from '@/lib/site';
 
+// Answered per request: SITE_ORIGIN and SITE_NOINDEX are read when the server
+// starts, so a prerendered copy would carry the build machine's values — a
+// staging image promoted to production would keep `Disallow: /`.
+export const dynamic = 'force-dynamic';
+
 /**
  * Crawl guidance (SRS SEO 002): the sitemap index plus the routes that should
  * never be crawled. This is guidance, not access control — authorisation is
