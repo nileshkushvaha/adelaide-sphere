@@ -25,9 +25,16 @@ env_file_value() (
   set -Eeuo pipefail
   [ -r "${1:-}" ] || { echo "env_file_value: cannot read ${1:-<no file>}" >&2; exit 1; }
   [ -n "${2:-}" ] || { echo 'env_file_value: no key given.' >&2; exit 1; }
+  # Leading whitespace and an `export ` prefix are tolerated, so a file a shell
+  # could source is never read as "no such key".
   ENV_FILE_KEY="$2" awk '
-    index($0, ENVIRON["ENV_FILE_KEY"] "=") == 1 {
-      value = substr($0, length(ENVIRON["ENV_FILE_KEY"]) + 2)
+    {
+      line = $0
+      sub(/^[ \t]+/, "", line)
+      sub(/^export[ \t]+/, "", line)
+    }
+    index(line, ENVIRON["ENV_FILE_KEY"] "=") == 1 {
+      value = substr(line, length(ENVIRON["ENV_FILE_KEY"]) + 2)
       sub(/\r$/, "", value)
       if (value ~ /^".*"$/ || value ~ /^\047.*\047$/) value = substr(value, 2, length(value) - 2)
       last = value; found = 1      # last assignment wins, as systemd does

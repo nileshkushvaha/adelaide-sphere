@@ -49,8 +49,12 @@ api_command() (
   # api.env's DATABASE_URL query string contains an unquoted `&`, so sourcing the
   # file leaves it unset — a shell reads that `&` as "background this assignment".
   # systemd parses the file itself, which is why only shells are affected. Read
-  # the value back explicitly rather than trusting what sourcing produced.
-  DATABASE_URL=$(env_file_value "$ROOT/shared/api.env" DATABASE_URL)
+  # the value back explicitly rather than trusting what sourcing produced — but
+  # only replace it with something: an empty read must never clear a value that
+  # sourcing did load.
+  DATABASE_URL_READ=$(env_file_value "$ROOT/shared/api.env" DATABASE_URL)
+  [[ -n "$DATABASE_URL_READ" ]] && DATABASE_URL=$DATABASE_URL_READ
+  [[ -n "${DATABASE_URL:-}" ]] || { echo "No DATABASE_URL in $ROOT/shared/api.env." >&2; exit 1; }
   export DATABASE_URL
   # The application driver uses sslca/sslmode; Prisma CLI uses sslcert/sslaccept.
   # Translate only this subprocess, leaving the shared application URL intact.
@@ -157,7 +161,9 @@ api_command pnpm db:migrate:status
   set -a
   . "$ROOT/shared/api.env"
   set +a
-  DATABASE_URL=$(env_file_value "$ROOT/shared/api.env" DATABASE_URL)
+  DATABASE_URL_READ=$(env_file_value "$ROOT/shared/api.env" DATABASE_URL)
+  [[ -n "$DATABASE_URL_READ" ]] && DATABASE_URL=$DATABASE_URL_READ
+  [[ -n "${DATABASE_URL:-}" ]] || { echo "No DATABASE_URL in $ROOT/shared/api.env." >&2; exit 1; }
   export DATABASE_URL
   cd "$DIR/apps/api"
   node dist/cli/bootstrap-admin.js --seed-only
