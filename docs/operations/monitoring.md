@@ -116,6 +116,8 @@ node_exporter, so the worker reads the files at scrape time instead.
 | `as_backup_disk_free_bytes` | gauge | `tier` | C11 — a full disk stops MySQL, not just the backup |
 | `as_media_mirror_last_success_timestamp_seconds` | gauge | — | C12 — uploaded files, which no dump contains |
 | `as_media_mirror_configured` | gauge | — | gates C12 |
+| `as_binlog_archive_last_success_timestamp_seconds` | gauge | — | C13 — the one-hour RPO after a server loss |
+| `as_binlog_archive_configured` | gauge | — | gates C13 |
 
 `tier` is a closed vocabulary — `daily｜weekly` — fixed in TypeScript and matched
 against the file name, so nothing on disk can invent a series. **Alert rules must

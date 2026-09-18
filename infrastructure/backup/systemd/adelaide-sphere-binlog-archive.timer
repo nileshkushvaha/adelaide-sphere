@@ -1,0 +1,15 @@
+# Every 30 minutes. The worst-case loss after a server loss is the time since
+# the last successful run, so half-hourly keeps it inside the one-hour RPO
+# with room for a slow or retried run; hourly would sit right on the line.
+[Unit]
+Description=Half-hourly Adelaide Sphere binlog archive
+
+[Timer]
+Unit=adelaide-sphere-binlog-archive.service
+OnCalendar=*-*-* *:10,40:00 Australia/Adelaide
+RandomizedDelaySec=2m
+AccuracySec=30s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

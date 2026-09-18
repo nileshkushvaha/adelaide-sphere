@@ -2553,6 +2553,41 @@ Fixes for three findings from the production-readiness audit of the same day.
 - **Verified:** `python3 scripts/test-deploy-vps.py` (5 modes; the success mode now also asserts both `www-data` read checks); `bash -n`. shellcheck is not installed on this machine. Not run against the VPS. No test suites were run.
 - **Not addressed, noticed on the way:** §4.3 installs Node system-wide under `/opt/node`, while the script builds with NVM from `/home/deploy/.nvm` and the units start `/usr/local/bin/node`. Those can be different binaries. §10.3 and §11B source `api.env` in a shell, which leaves `DATABASE_URL` unset (the `&` defect above). §17 still mentions "Siri Education services".
 
+## Review fixes: API startup, off-site binlogs, relocatable checksums (18 Sep 2026)
+A review of the backup integration found three defects, all confirmed and fixed. The rehearsal that proved the fixes found three more.
+
+- **[P1] The API could not start.** `BackupStatusService` took a `string | null` constructor parameter with a default. Nest resolves every constructor parameter through the container, and nothing provided that one: `Nest can't resolve dependencies of the BackupStatusService`, reproduced against a fresh build. The directory is now an injection token (`BACKUP_STATE_DIR`) with a factory provider registered in `OperationsModule`. The existing spec constructed the class directly, which is how it missed this; a new spec resolves it through `Test.createTestingModule`. Verified by building the API and starting `dist/main.js`: it starts, and `/api/v1/health/ready` returns 200.
+- **[P1] The one-hour RPO did not survive the loss of the server.** The daily dump recorded a binlog position, but the logs themselves never left the machine, so a lost VPS lost up to a day of changes. `infrastructure/backup/archive-binlogs.sh` runs every 30 minutes (`adelaide-sphere-binlog-archive.timer`). It flushes, then encrypts each closed log and copies it off-site with its checksum. A log is recorded as archived only after both files have uploaded, and a log that expired before it was archived fails the run as a gap. It works through `docker exec`, so it needs no host client and no grant beyond the existing `RELOAD` and `REPLICATION CLIENT`. `restore-drill.sh --binlog-dir` replays the archive from the dump's recorded position, with an optional UTC `--stop-datetime`. New metric and alert: `as_binlog_archive_last_success_timestamp_seconds`, C13.
+- **[P2] Checksums did not survive a download.** `backup-database.sh` recorded the absolute path, and the drill ran `shasum -c`, which looked for the file there. Checksums now record the file name. The drill compares the hash with the file in hand, which also works for the older path-style files already on the server.
+
+**Found by the rehearsal, and fixed:**
+- **A drill reported a replay that had not happened, with exit status 0.** macOS `/bin/bash` 3.2 treats an empty array as unbound under `set -u`, so with no stop point `mysqlbinlog` never ran. `mysql` then succeeded on empty input. Arrays now use the `${a[@]+"${a[@]}"}` form, and replay is two separately checked steps, not a pipe.
+- **A drill on the production server polluted the archive.** It wrote its restore, including `DROP DATABASE`, into the server's binlog. `--rewrite-db` is applied before `--database`, so a later replay into the same `_restore` name re-ran the old drill over the recovered data. Every drill connection now sets `sql_log_bin = 0`, and the drill refuses an archive that already holds writes made directly to its target. The first version of that refusal used `grep -q`: `mysqlbinlog` died of SIGPIPE, and under `pipefail` the check read as "not found" exactly when it had found something. It now counts matches.
+- **The restore account in guide 15.5 could not replay, and its password was never kept.** Replay needs `REPLICATION_APPLIER` and `SESSION_VARIABLES_ADMIN`, both found by running it. The old command created the user with a random password it discarded. 15.5 now keeps the password in a mode-600 file, grants the two privileges, and drops the account after the drill. Both commands were run against the local container.
+
+**Rehearsed for real against local MySQL 8.4 and MinIO.** The rehearsal used a scratch copy of the dev database and a backup account with the exact production grants. The off-site remote was a local directory behind an `rclone copyto` stand-in, because rclone is not installed here.
+- The daily dump recorded its binlog position with the production grants.
+- There were changes on both sides of a marked moment: a new table, an insert, an update, a delete, then another insert.
+- The archive flushed and uploaded the logs.
+- Everything was copied to a new directory, standing in for a download after the server is gone.
+- Replay to the end restored every change. Replay to the stop point stopped exactly there.
+- The server's binlog position was identical before and after the drill.
+- An archive with a missing log failed, and so did a tampered one.
+- Media was mirrored off-site and restored from that copy into an empty bucket: 381 objects each way, `mc diff` empty, and a sample file's hash matched.
+- The failure email had been proven through Mailpit earlier. Scratch databases, accounts, buckets and files were removed afterwards.
+
+**Checks:** 73 hermetic checks in `scripts/test-scheduled-backup.py` (including the archiver's gap, retry and password-not-on-the-command-line cases), 5 deploy modes, shellcheck clean, all ten unit files verified on systemd 255, typecheck and lint clean. Per CLAUDE.md rule 5, no test suites were run in this session.
+
+**Not proven, and only provable on the server:** a real VPS backup, off-site download and isolated restore, media restore and failure email. That is guide 15.7, the go-live acceptance procedure. It restores from off-site copies alone onto a laptop, with pass criteria for each step. Until it has passed once, recovery is designed and rehearsed, not proven.
+
+## SRS implementation planning and source reconciliation (18 Sep 2026)
+
+Planning only, requested by the user; no application changes or test suites. Deliverables: `docs/planning/srs-implementation-plan.md` and `docs/planning/srs-requirement-matrix.md`. Coverage: 222 unique formal requirements (including change-log-only BLOG 006), plus all 181 non-NFR table rows and 52 standalone prose paragraphs. The source SRS was left unchanged and its SHA-256 is recorded in the matrix.
+
+Material conflicts are recorded as C01–C14 in the plan: cover revision1.5 versus amendments through1.17; council-only SCP004 baseline versus current Inner Adelaide seed/project instructions; Resend MAIL001/D09 versus recorded SMTP choice; Open-now completeness/D08 versus60% heuristic; and obsolete acceptance text for comment threads, testimonials, partner authorization, documents, pages, settings storage, branding, paid guest posts and the site map. Latest explicit SRS amendments govern where unambiguous; geography/provider/readiness reconciliation stays an owner decision. The separately approved180-day weekly backup exception is preserved, with full-horizon deletion replay still required.
+
+Static inspection found concrete closure work in transactional submission idempotency, asynchronous authentication mail, task cancellation/retries/lock release, visitor-data retention/deletion replay, atomic account-status audit, concurrent provider events, indexed directory search, exception-hour overlap, replica/CDN invalidation, asynchronous cache controls and periodic rating reconciliation. These are planning findings, not fixes or fresh runtime claims. Existing uncommitted work remains intact; implementation requires a subsequent request.
+
 ## AI Content Phase 1A — 18 September 2026
 
 Implemented the expressly approved foundation only: disabled-by-default settings in the existing store; manual topic queue/detail/priority/pause/resume/cancel/reject in the existing admin; three server-enforced permissions; transactional safe audit; bounded API endpoints; durable actor-scoped request idempotency and exact normalized active-title protection. Added one topic table, no generation/control/provider tables. Atomic settings compare-and-set fixes the confirmed concurrent-save race with the smallest shared-store change.

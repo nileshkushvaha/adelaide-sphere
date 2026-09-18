@@ -19,6 +19,14 @@ elif name=='docker':
  if 'inspect' in a:
   if mode=='container-down': sys.exit(1)
   print('true')
+ elif 'mysql' in a and '-e' in a:
+  q=a[-1]   # the SQL; docker's own `-e MYSQL_PWD` comes first
+  if q=='SELECT @@log_bin': print('0' if mode=='binlog-off' else '1')
+  elif q=='SELECT @@log_bin_basename': print('/var/lib/mysql/binlog')
+  elif q=='SHOW BINARY LOGS':
+   for n in os.environ.get('TEST_BINLOGS','binlog.000001 binlog.000002').split(): print(n+chr(9)+'100'+chr(9)+'No')
+ elif 'cat' in a:
+  sys.stdout.write('binlog-bytes-for-'+a[-1])
  elif mode=='mirror-failure': sys.exit(1)
 elif name=='rclone':
  open(str(root/'rclone-args.txt'),'a').write(' '.join(a)+chr(10))
@@ -108,6 +116,9 @@ with tempfile.TemporaryDirectory() as t:
           'derived=127.0.0.1:3317 effective=127.0.0.1:3317' in r.stdout, r.stdout)
     check('uses the provisioned backup account by default',
           'user=adelaide_sphere_backup' in r.stdout, r.stdout)
+    ck = list((root / 'backups/daily').glob('*.sha256'))
+    check('the dump checksum names the file, so it verifies after a download',
+          ck and '/' not in ck[0].read_text().split()[1], [c.read_text() for c in ck])
     check('writes a backup and a checksum',
           len(list((root / 'backups/daily').glob('*.age'))) == 1
           and len(list((root / 'backups/daily').glob('*.sha256'))) == 1, r.stdout)
@@ -370,6 +381,73 @@ with tempfile.TemporaryDirectory() as t:
     s = state(root, 'media-mirror')
     check('a failed mirror keeps the previous success time',
           s['last_run_success'] == '0' and int(s['last_success_epoch']) == good, (good, s))
+
+# --- binlog archive ---------------------------------------------------------
+archiver = repo / 'infrastructure/backup/archive-binlogs.sh'
+
+
+def run_archive(root, mode='', binlogs='binlog.000001 binlog.000002 binlog.000003'):
+    env = {**os.environ, 'PATH': str(root / 'bin') + ':' + os.environ['PATH'], 'TEST_ROOT': str(root),
+           'TEST_MODE': mode, 'BACKUP_ROOT': str(root), 'TEST_BINLOGS': binlogs}
+    return subprocess.run(['bash', str(archiver)], env=env, capture_output=True, text=True)
+
+
+def ledger(root):
+    f = root / 'backups/binlogs/uploaded.list'
+    return f.read_text().split() if f.exists() else []
+
+
+with tempfile.TemporaryDirectory() as t:
+    root = make_root(t)
+    r = run_archive(root)
+    check('an unconfigured binlog archive is a no-op that says the RPO is unmet',
+          r.returncode == 0 and 'BACK 001 unmet' in r.stdout and not (root / 'docker-args.txt').exists(), r.stdout + r.stderr)
+
+with tempfile.TemporaryDirectory() as t:
+    root = make_root(t, offsite='offsite:as-backups/db')
+    r = run_archive(root)
+    docker = (root / 'docker-args.txt').read_text()
+    uploads = (root / 'rclone-args.txt').read_text()
+    check('flushes so the open log closes before copying', r.returncode == 0 and 'FLUSH BINARY LOGS' in docker, r.stderr)
+    check('archives every closed log and not the open one',
+          ledger(root) == ['binlog.000001', 'binlog.000002'] and 'binlog.000003' not in uploads, (ledger(root), uploads))
+    check('uploads each log with its checksum', uploads.count('copyto') == 4 and '.sha256' in uploads, uploads)
+    check('never puts the database password on docker\'s command line',
+          'not-a-real-password' not in docker, docker)
+    sums = sorted((root / 'backups/binlogs').glob('*.sha256'))
+    check('checksums name the file, not a server path',
+          sums and all('/' not in f.read_text().split()[1] for f in sums), [f.read_text() for f in sums])
+    r2 = run_archive(root, binlogs='binlog.000001 binlog.000002 binlog.000003 binlog.000004')
+    check('a second run archives only the newly closed log',
+          r2.returncode == 0 and ledger(root)[-1] == 'binlog.000003' and '1 log(s) archived' in r2.stdout, r2.stdout)
+    check('records success', state(root, 'binlog-archive')['last_run_success'] == '1', '')
+
+with tempfile.TemporaryDirectory() as t:
+    root = make_root(t, offsite='offsite:as-backups/db')
+    run_archive(root, binlogs='binlog.000001 binlog.000002 binlog.000003')
+    r = run_archive(root, binlogs='binlog.000007 binlog.000008')
+    check('a log purged before it was archived is reported as a gap',
+          r.returncode != 0 and 'Binlog gap' in r.stderr, r.stderr)
+    check('a gap is recorded as a failure', state(root, 'binlog-archive')['last_run_success'] == '0', '')
+
+with tempfile.TemporaryDirectory() as t:
+    root = make_root(t, offsite='offsite:as-backups/db')
+    r = run_archive(root, mode='rclone-failure')
+    check('a failed upload is not recorded as archived, so it is retried',
+          r.returncode != 0 and ledger(root) == [], ledger(root))
+    r = run_archive(root)
+    check('the retry archives it', r.returncode == 0 and ledger(root) == ['binlog.000001', 'binlog.000002'], r.stderr)
+
+with tempfile.TemporaryDirectory() as t:
+    root = make_root(t, offsite='offsite:as-backups/db')
+    r = run_archive(root, mode='binlog-off')
+    check('refuses when binary logging is off', r.returncode != 0 and 'Binary logging is OFF' in r.stderr, r.stderr)
+
+with tempfile.TemporaryDirectory() as t:
+    root = make_root(t, offsite='offsite:as-backups/db')
+    r = run_archive(root, binlogs='binlog.000001 ../../etc/passwd binlog.000003')
+    check('refuses a log name that could escape the directory',
+          r.returncode != 0 and 'Unexpected binlog name' in r.stderr, r.stderr)
 
 # --- failure notifier -------------------------------------------------------
 notifier = repo / 'infrastructure/backup/notify-failure.sh'

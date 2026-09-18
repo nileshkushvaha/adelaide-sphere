@@ -1,0 +1,39 @@
+# Off-site archive of MySQL's binary logs (SRS BACK 001: one-hour RPO).
+#
+# The daily dump records where in the binlog it was taken; this keeps the logs
+# after that point somewhere that survives the server. Without it, losing the
+# VPS loses every change since the last daily dump.
+[Unit]
+Description=Archive Adelaide Sphere binary logs off-site (SRS BACK 001)
+Documentation=file:/srv/adelaide-sphere/current/infrastructure/backup/README.md
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+OnFailure=adelaide-sphere-binlog-archive-failed.service
+
+[Service]
+Type=oneshot
+User=deploy
+Group=deploy
+UMask=0077
+Environment=BACKUP_ROOT=/srv/adelaide-sphere
+ExecStart=/srv/adelaide-sphere/current/infrastructure/backup/archive-binlogs.sh
+TimeoutStartSec=1500
+Nice=10
+IOSchedulingClass=idle
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+CapabilityBoundingSet=
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target

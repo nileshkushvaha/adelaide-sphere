@@ -29,7 +29,7 @@ done
 
 for required in HOST USER DATABASE OUT_DIR RECIPIENT; do
   if [[ -z "${!required}" ]]; then
-    echo "Missing --${required,,}. See the header of this script." >&2
+    echo "Missing --$(printf '%s' "$required" | tr '[:upper:]' '[:lower:]'). See the header of this script." >&2
     exit 2
   fi
 done
@@ -102,6 +102,9 @@ if [[ "$SIZE" -lt 1024 ]]; then
 fi
 
 # A checksum recorded next to the file lets the restore drill prove integrity.
-shasum -a 256 "$TARGET" > "${TARGET}.sha256"
+# Recorded by file name, not by path: the file is verified wherever it has been
+# copied to — off-site, then downloaded somewhere else for a restore — and an
+# absolute path would send `shasum -c` looking for the original instead.
+( cd "$OUT_DIR" && shasum -a 256 "${TARGET##*/}" ) > "${TARGET}.sha256"
 echo "Wrote ${TARGET} (${SIZE} bytes, ${ENCRYPTION}) and its SHA-256."
 echo "Copy it to storage that production credentials cannot delete (SRS BACK 002)."

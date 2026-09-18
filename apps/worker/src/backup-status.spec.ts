@@ -132,6 +132,15 @@ describe('registerBackupMetrics', () => {
     expect(await registry.metrics()).toContain('as_media_mirror_configured 0');
   });
 
+  it('publishes the binlog archive, which the one-hour RPO depends on', async () => {
+    writeFileSync(join(dir, 'binlog-archive.state'), GOOD.replace('tier=daily', 'tier=binlog-archive'));
+    registerBackupMetrics(registry, dir);
+    const body = await registry.metrics();
+    expect(body).toContain('as_binlog_archive_last_success_timestamp_seconds 1700000100');
+    expect(body).toContain('as_binlog_archive_configured 1');
+    expect(body).not.toContain('tier="binlog-archive"');
+  });
+
   it('reports off-site as unconfigured when no tier has a remote', async () => {
     writeFileSync(join(dir, 'daily.state'), GOOD.replace('offsite_configured=1', 'offsite_configured=0'));
     registerBackupMetrics(registry, dir);

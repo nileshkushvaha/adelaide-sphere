@@ -1,6 +1,20 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, type Provider } from '@nestjs/common';
+
+/** Injection token for the directory holding the scheduled backup's state files. */
+export const BACKUP_STATE_DIR = Symbol('BACKUP_STATE_DIR');
+
+/**
+ * Provides BACKUP_STATE_DIR from the environment. A plain constructor default
+ * is not enough: Nest resolves every constructor parameter through the
+ * container, and a `string | null` parameter has no provider, so the API would
+ * refuse to start.
+ */
+export const backupStateDirProvider: Provider = {
+  provide: BACKUP_STATE_DIR,
+  useFactory: (): string | null => (process.env.BACKUP_STATE_DIR ?? '').trim() || null,
+};
 
 /**
  * Age of the most recent successful database backup, read from the state file
@@ -18,7 +32,7 @@ import { Injectable } from '@nestjs/common';
 export class BackupStatusService {
   private readonly stateDir: string | null;
 
-  constructor(stateDir: string | null = (process.env.BACKUP_STATE_DIR ?? '').trim() || null) {
+  constructor(@Inject(BACKUP_STATE_DIR) stateDir: string | null) {
     this.stateDir = stateDir;
   }
 

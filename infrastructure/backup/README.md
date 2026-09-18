@@ -9,6 +9,7 @@ server keeps for itself (SRS BACK 001, BACK 002, MON 001, MON 002, NFR 009).
 | `run-scheduled-backup.sh` | The scheduled job: one tier per run. Dumps or promotes, copies off-site, prunes, records the result. **The only thing systemd calls.** |
 | `db-target.sh` | Reads the database host, port and name out of `shared/api.env`. Shared with `scripts/deploy-vps.sh`. |
 | `restore-drill.sh` | Restores a backup into an isolated `_restore` database and verifies it. |
+| `archive-binlogs.sh` | Copies MySQL's binary logs off-site every 30 minutes. This, not the dump, is what makes the one-hour RPO survive the loss of the server. |
 | `mirror-media.sh` | Copies the media bucket off-site, hourly. The database dump contains no uploaded files. |
 | `notify-failure.sh` | Emails a human when a scheduled job fails. Run by the `OnFailure` units; never fails itself. |
 | `systemd/` | The units and timers. Copy them to `/etc/systemd/system/`; do not hand-write units on the server. |
@@ -170,6 +171,58 @@ measured", where a zero would read as "measured, and fine".
 as_backup_last_success_timestamp_seconds > 26h` without a `{tier="daily"}`
 selector matches the weekly series six days out of seven and pages every day.
 See `docs/operations/alert-response.md` C10 and C10b.
+
+## Point-in-time recovery: the binary-log archive
+
+The daily dump records the binary-log position it was taken at. That position
+is only useful with the logs that follow it, and those live on the server until
+MySQL expires them after 7 days. **If the server is lost, so are they**, and
+recovery falls back to the last dump that left the machine — up to a day of
+changes gone. `archive-binlogs.sh` closes that gap:
+
+1. `FLUSH BINARY LOGS`, so everything so far is in a closed file;
+2. every closed log not yet archived is read out of the MySQL container,
+   encrypted like the dumps, checksummed by name and copied off-site to
+   `$BACKUP_OFFSITE_REMOTE/binlogs/`;
+3. a log is recorded as archived only after both files are off-site, so a failed
+   upload is retried on the next run;
+4. a log that expired before it was archived is reported as a **gap** and fails
+   the run — replay cannot cross a missing log, so every change after it would
+   be unrecoverable from the archive.
+
+It runs every 30 minutes, so the worst case after a server loss is about half an
+hour of changes, inside the one-hour RPO. It needs nothing beyond the backup
+account's existing `RELOAD` and `REPLICATION CLIENT` grants, and with no remote
+configured it does not even flush — archiving the logs next to the logs protects
+nothing — and says so each run.
+
+To recover: restore the newest daily dump and replay the archived logs with
+`restore-drill.sh --binlog-dir`, optionally `--stop-datetime` (UTC) to stop just
+before a bad change. Replay needs `mysqlbinlog` 8.4 or newer, which the official
+MySQL 8.4 image does not include. Deployment guide 15.5 has the account the drill
+needs and 15.7 the full procedure from off-site copies alone.
+
+Three things a rehearsal found and the drill now handles:
+
+- **A drill must not write to the binary log.** Restoring on the production
+  server wrote the whole database into its binlog, and a later replay into a
+  database of the same name applied that old drill's `DROP DATABASE` over the
+  recovered data. Every drill connection now sets `sql_log_bin = 0`, and replay
+  refuses an archive that already holds writes made directly to its target.
+- **Replay is two checked steps, not a pipe.** As `mysqlbinlog | mysql`, a
+  `mysqlbinlog` that never ran let `mysql` succeed on empty input, and the drill
+  reported a replay that had not happened — with exit status 0.
+- **`--stop-datetime` is UTC.** `mysqlbinlog` reads it in the timezone of the
+  machine running it, so the same command stopped hours apart on a laptop and on
+  the server.
+
+## Checksums
+
+Each `.sha256` records the file's **name**, not its path, and the restore drill
+compares the recorded hash with the file in hand. Backups are verified after
+being copied off-site and downloaded somewhere else; an absolute path would send
+`shasum -c` looking for the original. Older checksum files still carry the
+server path — the drill's comparison works for both.
 
 ## Disk space
 

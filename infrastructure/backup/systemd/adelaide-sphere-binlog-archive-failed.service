@@ -1,0 +1,11 @@
+[Unit]
+Description=Report a failed Adelaide Sphere binlog archive
+
+[Service]
+Type=oneshot
+User=deploy
+Group=deploy
+UMask=0077
+Environment=BACKUP_ROOT=/srv/adelaide-sphere
+ExecStart=/srv/adelaide-sphere/current/infrastructure/backup/notify-failure.sh --unit adelaide-sphere-binlog-archive.service --subject-suffix "binlog archive"
+SupplementaryGroups=systemd-journal

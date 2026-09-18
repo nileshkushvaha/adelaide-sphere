@@ -1496,9 +1496,16 @@ units:
 ```bash
 sudo cp /srv/adelaide-sphere/current/infrastructure/backup/systemd/* /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now adelaide-sphere-backup-daily.timer adelaide-sphere-backup-weekly.timer
-systemctl list-timers 'adelaide-sphere-backup*'
+sudo systemctl enable --now adelaide-sphere-backup-daily.timer adelaide-sphere-backup-weekly.timer adelaide-sphere-binlog-archive.timer
+systemctl list-timers 'adelaide-sphere-*'
 ```
+
+`adelaide-sphere-binlog-archive.timer` runs every 30 minutes and is what makes
+the one-hour RPO survive the loss of the server: the daily dump records the
+binary-log position it was taken at, and this job copies the logs after that
+point off-site. It does nothing until `BACKUP_OFFSITE_REMOTE` is set (15.3), and
+says so each run. It uses the backup account's existing `RELOAD` and
+`REPLICATION CLIENT` grants (6.6); nothing further is needed.
 
 Set `BACKUP_ALERT_EMAIL` in `shared/backup.env` at the same time. A failed run
 records itself either way, but without an address that record waits in a file
@@ -1593,19 +1600,53 @@ it will report).
 
 ### 15.5 Restore drill (before launch, then quarterly)
 
-On the server, into an isolated `_restore` database (the script refuses any
-other name):
+The drill restores a backup into an isolated database whose name ends in
+`_restore` (the script refuses any other), then — with `--binlog-dir` — replays
+the archived binary logs on top: point-in-time recovery.
+
+The restore account needs two global privileges beyond its database. Both were
+found necessary by a rehearsal, not guessed: `REPLICATION_APPLIER` to run the
+row events `mysqlbinlog` emits, and `SESSION_VARIABLES_ADMIN` for the session
+settings it emits and for `sql_log_bin = 0`, which every drill connection sets so
+a drill never writes its restore into the production binary log. That makes
+this a **powerful account: create it for the drill and drop it afterwards.**
+The password goes into a mode-600 file, because an account whose password
+nobody kept cannot be used:
 
 ```bash
-cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" as-mysql mysql -uroot -e "CREATE DATABASE IF NOT EXISTS adelaide_sphere_restore CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS 'as_restore'@'%' IDENTIFIED BY '$(openssl rand -hex 16)'; GRANT ALL PRIVILEGES ON adelaide_sphere_restore.* TO 'as_restore'@'%';"
+umask 077 && openssl rand -hex 24 > /srv/adelaide-sphere/shared/restore.pw
+cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && export MYSQL_PWD="$MYSQL_ROOT_PASSWORD" RESTORE_PW="$(cat /srv/adelaide-sphere/shared/restore.pw)" && docker exec -e MYSQL_PWD -e RESTORE_PW as-mysql sh -c 'mysql -uroot -e "CREATE DATABASE IF NOT EXISTS adelaide_sphere_restore CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; CREATE USER IF NOT EXISTS \`as_restore\`@\`%\` IDENTIFIED BY \"$RESTORE_PW\"; GRANT ALL PRIVILEGES ON adelaide_sphere_restore.* TO \`as_restore\`@\`%\`; GRANT REPLICATION_APPLIER, SESSION_VARIABLES_ADMIN ON *.* TO \`as_restore\`@\`%\`;"'; unset MYSQL_PWD RESTORE_PW
 ```
 
-Copy `as-backup.key` to the server temporarily, run
-`infrastructure/backup/restore-drill.sh` as its header shows — adding
-`--state-dir /srv/adelaide-sphere/backups/state` so the drill records its own
-date for the overdue alert — complete the manual checks it prints, record the
-result in `docs/operations/restore-drills.md`, then **shred the key** and drop
-the `_restore` database.
+Replay needs `mysqlbinlog` **8.4 or newer**. The official MySQL 8.4 image does
+not include it and Ubuntu 24.04's `mysql-client` is 8.0, so on the server
+install MySQL's own 8.4 client, or run the drill from a laptop as 15.7 does —
+which is the better test anyway.
+
+Copy `as-backup.key` to the machine running the drill, then:
+
+```bash
+MYSQL_PWD="$(cat /srv/adelaide-sphere/shared/restore.pw)" \
+  /srv/adelaide-sphere/current/infrastructure/backup/restore-drill.sh \
+  --file <daily backup>.sql.gz.age --identity as-backup.key \
+  --binlog-dir <directory of archived binlogs> \
+  --host 127.0.0.1 --port 3317 --user as_restore --database adelaide_sphere_restore \
+  --state-dir /srv/adelaide-sphere/backups/state
+```
+
+Add `--stop-datetime 'YYYY-MM-DD HH:MM:SS'` (**UTC**) to stop just before a bad
+change. Complete the manual checks the script prints, record the result in
+`docs/operations/restore-drills.md`, then **shred the key**, drop the database
+**and the account**, and delete `shared/restore.pw`:
+
+```bash
+cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && export MYSQL_PWD="$MYSQL_ROOT_PASSWORD" && docker exec -e MYSQL_PWD as-mysql mysql -uroot -e "DROP DATABASE IF EXISTS adelaide_sphere_restore; DROP USER IF EXISTS \`as_restore\`@\`%\`;"; unset MYSQL_PWD; shred -u /srv/adelaide-sphere/shared/restore.pw
+```
+
+If the drill refuses with "already contains writes made directly to
+`adelaide_sphere_restore`", a drill from before drills stopped logging left
+events in the archive under that name; restore into a name never used before,
+for example `--database adelaide_sphere_pitr_restore --source-database adelaide_sphere`.
 
 A drill against a **weekly** archive must replay privacy deletion records for the
 whole period back to the backup point, up to 180 days, rather than the ≤30 days a
@@ -1638,6 +1679,80 @@ credential that cannot delete.
 The consequence is the wider deletion replay described in 15.5.
 
 `infrastructure/backup/README.md` carries the same note beside the code.
+
+### 15.7 Acceptance: prove recovery before go-live
+
+Nothing in sections 15.2–15.5 counts until this has passed once on the real
+server. The point is to recover **using only what is off-site**, on a machine
+that is not the server, because that is the situation a backup exists for. Do it
+after the timers are enabled and `BACKUP_OFFSITE_REMOTE`, `MEDIA_MIRROR_TARGET`
+and `BACKUP_ALERT_EMAIL` are set. Record the result in
+`docs/operations/restore-drills.md`.
+
+**1. On the server — take everything now, and mark a moment.**
+
+```bash
+sudo systemctl start adelaide-sphere-backup@daily.service adelaide-sphere-media-mirror.service
+cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && export MYSQL_PWD="$MYSQL_ROOT_PASSWORD" && docker exec -e MYSQL_PWD as-mysql mysql -uroot -N adelaide_sphere -e "SELECT UTC_TIMESTAMP(), (SELECT COUNT(*) FROM audit_logs)"; unset MYSQL_PWD
+```
+
+Write down both values: the moment (UTC) and the `audit_logs` count. Use the
+admin once afterwards (any audited action) so there is a change *after* the
+moment, then archive the binlogs so both sides of it are off-site:
+
+```bash
+sudo systemctl start adelaide-sphere-binlog-archive.service
+journalctl -u adelaide-sphere-backup@daily -u adelaide-sphere-binlog-archive -u adelaide-sphere-media-mirror --since '-15 min' --no-pager | tail -20
+```
+
+Pass: each unit ends in "complete", and the binlog archive names at least one log.
+
+**2. On a laptop — download from off-site only.** With `rclone` configured for
+the same remote (read access is enough), `age`, a MySQL 8.4+ client
+(`brew install mysql-client rclone age` on a Mac) and the repository checked out:
+
+```bash
+mkdir -p ~/recovery && cd ~/recovery
+rclone copy offsite:as-backups/db/daily . --max-age 24h
+rclone copy offsite:as-backups/db/binlogs ./binlogs
+docker run -d --name as-recovery -e MYSQL_ROOT_PASSWORD=recovery-only -p 127.0.0.1:3399:3306 mysql:8.4.11
+sleep 30 && docker exec as-recovery mysql -uroot -precovery-only -e "CREATE USER as_restore IDENTIFIED BY 'recovery-only'; GRANT ALL ON adelaide_sphere_restore.* TO as_restore; GRANT REPLICATION_APPLIER, SESSION_VARIABLES_ADMIN ON *.* TO as_restore;"
+MYSQL_PWD=recovery-only bash <repo>/infrastructure/backup/restore-drill.sh \
+  --file "$(ls -1 adelaide_sphere-*.sql.gz.age | sort | tail -1)" --identity ~/as-backup.key \
+  --binlog-dir ./binlogs --stop-datetime '<the moment from step 1>' \
+  --host 127.0.0.1 --port 3399 --user as_restore --database adelaide_sphere_restore
+docker exec as-recovery mysql -uroot -precovery-only -N adelaide_sphere_restore -e "SELECT COUNT(*) FROM audit_logs"
+```
+
+Pass: "checksum OK" for the dump and every log, "replayed N log(s)", and the
+`audit_logs` count equals the one written down in step 1 — not the higher one
+the change after the moment produced. That is point-in-time recovery, from
+off-site copies alone, to within the archive interval.
+
+**3. Media — the files, not only the rows.** On the server:
+
+```bash
+docker exec as-minio mc diff local/adelaide-sphere-media offsite/as-backups-media
+```
+
+Pass: no output (every object is off-site and identical). Then, on the laptop,
+download one object named in the output of
+`docker exec as-minio mc ls -r local/adelaide-sphere-media | head -1` from the
+off-site bucket and open it.
+
+**4. Failure email.**
+
+```bash
+/srv/adelaide-sphere/current/infrastructure/backup/notify-failure.sh --unit adelaide-sphere-backup@daily.service --subject-suffix 'ACCEPTANCE TEST'
+systemctl show -p OnFailure adelaide-sphere-backup@daily.service adelaide-sphere-binlog-archive.service adelaide-sphere-media-mirror.service
+```
+
+Pass: the email arrives at `BACKUP_ALERT_EMAIL` with the journal tail in it, and
+every unit names its `-failed` handler.
+
+**5. Clean up.** `docker rm -f as-recovery`, delete `~/recovery`, shred the key
+copy, and record the moment, the counts, the replayed logs and the measured
+restore time in `docs/operations/restore-drills.md`.
 
 ---
 

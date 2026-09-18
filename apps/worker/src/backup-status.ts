@@ -153,6 +153,16 @@ export function registerBackupMetrics(registry: Registry, stateDir: string | nul
     help: 'Unix time of the last successful off-site media mirror (SRS BACK 001, one-hour lag).',
     registers: [registry],
   });
+  const binlogArchiveLastSuccess = new Gauge({
+    name: 'as_binlog_archive_last_success_timestamp_seconds',
+    help: 'Unix time binary logs were last archived off-site (SRS BACK 001, one-hour RPO).',
+    registers: [registry],
+  });
+  const binlogArchiveConfigured = new Gauge({
+    name: 'as_binlog_archive_configured',
+    help: '1 when binary logs are archived off-site on this host, 0 when they are not.',
+    registers: [registry],
+  });
   const mediaMirrorConfigured = new Gauge({
     name: 'as_media_mirror_configured',
     help: '1 when an off-site media target is configured on this host, 0 when it is not.',
@@ -202,11 +212,16 @@ export function registerBackupMetrics(registry: Registry, stateDir: string | nul
     const media = readState(stateDir, 'media-mirror');
     mediaMirrorLastSuccess.set(media === null ? 0 : media.lastSuccessEpoch);
     mediaMirrorConfigured.set(media === null ? 0 : media.offsiteConfigured);
+    // Without this the one-hour RPO holds only while the server survives: the
+    // daily dump alone recovers to the last dump, up to a day back.
+    const binlogs = readState(stateDir, 'binlog-archive');
+    binlogArchiveLastSuccess.set(binlogs === null ? 0 : binlogs.lastSuccessEpoch);
+    binlogArchiveConfigured.set(binlogs === null ? 0 : binlogs.offsiteConfigured);
   };
 
   // Refreshed when Prometheus scrapes, the same way the API's collector works,
   // so the numbers are never staler than the scrape that reported them.
-  for (const gauge of [lastSuccess, lastRun, lastRunSuccess, sizeBytes, offsiteLastSuccess, offsiteConfigured, drillLastSuccess, diskFree, mediaMirrorLastSuccess, mediaMirrorConfigured]) {
+  for (const gauge of [lastSuccess, lastRun, lastRunSuccess, sizeBytes, offsiteLastSuccess, offsiteConfigured, drillLastSuccess, diskFree, mediaMirrorLastSuccess, mediaMirrorConfigured, binlogArchiveLastSuccess, binlogArchiveConfigured]) {
     (gauge as unknown as { collect: () => void }).collect = refresh;
   }
 }

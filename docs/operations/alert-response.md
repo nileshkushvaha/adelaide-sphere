@@ -187,6 +187,7 @@ values during the failure and false again after recovery.
 | Backup failure | C10, C10b (below) | `as_backup_last_run_success{tier}` / `as_backup_last_success_timestamp_seconds{tier}`, written by `run-scheduled-backup.sh` and published by the worker | Emitting; **not yet drilled on the VPS** |
 | Backup not reaching off-site | C10c (below) | `as_backup_offsite_last_success_timestamp_seconds{tier}`, gated on `as_backup_offsite_configured` | Emitting; needs a remote (D07) |
 | Backups filling the disk | C11 (below) | `as_backup_disk_free_bytes{tier}`, sampled once per backup run | Emitting; sampled, not continuous |
+| Binary logs not reaching off-site | C13 (below) | `as_binlog_archive_last_success_timestamp_seconds`, gated on `as_binlog_archive_configured` | Emitting; needs a remote (D07) |
 | Media not reaching off-site | C12 (below) | `as_media_mirror_last_success_timestamp_seconds`, gated on `as_media_mirror_configured` | Emitting; needs a target (D07) |
 | Overdue restore drill | I4 (below) | `as_restore_drill_last_success_timestamp_seconds`, written by `restore-drill.sh --state-dir` | Emitting; one drill on record |
 | API readiness failure | C1 | D5/D6: readiness 503 in under 1.5 s in both | Validated |
@@ -257,6 +258,18 @@ a site full of broken images, and nothing in C10 would have warned about it.
 cause is the `mc` alias: it lives inside the MinIO container's filesystem, so
 re-creating that container loses it and the mirror fails every hour until
 `mc alias set offsite …` is run again.
+
+### C13 — Binary logs are not reaching off-site storage
+`as_binlog_archive_configured == 1 and time() - as_binlog_archive_last_success_timestamp_seconds > 90m`
+*Why it matters:* this is the one-hour RPO. The daily dump alone recovers to the
+last dump; everything since then exists only in binary logs, and until they are
+off-site it is lost with the server.
+*Why 90m:* the archive runs every 30 minutes, so this is three missed runs.
+*Action:* `journalctl -u adelaide-sphere-binlog-archive -n 30`. **"Binlog gap"
+is the serious one**: logs expired on the server before they were archived, so
+point-in-time recovery cannot cross them until the next daily dump. Find out why
+the job stopped for that long, then take a daily backup by hand to start a new
+recoverable chain.
 
 ### I4 — Restore drill overdue
 `time() - as_restore_drill_last_success_timestamp_seconds > 90d`
