@@ -25,6 +25,11 @@ export interface WorkerConfig {
   metricsToken: string | undefined;
   /** Interface the metrics server binds to. Loopback unless deliberately widened. */
   metricsBind: string;
+  /**
+   * Directory holding the scheduled backup's state files. Null leaves the backup
+   * gauges unregistered, which reads as "not measured" rather than "fine".
+   */
+  backupStateDir: string | null;
   logLevel: 'debug' | 'info' | 'warn' | 'error';
   /** Web tier purge endpoint; null when no cached HTML tier is deployed (SRS CACHE 002). */
   revalidate: { url: string; token: string } | null;
@@ -83,6 +88,10 @@ export function loadWorkerConfig(env: NodeJS.ProcessEnv = process.env): WorkerCo
   if (metricsPort !== null && (!Number.isInteger(metricsPort) || metricsPort < 1 || metricsPort > 65_535)) problems.push('  - WORKER_METRICS_PORT: must be a port number');
   const metricsToken = (env.METRICS_TOKEN ?? '').trim() || undefined;
   if (metricsToken !== undefined && metricsToken.length < 32) problems.push('  - METRICS_TOKEN: must be at least 32 characters');
+  const backupStateDir = (env.BACKUP_STATE_DIR ?? '').trim() || null;
+  if (backupStateDir !== null && !backupStateDir.startsWith('/')) {
+    problems.push('  - BACKUP_STATE_DIR: must be an absolute path (the worker and the backup job run from different directories)');
+  }
   const metricsBind = (env.WORKER_METRICS_BIND ?? '127.0.0.1').trim();
   if (!/^[0-9a-fA-F.:]+$/.test(metricsBind)) problems.push('  - WORKER_METRICS_BIND: must be an IP address (127.0.0.1 to keep it loopback-only)');
   if (metricsBind !== '127.0.0.1' && metricsToken === undefined) {
@@ -115,6 +124,7 @@ export function loadWorkerConfig(env: NodeJS.ProcessEnv = process.env): WorkerCo
     metricsPort,
     metricsToken,
     metricsBind,
+    backupStateDir,
     logLevel: logLevelFromEnv(env.LOG_LEVEL, nodeEnv === 'production' ? 'info' : 'debug'),
     revalidate: revalidateUrl !== '' && revalidateToken !== '' ? { url: revalidateUrl, token: revalidateToken } : null,
     media: {

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service.js';
+import { BackupStatusService } from './backup-status.service.js';
 import type { OperationsSignalDto, OperationsStatusDto } from './operations.dto.js';
 
 /**
@@ -19,6 +20,8 @@ export const ALERT_THRESHOLDS = {
   moderationBacklog: 50,
   /** Uploads stuck in quarantine mean the worker is not processing media. */
   stuckMediaSeconds: 900,
+  /** A daily backup older than 26 hours has missed its window (SRS MON 002). */
+  backupAgeSeconds: 93_600,
 } as const;
 
 /**
@@ -28,7 +31,10 @@ export const ALERT_THRESHOLDS = {
  */
 @Injectable()
 export class OperationsService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly backups: BackupStatusService,
+  ) {}
 
   async status(now = new Date()): Promise<OperationsStatusDto> {
     const db = await this.database.client();
@@ -97,6 +103,26 @@ export class OperationsService {
         action: 'Check the worker and object storage credentials; quarantined objects are never publicly reachable.',
       }),
     ];
+
+    // Read from disk rather than the database, because the backup runs outside
+    // both application processes. Where backup state is published at all, a
+    // reading that cannot be obtained counts as breached: a backup nobody can
+    // account for is not a backup that worked (SRS BACK 001).
+    if (this.backups.configured) {
+      const backupAge = this.backups.ageSeconds('daily', now);
+      signals.push({
+        key: 'backup_age',
+        label: 'Age of the most recent successful daily database backup',
+        value: backupAge ?? 0,
+        unit: 'seconds',
+        threshold: ALERT_THRESHOLDS.backupAgeSeconds,
+        breached: backupAge === null || backupAge >= ALERT_THRESHOLDS.backupAgeSeconds,
+        action:
+          backupAge === null
+            ? 'No backup state could be read. Check BACKUP_STATE_DIR and `systemctl status adelaide-sphere-backup@daily`.'
+            : 'Check `journalctl -u adelaide-sphere-backup@daily`; nothing else takes this backup, so the gap is real until it is fixed.',
+      });
+    }
 
     return { state: signals.some((entry) => entry.breached) ? 'degraded' : 'ok', signals, generatedAt: now.toISOString() };
   }

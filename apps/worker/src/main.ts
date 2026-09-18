@@ -16,7 +16,8 @@ import { processMediaAsset, type MediaJobData } from './media-processing.js';
 import { invalidateCache, type CacheInvalidationJobData } from './cache-invalidation.js';
 import { S3Storage } from './s3-storage.js';
 import { createLogger } from './log.js';
-import { jobDuration, jobsProcessed, startMetricsServer, workerUp } from './observability.js';
+import { registerBackupMetrics } from './backup-status.js';
+import { jobDuration, jobsProcessed, startMetricsServer, workerRegistry, workerUp } from './observability.js';
 import { decryptField, encryptField } from './field-encryption.js';
 
 /**
@@ -109,6 +110,9 @@ async function main(): Promise<void> {
 
   await schedules.start();
   workerUp.set(1);
+  // Backup freshness comes from files on disk, written by a systemd oneshot that
+  // has no metrics surface of its own (SRS MON 002 alert C10).
+  registerBackupMetrics(workerRegistry, config.backupStateDir);
   const metricsServer = config.metricsPort === null ? null : startMetricsServer(config.metricsPort, config.metricsToken, (line) => log.line(line), config.metricsBind);
 
   log('info', 'worker listening', { runnerId, jobName: QUEUE_NAME, outcome: `${mailer.describe?.() ?? mailer.transportName}, concurrency ${config.concurrency}` });
