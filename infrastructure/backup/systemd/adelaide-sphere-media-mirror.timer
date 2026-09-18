@@ -1,0 +1,13 @@
+# Hourly, because BACK 001 allows at most an hour of media replication lag.
+[Unit]
+Description=Hourly Adelaide Sphere media mirror
+
+[Timer]
+Unit=adelaide-sphere-media-mirror.service
+OnCalendar=*-*-* *:05:00 Australia/Adelaide
+RandomizedDelaySec=5m
+AccuracySec=1m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

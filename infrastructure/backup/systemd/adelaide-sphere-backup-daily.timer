@@ -1,0 +1,18 @@
+# Daily encrypted backup, retained 30 days (SRS BACK 001).
+[Unit]
+Description=Daily Adelaide Sphere database backup (SRS BACK 001)
+
+[Timer]
+Unit=adelaide-sphere-backup@daily.service
+# 03:30, not the 02:30 the older runbook used: South Australia moves 02:00 to
+# 03:00 on the first Sunday in October, so 02:30 does not exist that day and the
+# run is skipped, and on the April change it happens twice. The timezone is named
+# explicitly so the schedule does not depend on the host's timedatectl setting.
+OnCalendar=*-*-* 03:30:00 Australia/Adelaide
+RandomizedDelaySec=15m
+AccuracySec=1m
+# Run a missed backup after a reboot or a shutdown rather than skipping the day.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

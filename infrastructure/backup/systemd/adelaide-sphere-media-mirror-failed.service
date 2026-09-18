@@ -1,0 +1,11 @@
+[Unit]
+Description=Report a failed Adelaide Sphere media mirror
+
+[Service]
+Type=oneshot
+User=deploy
+Group=deploy
+UMask=0077
+Environment=BACKUP_ROOT=/srv/adelaide-sphere
+ExecStart=/srv/adelaide-sphere/current/infrastructure/backup/notify-failure.sh --unit adelaide-sphere-media-mirror.service --subject-suffix "media mirror"
+SupplementaryGroups=systemd-journal

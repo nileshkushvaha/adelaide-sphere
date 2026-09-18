@@ -1,0 +1,22 @@
+# OnFailure handler: record the failed run, then tell a human.
+#
+# Without the first step a crashed run leaves the state file untouched, and a
+# stale-but-successful-looking timestamp is exactly what the alert must not be
+# shown. Without the second, the record sits in a file nobody opens until
+# someone needs a backup that is not there.
+[Unit]
+Description=Record and report a failed Adelaide Sphere %i database backup
+
+[Service]
+Type=oneshot
+User=deploy
+Group=deploy
+UMask=0077
+Environment=BACKUP_ROOT=/srv/adelaide-sphere
+ExecStart=/srv/adelaide-sphere/current/infrastructure/backup/run-scheduled-backup.sh --tier %i --record-failure-only
+# The notifier exits 0 whatever happens: it runs because something already
+# failed, and a notifier that fails must not bury the failure it came to report.
+ExecStart=/srv/adelaide-sphere/current/infrastructure/backup/notify-failure.sh --unit adelaide-sphere-backup@%i.service --subject-suffix "%i database backup"
+# Reading the journal for the failed unit needs this account in systemd-journal.
+# Without it the alert still sends, just without the log tail.
+SupplementaryGroups=systemd-journal

@@ -1,0 +1,59 @@
+# Encrypted database backup, one tier per instance (SRS BACK 001/002).
+#   systemctl start adelaide-sphere-backup@daily.service
+#
+# Installed from the repository, not written by hand on the server:
+#   sudo cp infrastructure/backup/systemd/* /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now adelaide-sphere-backup-daily.timer adelaide-sphere-backup-weekly.timer
+[Unit]
+Description=Adelaide Sphere %i database backup (SRS BACK 001)
+Documentation=file:/srv/adelaide-sphere/current/infrastructure/backup/README.md
+# The dump goes through the MySQL container, so docker must be up first. Without
+# this a backup scheduled near boot races the container and fails; OnFailure then
+# records it, so the gap is visible rather than silent.
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+OnFailure=adelaide-sphere-backup-failed@%i.service
+
+[Service]
+Type=oneshot
+# `deploy` owns /srv/adelaide-sphere/shared and its mode-0600 env files, and is
+# the account everything on this host actually runs as. The deployment guide's
+# older units name an `adelaide-sphere` user that does not exist on the server.
+User=deploy
+Group=deploy
+# Backups are readable only by their owner (SRS BACK 002: restrict access and
+# deletion). The script relaxes the state file to 0640 on purpose.
+UMask=0077
+WorkingDirectory=/srv/adelaide-sphere
+Environment=BACKUP_ROOT=/srv/adelaide-sphere
+ExecStart=/srv/adelaide-sphere/current/infrastructure/backup/run-scheduled-backup.sh --tier %i
+# A dump of a growing database on a small shared VPS: give it room, but never
+# let a hung mysqldump hold the timer open indefinitely.
+TimeoutStartSec=3600
+# One box runs MySQL, Redis, MinIO and three Node services. The backup yields.
+Nice=10
+IOSchedulingClass=idle
+
+NoNewPrivileges=true
+# `full` rather than `strict`: /srv stays writable, so no ReadWritePaths= list has
+# to be kept in step with the backup layout, and it matches the three app units.
+ProtectSystem=full
+# rclone reads its config from ~/.config/rclone. An OAuth-style remote that needs
+# to write a refreshed token would need ReadWritePaths=/home/deploy/.config/rclone.
+ProtectHome=read-only
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+CapabilityBoundingSet=
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+# No MemoryDenyWriteExecute: it breaks Node's JIT, and this script runs node.
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,16 @@
+# Weekly archive, retained 180 days. This promotes the most recent daily backup
+# rather than taking a second dump; see infrastructure/backup/README.md for the
+# retention and privacy note that covers the longer window.
+[Unit]
+Description=Weekly Adelaide Sphere database archive
+
+[Timer]
+Unit=adelaide-sphere-backup@weekly.service
+# An hour after the daily run, so the file it promotes is this morning's.
+OnCalendar=Sun *-*-* 04:30:00 Australia/Adelaide
+RandomizedDelaySec=15m
+AccuracySec=1m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -7,7 +7,7 @@
 #     --identity ~/.age/ops.key --host 127.0.0.1 --user restore --database adelaide_sphere_restore
 set -Eeuo pipefail
 
-FILE=""; IDENTITY=""; HOST=""; USER=""; DATABASE=""; PORT="3306"
+FILE=""; IDENTITY=""; HOST=""; USER=""; DATABASE=""; PORT="3306"; STATE_DIR=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --file) FILE="$2"; shift 2 ;;
@@ -16,6 +16,8 @@ while [[ $# -gt 0 ]]; do
     --user) USER="$2"; shift 2 ;;
     --database) DATABASE="$2"; shift 2 ;;
     --port) PORT="$2"; shift 2 ;;
+    # Records the drill time so the "restore drill overdue" alert can see it.
+    --state-dir) STATE_DIR="$2"; shift 2 ;;
     *) echo "Unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -64,9 +66,38 @@ mysql --host="$HOST" --port="$PORT" --user="$USER" "$DATABASE" -N -e "
 
 echo "5/5 Result"
 echo "  restore took $((END - START))s (record this as the measured RTO)"
+
+# Same shape as the scheduled backup's state files, so the worker publishes the
+# drill age from the same reader (SRS BACK 002 quarterly drill, alert I4).
+if [[ -n "$STATE_DIR" ]]; then
+  mkdir -p "$STATE_DIR"
+  NOW=$(date -u +%s)
+  TMP=$(mktemp "$STATE_DIR/.restore-drill.XXXXXX")
+  {
+    echo "schema=1"
+    echo "tier=restore-drill"
+    echo "last_run_epoch=$NOW"
+    echo "last_run_success=1"
+    echo "last_success_epoch=$NOW"
+    echo "size_bytes=0"
+    echo "offsite_configured=0"
+    echo "offsite_last_success_epoch=0"
+  } > "$TMP"
+  chmod 0640 "$TMP"
+  mv -f "$TMP" "$STATE_DIR/restore-drill.state"
+  echo "  recorded in $STATE_DIR/restore-drill.state"
+fi
+
+# Which tier the backup came from decides how far back the deletion replay must
+# reach, so the file name is echoed here rather than left to memory.
+printf '  restored from: %s\n' "${FILE##*/}"
 cat <<'NOTES'
   Still to do by hand, and to record in the drill report:
-    - replay privacy deletion records made after the backup point
+    - replay privacy deletion records made after the backup point. A backup from
+      the WEEKLY archive can be up to 180 days old, so the replay must cover the
+      whole period back to the backup point, not the 30 days a daily restore
+      implies. Restoring a weekly archive without the wider replay puts back
+      personal data the retention jobs have already purged (SRS PRIV 002).
     - verify media checksums against object storage
     - rebuild caches and queues from the restored rows (the outbox is authoritative)
     - confirm outbound mail is disabled in the isolated environment before starting any worker
