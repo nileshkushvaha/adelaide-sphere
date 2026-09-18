@@ -45,6 +45,8 @@ export interface AiTopic {
   followUpOfPostId: string | null;
   followUpReason: string | null;
   categoryId: string | null;
+  /** Per-article image mode; null follows AI Settings. */
+  imageMode: "manual" | "hybrid" | null;
 }
 export type NoveltyStatus = "unchecked" | "clear" | "review" | "duplicate";
 export interface NoveltyMatch {
@@ -201,6 +203,8 @@ export interface BudgetStatus {
   workflowLimitMicros: number;
   day: { period: string; reservedMicros: number; settledMicros: number; limitMicros: number; warning: boolean };
   month: { period: string; reservedMicros: number; settledMicros: number; limitMicros: number; warning: boolean };
+  imageDay: { period: string; reservedMicros: number; settledMicros: number; limitMicros: number; warning: boolean };
+  imageMonth: { period: string; reservedMicros: number; settledMicros: number; limitMicros: number; warning: boolean };
   uncertainOperations: number;
   uncertainMicros: number;
   outcomeUnknownOperations: number;
@@ -218,10 +222,45 @@ export interface PriceSchedule {
   cachedInputMicrosPerMTok: number;
   outputMicrosPerMTok: number;
   longContextThresholdTokens: number;
+  /** Image models only. */
+  imageSize?: string | null;
+  imageQuality?: string | null;
+  maxOutputTokens?: number | null;
   sourceUrl: string;
   effectiveFrom: string;
   status: "proposed" | "approved" | "retired";
   approvedAt: string | null;
+}
+export type ImageJobStatus = "requested" | "stored" | "approved" | "rejected" | "failed" | "outcome_unknown" | "superseded";
+export interface ImageJob {
+  id: string;
+  imageVersion: number;
+  status: ImageJobStatus;
+  prompt: string;
+  model: string;
+  size: string;
+  quality: string;
+  width: number | null;
+  height: number | null;
+  disclosureText: string;
+  approvedAt: string | null;
+  reviewNote: string | null;
+  failureCode: string | null;
+  createdAt: string;
+  operationId: string;
+  operation: { state: string; costState: CostState; reservedMicros: number; settledMicros: number | null; errorClass: string | null; priceSchedule: { version: string; currency: string } | null };
+  media: { id: string; status: "quarantined" | "ready" | "rejected"; rejectionReason: string | null; previewUrl: string | null } | null;
+  isFeatured: boolean;
+}
+export interface TopicImages {
+  globalMode: "manual" | "hybrid";
+  override: "manual" | "hybrid" | null;
+  brief: { prompt: string; altDraft: string } | null;
+  size: string;
+  quality: string;
+  disclosureText: string;
+  post: { id: string; version: number; coverMediaId: string | null; coverAlt: string | null } | null;
+  jobs: ImageJob[];
 }
 /** Micro-units of a currency, shown to the cent (rounded up, so cost is never understated). */
 export const money = (micros: number | null | undefined, currency = "USD") =>
@@ -359,10 +398,28 @@ export const aiContentApi = {
         body: { expectedVersion: source.version, ...input },
       })
       .then((r) => r.data.data),
-  setArticleSettings: (topic: AiTopic, categoryId: string | null) =>
+  setArticleSettings: (topic: AiTopic, input: { categoryId?: string | null; imageMode?: "manual" | "hybrid" | null }) =>
     httpClient
-      .request<{ data: AiTopic }>(`/admin/ai-content/topics/${topic.id}/article`, { method: "PUT", body: { expectedVersion: topic.version, categoryId } })
+      .request<{ data: AiTopic }>(`/admin/ai-content/topics/${topic.id}/article`, { method: "PUT", body: { expectedVersion: topic.version, ...input } })
       .then((r) => r.data.data),
+  images: (id: string) => httpClient.request<{ data: TopicImages }>(`/admin/ai-content/topics/${id}/images`).then((r) => r.data.data),
+  generateImage: (topic: AiTopic, key: string, prompt?: string) =>
+    httpClient
+      .request<{ data: { operationId: string; jobId: string; created: boolean } }>(`/admin/ai-content/topics/${topic.id}/images`, {
+        method: "POST",
+        headers: { "Idempotency-Key": key },
+        body: { expectedVersion: topic.version, ...(prompt ? { prompt } : {}) },
+      })
+      .then((r) => r.data.data),
+  approveImage: (jobId: string, expectedPostVersion: number, altText: string, note?: string) =>
+    httpClient
+      .request<{ data: { postId: string; postVersion: number } }>(`/admin/ai-content/images/${jobId}/approve`, {
+        method: "POST",
+        body: { expectedPostVersion, altText, altWrittenFromImage: true, ...(note ? { note } : {}) },
+      })
+      .then((r) => r.data.data),
+  rejectImage: (jobId: string, note: string) =>
+    httpClient.request<{ data: { rejected: true } }>(`/admin/ai-content/images/${jobId}/reject`, { method: "POST", body: { note } }).then((r) => r.data.data),
   generate: (topic: AiTopic, scope: "full" | "metadata", key: string) =>
     httpClient
       .request<{ data: { operationId: string; created: boolean; topic: AiTopic } }>(`/admin/ai-content/topics/${topic.id}/generate`, {

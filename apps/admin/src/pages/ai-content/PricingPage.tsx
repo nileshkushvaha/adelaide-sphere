@@ -19,6 +19,8 @@ export function PricingPage() {
   const [state, reload] = useAsync(() => aiContentApi.prices(), []);
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
+  const model = Form.useWatch("model", form) as string | undefined;
+  const isImage = model?.startsWith("gpt-image") ?? false;
   return (
     <>
       <PageHeader title="AI pricing and budget" description="Prices must match the provider's published pricing before they are approved." crumbs={[{ label: "AI Content", href: "/ai-content" }]} />
@@ -42,6 +44,7 @@ export function PricingPage() {
                 cachedInputMicrosPerMTok: Math.round(v.cached * 1_000_000),
                 outputMicrosPerMTok: Math.round(v.output * 1_000_000),
                 longContextThresholdTokens: v.longContextThresholdTokens,
+                ...(isImage ? { imageSize: v.imageSize, imageQuality: v.imageQuality, maxOutputTokens: v.maxOutputTokens } : {}),
                 sourceUrl: v.sourceUrl,
                 effectiveFrom: v.effectiveFrom.toISOString(),
               });
@@ -62,8 +65,32 @@ export function PricingPage() {
             <Select options={[{ value: "openai", label: "OpenAI" }]} />
           </Form.Item>
           <Form.Item name="model" label="Model" rules={[{ required: true, message: "Choose a model" }]}>
-            <Select options={[{ value: "gpt-5.6-terra", label: "gpt-5.6-terra" }, { value: "gpt-5.6-luna", label: "gpt-5.6-luna" }]} />
+            <Select
+              options={[
+                { value: "gpt-5.6-terra", label: "gpt-5.6-terra (articles)" },
+                { value: "gpt-5.6-luna", label: "gpt-5.6-luna (suggestions)" },
+                { value: "gpt-image-2.5-flare", label: "gpt-image-2.5-flare (images)" },
+              ]}
+            />
           </Form.Item>
+          {isImage && (
+            <>
+              <Form.Item name="imageSize" label="Image size this price covers" rules={[{ required: true, message: "Choose a size" }]}>
+                <Select options={["1536x1024", "1024x1024", "1024x1536"].map((v) => ({ value: v, label: v }))} />
+              </Form.Item>
+              <Form.Item name="imageQuality" label="Image quality this price covers" rules={[{ required: true, message: "Choose a quality" }]}>
+                <Select options={["low", "medium", "high"].map((v) => ({ value: v, label: v }))} />
+              </Form.Item>
+              <Form.Item
+                name="maxOutputTokens"
+                label="Most output tokens for one image"
+                extra="The bound each image is reserved against. Usage above it halts paid calls."
+                rules={[{ required: true, message: "Enter the per-image bound" }]}
+              >
+                <InputNumber min={1} max={100000} style={{ width: "100%", maxWidth: 240 }} />
+              </Form.Item>
+            </>
+          )}
           <Form.Item name="currency" label="Currency" rules={[{ required: true }]}>
             <Select options={["USD", "AUD", "EUR", "GBP"].map((c) => ({ value: c, label: c }))} />
           </Form.Item>
@@ -103,7 +130,7 @@ export function PricingPage() {
             scroll={{ x: true }}
             columns={[
               { title: "Version", dataIndex: "version" },
-              { title: "Model", render: (_: unknown, p: PriceSchedule) => `${p.provider} ${p.model} (${p.serviceTier})` },
+              { title: "Model", render: (_: unknown, p: PriceSchedule) => `${p.provider} ${p.model} (${p.serviceTier})${p.imageSize ? ` · ${p.imageSize} ${p.imageQuality} · ≤${p.maxOutputTokens} output tokens` : ""}` },
               { title: "Input / cached / output per 1M", render: (_: unknown, p: PriceSchedule) => `${perMillion(p.inputMicrosPerMTok, p.currency)} / ${perMillion(p.cachedInputMicrosPerMTok, p.currency)} / ${perMillion(p.outputMicrosPerMTok, p.currency)}` },
               { title: "Source", render: (_: unknown, p: PriceSchedule) => <a href={p.sourceUrl} target="_blank" rel="noopener noreferrer">{new URL(p.sourceUrl).host}</a> },
               { title: "Status", render: (_: unknown, p: PriceSchedule) => <Tag color={p.status === "approved" ? "green" : p.status === "retired" ? "default" : "gold"}>{p.status}</Tag> },

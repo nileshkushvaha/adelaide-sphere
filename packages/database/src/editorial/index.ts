@@ -25,3 +25,4 @@ export {
   type TransitionAudit,
 } from './ai-publication.js';
 export { DUE_SCHEDULED_POST_SELECT, publishDueScheduledPost, type DueScheduledPost, type ScheduledPublicationOutcome } from './scheduled-publication.js';
+export { altHash, coverImageDisclosure, featuredImageRequired, imagePublicationReasons } from './ai-image-gate.js';

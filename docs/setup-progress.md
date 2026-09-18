@@ -2644,3 +2644,24 @@ Additive migration `20260918210000_ai_content_fact_confirmation` (test DB only).
 - Owner-authorised: `pnpm db:migrate:deploy` applied the 6 pending migrations to `adelaide_sphere_dev` (`20260917190000_domain_com_au_to_com` through `20260918210000_ai_content_fact_confirmation`). Status: up to date.
 - A `mysqldump` of the dev database was taken first (local session scratch, not in the repo).
 - Checks: API health 200, public posts 200, web home and blog article 200, AI admin 401 unauthenticated. Two seeded price schedules are present as *proposed*; automation stays disabled. Production is untouched.
+
+## AI Content Phase 1E — 19 September 2026
+
+- **Scope:** plan §O workstream 1E under the owner's image decisions: hybrid, prompt-only by default, Generate image on request only, one featured slot, a separate image budget, human approval with alt text from the image, the configurable disclosure, and the media pipeline authoritative.
+- **Migration:** additive `20260919100000_ai_content_images`: `ai_image_jobs`, image operation kind, image budget scopes, image price fields, per-article image mode.
+- **Code:**
+  - Database: `automation/images.ts` and `editorial/ai-image-gate.ts`, wired into the shared publication policy.
+  - Worker: `images.ts`, `openai-image-provider.ts`.
+  - API: image routes.
+  - Admin: the Featured image card, image pricing, the image budget.
+  - Web: the AI image caption.
+- **Owner decision recorded:** automatic image mode is not implemented (plan exit "all three modes" is only partly met).
+- **Checks:**
+  - 1E spec 10/10 (×2); `pnpm test:integration` 393/393 + 5/5; `pnpm test` all passed; e2e 20/20;
+  - typecheck, lint, builds (web `tsc` only), contracts, migration policy;
+  - mutation checks G1–G8 all caught;
+  - 1B/1D publish fixtures now attach an uploaded featured image (new requirement).
+- **Environment:** migration applied to `adelaide_sphere_test` only. **Dev is 1 migration behind: the user-started dev API's public article detail returns 500 until it is applied.** No key and no live call. Nothing deployed.
+- **Next:** 1F not started. Record: [Phase 1E completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1e-completion.md).
+
+- **Update (19 Sep 2026):** owner-authorised: `20260919100000_ai_content_images` applied to `adelaide_sphere_dev` after a dump; schema up to date. Dev API health, list, article detail and the web article return 200; normal articles keep their photographer credit and show no AI disclosure.

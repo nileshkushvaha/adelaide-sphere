@@ -4,7 +4,12 @@ import {
   ResearchCommandError,
   applyProposal,
   approveContent,
+  approveImage,
   confirmFacts,
+  featuredBrief,
+  readImageSettings,
+  rejectImage,
+  requestImage,
   postFactReview,
   approvePrice,
   budgetStatus,
@@ -17,8 +22,9 @@ import {
 import type { RequestContext } from '../auth/auth.service.js';
 import { databaseCode, retryTransaction } from '../common/database-retry.js';
 import { DatabaseService } from '../database/database.service.js';
+import { ObjectStoragePort } from '../media/storage.port.js';
 import type { AdminPrincipal } from '../identity/identity.service.js';
-import type { ApplyProposalDto, ApproveContentDto, ConfirmFactsDto, GenerateDto, ProposePriceDto, ResolveOperationDto, TopicArticleSettingsDto } from './ai-generation.dto.js';
+import type { ApplyProposalDto, ApproveContentDto, ApproveImageDto, ConfirmFactsDto, GenerateDto, GenerateImageDto, RejectImageDto, ProposePriceDto, ResolveOperationDto, TopicArticleSettingsDto } from './ai-generation.dto.js';
 import { AiContentService } from './ai-content.service.js';
 
 type Violation = { field?: string; token?: string; reason?: string };
@@ -41,6 +47,7 @@ export class AiGenerationService {
   constructor(
     private readonly database: DatabaseService,
     private readonly topics: AiContentService,
+    private readonly storage: ObjectStoragePort,
   ) {}
 
   private async run<T>(work: (tx: Parameters<Parameters<Awaited<ReturnType<DatabaseService['client']>>['$transaction']>[0]>[0]) => Promise<T>): Promise<T> {
@@ -57,14 +64,20 @@ export class AiGenerationService {
       const item = await tx.aIContentItem.findUnique({ where: { id: itemId }, select: { version: true, status: true } });
       if (!item) throw new NotFoundException();
       if (item.version !== input.expectedVersion) throw new ConflictException({ code: 'STALE_VERSION', message: 'This topic changed. Reload it before trying again.' });
-      if (['published', 'cancelled', 'rejected', 'scheduled', 'approved'].includes(item.status)) throw new ConflictException({ code: 'INVALID_TRANSITION', message: 'The category cannot change at this stage.' });
+      if (['published', 'cancelled', 'rejected', 'scheduled', 'approved'].includes(item.status)) throw new ConflictException({ code: 'INVALID_TRANSITION', message: 'These settings cannot change at this stage.' });
       if (input.categoryId) {
         const category = await tx.blogCategory.findUnique({ where: { id: input.categoryId }, select: { active: true } });
         if (!category?.active) throw new HttpException({ code: 'VALIDATION_ERROR', message: 'Some fields are invalid', fields: { categoryId: ['Choose an existing active category'] } }, 400);
       }
-      const updated = await tx.aIContentItem.updateMany({ where: { id: itemId, version: input.expectedVersion }, data: { categoryId: input.categoryId ?? null, version: { increment: 1 } } });
+      // Only the fields sent change: an image-mode change never clears the category, and vice versa.
+      const data = {
+        ...(input.categoryId !== undefined ? { categoryId: input.categoryId ?? null } : {}),
+        ...(input.imageMode !== undefined ? { imageMode: input.imageMode ?? null } : {}),
+      };
+      const updated = await tx.aIContentItem.updateMany({ where: { id: itemId, version: input.expectedVersion }, data: { ...data, version: { increment: 1 } } });
       if (updated.count !== 1) throw new ConflictException({ code: 'STALE_VERSION', message: 'This topic changed. Reload it before trying again.' });
-      await tx.auditLog.create({ data: { action: 'ai_content.topic.category_set', actorAdminId: actor.id, targetType: 'ai_topic', targetId: itemId, requestId: ctx.requestId, metadata: { categorySet: Boolean(input.categoryId) } } });
+      if (input.categoryId !== undefined) await tx.auditLog.create({ data: { action: 'ai_content.topic.category_set', actorAdminId: actor.id, targetType: 'ai_topic', targetId: itemId, requestId: ctx.requestId, metadata: { categorySet: Boolean(input.categoryId) } } });
+      if (input.imageMode !== undefined) await tx.auditLog.create({ data: { action: 'ai_content.topic.image_mode_set', actorAdminId: actor.id, targetType: 'ai_topic', targetId: itemId, requestId: ctx.requestId, metadata: { imageMode: input.imageMode ?? 'default' } } });
     });
     return this.topics.detail(itemId);
   }
@@ -147,6 +160,73 @@ export class AiGenerationService {
       if (databaseCode(error) === 'P2002') throw new ConflictException({ code: 'DUPLICATE_PRICE_VERSION', message: 'This price version already exists.' });
       throw error;
     }
+  }
+
+  // ---- featured images (Phase 1E) ----------------------------------------
+
+  async generateImage(itemId: string, input: GenerateImageDto, key: string | undefined, actor: AdminPrincipal, ctx: RequestContext) {
+    if (!key || !/^[a-zA-Z0-9_-]{16,100}$/.test(key)) throw new HttpException({ code: 'VALIDATION_ERROR', message: 'Some fields are invalid', fields: { idempotencyKey: ['Supply an Idempotency-Key of 16–100 letters, digits, hyphens or underscores'] } }, 400);
+    const result = await this.run((tx) => requestImage(tx, { itemId, expectedVersion: input.expectedVersion, prompt: input.prompt ?? null, adminId: actor.id, requestKey: key, requestId: ctx.requestId }));
+    return { ...result, topic: await this.topics.detail(itemId) };
+  }
+
+  /** The article's image state: mode, brief, the current featured image and every generated version with its cost. */
+  async images(itemId: string) {
+    const db = await this.database.client();
+    const item = await db.aIContentItem.findUnique({ where: { id: itemId }, select: { id: true, imageMode: true, postId: true } });
+    if (!item) throw new NotFoundException();
+    const [settings, brief, jobs, post] = await Promise.all([
+      db.$transaction((tx) => readImageSettings(tx)),
+      db.$transaction((tx) => featuredBrief(tx, itemId)),
+      db.aIImageJob.findMany({
+        where: { itemId },
+        orderBy: { imageVersion: 'desc' },
+        take: 20,
+        select: {
+          id: true,
+          imageVersion: true,
+          status: true,
+          prompt: true,
+          model: true,
+          size: true,
+          quality: true,
+          width: true,
+          height: true,
+          disclosureText: true,
+          approvedAt: true,
+          reviewNote: true,
+          failureCode: true,
+          createdAt: true,
+          operationId: true,
+          operation: { select: { state: true, costState: true, reservedMicros: true, settledMicros: true, errorClass: true, priceSchedule: { select: { version: true, currency: true } } } },
+          mediaAsset: { select: { id: true, status: true, rejectionReason: true, variants: { where: { kind: 'card' }, select: { objectKey: true } } } },
+        },
+      }),
+      item.postId ? db.post.findUnique({ where: { id: item.postId }, select: { id: true, version: true, coverMediaId: true, coverAlt: true } }) : null,
+    ]);
+    return {
+      globalMode: settings.imageMode === 'hybrid' ? 'hybrid' : 'manual',
+      override: item.imageMode,
+      brief,
+      size: settings.size,
+      quality: settings.quality,
+      disclosureText: settings.disclosureText,
+      post,
+      jobs: jobs.map(({ mediaAsset, ...job }) => ({
+        ...job,
+        media: mediaAsset ? { id: mediaAsset.id, status: mediaAsset.status, rejectionReason: mediaAsset.rejectionReason, previewUrl: mediaAsset.variants[0] ? this.storage.publicUrl(mediaAsset.variants[0].objectKey) : null } : null,
+        isFeatured: Boolean(mediaAsset && post?.coverMediaId === mediaAsset.id),
+      })),
+    };
+  }
+
+  async approveImage(jobId: string, input: ApproveImageDto, actor: AdminPrincipal, ctx: RequestContext) {
+    return this.run((tx) => approveImage(tx, { jobId, expectedPostVersion: input.expectedPostVersion, altText: input.altText, note: input.note ?? null, adminId: actor.id, requestId: ctx.requestId }));
+  }
+
+  async rejectImage(jobId: string, input: RejectImageDto, actor: AdminPrincipal, ctx: RequestContext) {
+    await this.run((tx) => rejectImage(tx, { jobId, note: input.note, adminId: actor.id, requestId: ctx.requestId }));
+    return { rejected: true };
   }
 
   async approvePrice(priceId: string, actor: AdminPrincipal, ctx: RequestContext) {

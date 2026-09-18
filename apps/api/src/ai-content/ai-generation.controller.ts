@@ -3,7 +3,7 @@ import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { CurrentAdmin, RequirePermissions, type AuthenticatedRequest } from '../auth/decorators.js';
 import { getRequestId } from '../common/request-id.js';
 import type { AdminPrincipal } from '../identity/identity.service.js';
-import { ApplyProposalDto, ApproveContentDto, ConfirmFactsDto, GenerateDto, ProposePriceDto, ResolveOperationDto, ResumePaidCallsDto, TopicArticleSettingsDto, TopicVersionOnlyDto } from './ai-generation.dto.js';
+import { ApplyProposalDto, ApproveContentDto, ApproveImageDto, ConfirmFactsDto, GenerateDto, GenerateImageDto, RejectImageDto, ProposePriceDto, ResolveOperationDto, ResumePaidCallsDto, TopicArticleSettingsDto, TopicVersionOnlyDto } from './ai-generation.dto.js';
 import { AiGenerationService } from './ai-generation.service.js';
 
 const context = (req: AuthenticatedRequest) => ({ ip: req.ip ?? 'unknown', userAgent: req.headers['user-agent'], requestId: getRequestId(req) });
@@ -62,6 +62,37 @@ export class AiGenerationController {
   @RequirePermissions('ai_content.view', 'ai_content.review')
   async confirmFacts(@Param('id') id: string, @Body() body: ConfirmFactsDto, @CurrentAdmin() admin: AdminPrincipal, @Req() req: AuthenticatedRequest) {
     return { data: await this.service.confirmFacts(id, body, admin, context(req)) };
+  }
+
+  @Header('Cache-Control', 'no-store')
+  @Post('topics/:id/images')
+  @ApiHeader({ name: 'Idempotency-Key', required: true })
+  @RequirePermissions('ai_content.view', 'ai_content.generate')
+  async generateImage(@Param('id') id: string, @Body() body: GenerateImageDto, @Headers('idempotency-key') key: string | undefined, @CurrentAdmin() admin: AdminPrincipal, @Req() req: AuthenticatedRequest) {
+    return { data: await this.service.generateImage(id, body, key, admin, context(req)) };
+  }
+
+  @Header('Cache-Control', 'no-store')
+  @Get('topics/:id/images')
+  @RequirePermissions('ai_content.view')
+  async images(@Param('id') id: string) {
+    return { data: await this.service.images(id) };
+  }
+
+  @Header('Cache-Control', 'no-store')
+  @Post('images/:id/approve')
+  @HttpCode(200)
+  @RequirePermissions('ai_content.view', 'ai_content.approve', 'posts.update')
+  async approveImage(@Param('id') id: string, @Body() body: ApproveImageDto, @CurrentAdmin() admin: AdminPrincipal, @Req() req: AuthenticatedRequest) {
+    return { data: await this.service.approveImage(id, body, admin, context(req)) };
+  }
+
+  @Header('Cache-Control', 'no-store')
+  @Post('images/:id/reject')
+  @HttpCode(200)
+  @RequirePermissions('ai_content.view', 'ai_content.review')
+  async rejectImage(@Param('id') id: string, @Body() body: RejectImageDto, @CurrentAdmin() admin: AdminPrincipal, @Req() req: AuthenticatedRequest) {
+    return { data: await this.service.rejectImage(id, body, admin, context(req)) };
   }
 
   @Header('Cache-Control', 'no-store')

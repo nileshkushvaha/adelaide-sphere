@@ -77,7 +77,12 @@ describe('Phase 1A topic invariants', () => {
       postingEnabled: false,
       titleMode: 'manual',
       publicationMode: 'review_required',
-      imageMode: 'manual',
+      // Owner image decisions (Phase 1E): hybrid, prompt-only unless a person asks; no image budget until one is set.
+      imageMode: 'hybrid',
+      featuredImageRequired: true,
+      imageDailyLimitMinor: 0,
+      imageMonthlyLimitMinor: 0,
+      imageDisclosureText: 'Illustrative image created with AI.',
       timezone: 'Australia/Adelaide',
       // Owner budget decision of 18 September 2026 (Phase 1D): USD, 0.50/day, 10.00/month, 0.25/article, warn at 70%.
       budgetCurrency: 'USD',
@@ -94,12 +99,14 @@ describe('Phase 1A topic invariants', () => {
         group,
         {
           titleMode: 'hybrid',
-          imageMode: 'automatic',
+          imageMode: 'manual',
           publicationMode: 'auto_publish',
         },
         defaults,
       ).errors,
     ).toEqual({});
+    // Automatic image generation is not approved: saving it is refused, not stored for later.
+    expect(validateGroupPayload(group, { imageMode: 'automatic' }, defaults).errors).toEqual({ imageMode: expect.stringMatching(/not approved/) });
     const errors = validateGroupPayload(
       group,
       {

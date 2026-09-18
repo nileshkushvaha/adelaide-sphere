@@ -182,9 +182,15 @@ describe('AI Content Phase 1D generation (real MySQL/API, fake provider)', () =>
     const post = await db().post.findUniqueOrThrow({ where: { id: topic.postId } });
     return admin(agent().post(`${base}/topics/${topicId}/confirm-facts`), c).send({ expectedVersion: topic.version, postVersion: post.version, note: 'Checked every statement against the venue page' });
   }
+  /** An editor's uploaded, ready featured image (1E requires one to publish); set as if it came with the draft. */
+  async function withUploadedCover(postId: string) {
+    const asset = await db().mediaAsset.create({ data: { sourceName: 'photo.jpg', mimeType: 'image/jpeg', bytes: 1000, width: 1600, height: 900, checksum: 'c'.repeat(64), objectKey: `quarantine/${randomUUID()}.jpg`, status: 'ready', altText: 'A photograph of a laneway' } });
+    await db().post.update({ where: { id: postId }, data: { coverMediaId: asset.id, coverAlt: 'A photograph of a laneway' } });
+  }
   async function confirmedDraft(title: string) {
     const drafted = await fullDraft(title);
     expect(drafted.status).toBe('needs_fact_review');
+    await withUploadedCover(drafted.postId);
     expect((await confirm(drafted.id)).status).toBe(200);
     return detail(drafted.id);
   }

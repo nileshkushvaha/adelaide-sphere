@@ -1,4 +1,5 @@
 import { canTransitionAiItem, type AiItemStatus } from '@adelaide-sphere/domain';
+import { imagePublicationReasons } from './ai-image-gate.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { readAutomationControl } from '../automation/control.js';
 import { researchFreshnessBlocker } from '../automation/research.js';
@@ -56,6 +57,8 @@ const PUBLISHABLE_FROM: Record<'publish' | 'schedule', readonly AiItemStatus[]> 
  * - the run that produced the content must have passed the fact gate, and a
  *   person must have confirmed the facts of exactly this material state against
  *   the current research packet (the automatic screen never certifies alone);
+ * - the image policy holds (imagePublicationReasons: a ready featured image
+ *   when required, and every AI-generated image approved as it now stands);
  * - byline and category must still be active at commit time (F52);
  * - automated (scheduled) publication additionally needs automation enabled:
  *   disabling AI stops automated publication, not a human's own action (F37).
@@ -93,6 +96,8 @@ export async function aiPublicationDecision(tx: Tx, input: { postId: string; act
   // Evidence ages: volatile facts must have been retrieved recently and events must still be upcoming (1C).
   const stale = await researchFreshnessBlocker(tx, item.id, new Date());
   if (stale) reasons.push(stale);
+  // Images (Phase 1E): a ready featured image, and any AI-generated image approved as it now stands.
+  reasons.push(...(await imagePublicationReasons(tx, material.post)));
   if (!material.post.author.active) reasons.push('Choose an active author.');
   if (!material.post.category.active) reasons.push('Choose an active category.');
   if (input.path === 'scheduled' && !(await readAutomationControl(tx)).enabled) {

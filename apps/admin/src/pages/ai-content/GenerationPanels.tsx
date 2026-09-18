@@ -73,7 +73,7 @@ export function ArticleCard({ topic, onChange }: { topic: AiTopic; onChange: () 
             value={topic.categoryId ?? undefined}
             loading={categories.status === "loading"}
             options={categories.status === "ready" ? categories.data.map((c) => ({ value: c.id, label: c.name })) : []}
-            onChange={(value) => void act(() => aiContentApi.setArticleSettings(topic, value ?? null), "Category saved")}
+            onChange={(value) => void act(() => aiContentApi.setArticleSettings(topic, { categoryId: value ?? null }), "Category saved")}
             style={{ minWidth: 240 }}
           />
         </Space>
@@ -331,7 +331,9 @@ export function BudgetCard() {
         items={[
           { key: "day", label: `Today (${b.day.period})`, children: <>{line(b.day)} {b.day.warning && <Tag color="orange">over {b.warningPercent}%</Tag>}</> },
           { key: "month", label: `This month (${b.month.period})`, children: <>{line(b.month)} {b.month.warning && <Tag color="orange">over {b.warningPercent}%</Tag>}</> },
-          { key: "cap", label: "Per article", children: `at most ${money(b.workflowLimitMicros, b.currency)}` },
+          { key: "imageDay", label: `Images today`, children: <>{line(b.imageDay)} {b.imageDay.warning && <Tag color="orange">over {b.warningPercent}%</Tag>}</> },
+          { key: "imageMonth", label: `Images this month`, children: <>{line(b.imageMonth)} {b.imageMonth.warning && <Tag color="orange">over {b.warningPercent}%</Tag>}</> },
+          { key: "cap", label: "Per article (text and images together)", children: `at most ${money(b.workflowLimitMicros, b.currency)}` },
           { key: "uncertain", label: "Charged but not priceable", children: `${b.uncertainOperations} (${money(b.uncertainMicros, b.currency)}, counted in full)` },
           { key: "unknown", label: "Outcome unknown", children: b.outcomeUnknownOperations },
         ]}

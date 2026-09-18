@@ -8,6 +8,8 @@ import { ResendEnquiryMailer } from './mailer/resend-mailer.js';
 import { SmtpEnquiryMailer } from './mailer/smtp-mailer.js';
 import { randomBytes } from 'node:crypto';
 import { AI_OPERATION_JOB, CACHE_INVALIDATE_JOB, ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB, QUEUE_NAME, SCHEDULED_TASK_JOB, buildEnquiryMail, redisConnectionFromUrl } from '@adelaide-sphere/domain';
+import { OpenAiImageProvider } from './ai-content/openai-image-provider.js';
+import type { ImageProvider } from './ai-content/image-provider.js';
 import { OpenAiTextProvider } from './ai-content/openai-provider.js';
 import type { TextProvider } from './ai-content/text-provider.js';
 import { runAiOperation, type AiOperationJobData } from './ai-content/operations.js';
@@ -50,7 +52,10 @@ async function main(): Promise<void> {
   // Only a provider with a server-side credential exists; the key never leaves this process except to the provider.
   const textProviders: Record<string, TextProvider> = {};
   if (config.aiText.openaiApiKey) textProviders.openai = new OpenAiTextProvider(config.aiText.openaiApiKey);
-  const aiDeps = { textProviders };
+  // The same server-side credential serves images; without it no image request is ever sent.
+  const imageProviders: Record<string, ImageProvider> = {};
+  if (config.aiText.openaiApiKey) imageProviders.openai = new OpenAiImageProvider(config.aiText.openaiApiKey);
+  const aiDeps = { textProviders, imageProviders, storage };
   const worker = new Worker<DeliveryJobData & MediaJobData & CacheInvalidationJobData & ScheduledTaskJobData>(
     QUEUE_NAME,
     async (job: Job<DeliveryJobData & MediaJobData & CacheInvalidationJobData & ScheduledTaskJobData>) => {

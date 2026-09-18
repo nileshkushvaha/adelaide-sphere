@@ -10,6 +10,7 @@ import { AI_CONTROL_ID } from './control.js';
 import { GenerationCommandError, verifiedClaims } from './generation.js';
 import { configuredLocation } from './novelty.js';
 import { enqueueOperationDelivery } from './operations.js';
+import { IMAGE_PROVIDER_CAPABILITIES } from './providers.js';
 
 type Tx = Prisma.TransactionClient;
 
@@ -229,7 +230,7 @@ export async function resolveUnknownOperation(tx: Tx, input: { operationId: stri
   const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM ai_operations WHERE id = ${input.operationId} FOR UPDATE`;
   if (locked.length === 0) throw new GenerationCommandError('NOT_FOUND', 'This operation does not exist.', 404);
   const op = await tx.aIOperation.findUniqueOrThrow({ where: { id: input.operationId }, select: { id: true, kind: true, state: true, itemId: true, providerResponseId: true, costState: true, reservedMicros: true, dayBucketId: true, monthBucketId: true } });
-  if (op.kind !== 'generate') throw new GenerationCommandError('NOT_FOUND', 'This operation does not exist.', 404);
+  if (op.kind !== 'generate' && op.kind !== 'image') throw new GenerationCommandError('NOT_FOUND', 'This operation does not exist.', 404);
   if (op.state !== 'outcome_unknown') throw new GenerationCommandError('INVALID_TRANSITION', 'Only an operation with an unknown outcome needs resolving.');
   const leaveUnknown = async (data: Prisma.AIOperationUpdateManyMutationInput) => {
     // State-conditional as well as locked: exactly one resolution ever leaves outcome_unknown.
@@ -249,7 +250,9 @@ export async function resolveUnknownOperation(tx: Tx, input: { operationId: stri
     if (settled.count === 1) {
       await tx.$executeRaw`UPDATE ai_budget_buckets SET reservedMicros = reservedMicros - ${op.reservedMicros}, settledMicros = settledMicros + ${op.reservedMicros}, version = version + 1, updatedAt = UTC_TIMESTAMP(3) WHERE id IN (${op.dayBucketId}, ${op.monthBucketId})`;
     }
-    const item = op.itemId ? await tx.$queryRaw<{ id: string; status: AiItemStatus; version: number; postId: string | null }[]>`SELECT id, status, version, postId FROM ai_content_items WHERE id = ${op.itemId} FOR UPDATE` : [];
+    // An abandoned image fails that image only; the article is untouched.
+    if (op.kind === 'image') await tx.aIImageJob.updateMany({ where: { operationId: op.id, status: { in: ['requested', 'outcome_unknown'] } }, data: { status: 'failed', failureCode: 'outcome_abandoned', version: { increment: 1 } } });
+    const item = op.itemId && op.kind === 'generate' ? await tx.$queryRaw<{ id: string; status: AiItemStatus; version: number; postId: string | null }[]>`SELECT id, status, version, postId FROM ai_content_items WHERE id = ${op.itemId} FOR UPDATE` : [];
     const it = item[0];
     if (it && it.status === 'generating') {
       const current = { id: it.id, status: it.status, version: Number(it.version) };
@@ -279,12 +282,27 @@ export interface PriceInput {
   cachedInputMicrosPerMTok: number;
   outputMicrosPerMTok: number;
   longContextThresholdTokens: number;
+  /** Image models only: the size and quality covered and the approved per-image output-token bound. */
+  imageSize?: string | null;
+  imageQuality?: string | null;
+  maxOutputTokens?: number | null;
   sourceUrl: string;
   effectiveFrom: Date;
 }
 
 /** A proposed price version; it prices nothing until approved. */
 export async function proposePrice(tx: Tx, input: PriceInput & { adminId: string; requestId?: string | null }) {
+  // An image price must say exactly what it covers and bound one image's output; a text price must not.
+  const image = IMAGE_PROVIDER_CAPABILITIES[input.provider]?.[input.model];
+  const fields: Record<string, string[]> = {};
+  if (image) {
+    if (!input.imageSize || !image.sizes.includes(input.imageSize)) fields.imageSize = [`Choose one of ${image.sizes.join(', ')}`];
+    if (!input.imageQuality || !image.qualities.includes(input.imageQuality)) fields.imageQuality = [`Choose one of ${image.qualities.join(', ')}`];
+    if (!Number.isInteger(input.maxOutputTokens) || input.maxOutputTokens! < 1 || input.maxOutputTokens! > 100_000) fields.maxOutputTokens = ['Enter the most output tokens one image at this size and quality can use (1–100,000)'];
+  } else if (input.imageSize || input.imageQuality || input.maxOutputTokens) {
+    fields.imageSize = ['Image fields apply only to image models'];
+  }
+  if (Object.keys(fields).length > 0) throw new GenerationCommandError('VALIDATION_ERROR', 'Some fields are invalid', 400, { fields });
   const row = await tx.aIPriceSchedule.create({
     data: {
       version: input.version,
@@ -295,6 +313,9 @@ export async function proposePrice(tx: Tx, input: PriceInput & { adminId: string
       cachedInputMicrosPerMTok: input.cachedInputMicrosPerMTok,
       outputMicrosPerMTok: input.outputMicrosPerMTok,
       longContextThresholdTokens: input.longContextThresholdTokens,
+      imageSize: image ? input.imageSize! : null,
+      imageQuality: image ? input.imageQuality! : null,
+      maxOutputTokens: image ? input.maxOutputTokens! : null,
       sourceUrl: input.sourceUrl,
       effectiveFrom: input.effectiveFrom,
       createdByAdminId: input.adminId,
@@ -314,8 +335,9 @@ export async function approvePrice(tx: Tx, input: { priceId: string; adminId: st
   if (!row) throw new GenerationCommandError('NOT_FOUND', 'This price does not exist.', 404);
   if (row.status !== 'proposed') throw new GenerationCommandError('INVALID_TRANSITION', 'Only a proposed price can be approved.');
   await tx.$queryRaw`SELECT id FROM ai_price_schedules WHERE provider = ${row.provider} AND model = ${row.model} FOR UPDATE`;
-  await tx.aIPriceSchedule.updateMany({ where: { provider: row.provider, model: row.model, status: 'approved' }, data: { status: 'retired' } });
+  // Retires the previous approved version for the same model (and, for images, the same size and quality).
+  await tx.aIPriceSchedule.updateMany({ where: { provider: row.provider, model: row.model, imageSize: row.imageSize, imageQuality: row.imageQuality, status: 'approved' }, data: { status: 'retired' } });
   await tx.aIPriceSchedule.update({ where: { id: row.id }, data: { status: 'approved', approvedByAdminId: input.adminId, approvedAt: new Date() } });
-  await audit(tx, 'ai_content.price.approved', 'ai_price', row.id, input.adminId, { version: row.version, model: row.model, currency: row.currency, inputMicrosPerMTok: row.inputMicrosPerMTok, outputMicrosPerMTok: row.outputMicrosPerMTok }, input.requestId);
+  await audit(tx, 'ai_content.price.approved', 'ai_price', row.id, input.adminId, { version: row.version, model: row.model, currency: row.currency, inputMicrosPerMTok: row.inputMicrosPerMTok, outputMicrosPerMTok: row.outputMicrosPerMTok, imageSize: row.imageSize, imageQuality: row.imageQuality, maxOutputTokens: row.maxOutputTokens }, input.requestId);
   return tx.aIPriceSchedule.findUniqueOrThrow({ where: { id: row.id } });
 }

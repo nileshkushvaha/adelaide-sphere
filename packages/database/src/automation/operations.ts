@@ -172,7 +172,7 @@ export async function finishOperation(tx: Tx, lease: OperationLease, state: 'suc
  */
 export async function releaseForRetry(db: DatabaseClient, lease: OperationLease, errorCode: string, minDelayMs = 0): Promise<'retrying' | 'exhausted' | 'stale'> {
   return db.$transaction(async (tx) => {
-    const op = await tx.aIOperation.findUnique({ where: { id: lease.operationId }, select: { attempts: true, itemId: true } });
+    const op = await tx.aIOperation.findUnique({ where: { id: lease.operationId }, select: { attempts: true, itemId: true, kind: true } });
     if (!op) return 'stale';
     try {
       await assertLease(tx, lease);
@@ -182,7 +182,12 @@ export async function releaseForRetry(db: DatabaseClient, lease: OperationLease,
     }
     if (op.attempts >= MAX_OPERATION_ATTEMPTS) {
       await finishOperation(tx, lease, 'failed', errorCode);
-      await failItemForOperation(tx, op.itemId, 'attempts_exhausted');
+      // An image is subordinate to its article: its failure fails the image, never the article.
+      if (op.kind === 'image') {
+        await tx.aIImageJob.updateMany({ where: { operationId: lease.operationId, status: 'requested' }, data: { status: 'failed', failureCode: 'attempts_exhausted', version: { increment: 1 } } });
+      } else {
+        await failItemForOperation(tx, op.itemId, 'attempts_exhausted');
+      }
       return 'exhausted';
     }
     // Bounded exponential backoff with jitter, never sooner than a source's Retry-After (AI-275).
@@ -230,7 +235,11 @@ async function recoverGeneration(db: DatabaseClient, operationId: string, phase:
     if (phase === 'sending' || (phase === 'sent' && attempts >= MAX_OPERATION_ATTEMPTS)) {
       const updated = await tx.$executeRaw`UPDATE ai_operations SET state = 'outcome_unknown', leaseOwner = NULL, leaseUntil = NULL, errorClass = 'worker_lost_during_send', resultCode = 'outcome_unknown', updatedAt = UTC_TIMESTAMP(3)
         WHERE id = ${operationId} AND state = 'running' AND leaseUntil < UTC_TIMESTAMP(3)`;
-      if (updated === 1) await tx.auditLog.create({ data: { action: 'ai_content.generation.outcome_unknown', targetType: 'ai_operation', targetId: operationId, metadata: { errorClass: 'worker_lost_during_send' } } });
+      if (updated === 1) {
+        // An image request's job shows the same hold (no-op for text generations).
+        await tx.$executeRaw`UPDATE ai_image_jobs SET status = 'outcome_unknown', version = version + 1, updatedAt = UTC_TIMESTAMP(3) WHERE operationId = ${operationId} AND status = 'requested'`;
+        await tx.auditLog.create({ data: { action: 'ai_content.generation.outcome_unknown', targetType: 'ai_operation', targetId: operationId, metadata: { errorClass: 'worker_lost_during_send' } } });
+      }
       return;
     }
     const updated = await tx.$executeRaw`UPDATE ai_operations SET state = 'pending', leaseOwner = NULL, leaseUntil = NULL, resultCode = 'lease_expired', nextAttemptAt = UTC_TIMESTAMP(3), updatedAt = UTC_TIMESTAMP(3)
@@ -256,7 +265,8 @@ export async function recoverOperations(db: DatabaseClient, redeliverAfterMs = R
      WHERE state = 'running' AND leaseUntil < UTC_TIMESTAMP(3)
      ORDER BY leaseUntil LIMIT ${RECOVERY_BATCH}`;
   for (const op of expired) {
-    if (op.kind === 'generate') {
+    // Paid calls (text and image) are never re-sent on recovery: see recoverGeneration.
+    if (op.kind === 'generate' || op.kind === 'image') {
       await recoverGeneration(db, op.id, op.providerPhase, Number(op.attempts));
       result.reclaimed += 1;
       continue;

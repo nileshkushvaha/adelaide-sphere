@@ -195,3 +195,18 @@ export {
   type TokenRates,
   type TokenUsage,
 } from './ai-generation.js';
+export {
+  IMAGE_ALT_MAX,
+  IMAGE_POLICY_SUFFIX,
+  IMAGE_POLICY_VERSION,
+  IMAGE_PROMPT_MAX,
+  altTextProblem,
+  effectiveImageMode,
+  imagePromptProblems,
+  imagePromptWithPolicy,
+  imageTokenUsage,
+  maxImageCallCostMicros,
+  type ImageMode,
+  type ImagePromptProblem,
+  type ImageUsage,
+} from './ai-images.js';

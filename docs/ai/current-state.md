@@ -3,6 +3,15 @@
 Overwrite this file at every phase gate; keep it factual and short. History lives in `docs/setup-progress.md` (and `docs/history/`), requirement status in `docs/requirements-traceability.md`.
 
 ## Phase
+- **Latest (19 Sep 2026, AI Content Phase 1E):** featured images.
+  - Hybrid, prompt-only by default; Generate image only on explicit request; automatic mode refused.
+  - OpenAI image adapter behind a neutral seam (`gpt-image-2.5-flare` in code).
+  - Image price with a per-image output bound; separate image budget, default 0.
+  - Intake through the quarantine and media pipeline; human approval with alt text from the image; configurable disclosure.
+  - A required featured image in the shared publication policy.
+  - Verified on `adelaide_sphere_test` only: 1E spec 10/10, integration 393/393 + 5/5, all unit suites.
+  - Dev DB migrated (owner-authorised, 19 Sep 2026, after a dump): schema up to date; the article detail route works again.
+  - Committed on branch `claude/ai-content-phase-1`. **STOP before 1F.** See [Phase 1E completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1e-completion.md).
 - **19 Sep 2026: dev DB migrated (owner-authorised).**
   - All 6 pending migrations (domain `.com`, 1A, 1B, 1C, 1D, 1D fact confirmation) are applied to `adelaide_sphere_dev` with `pnpm db:migrate:deploy`; the schema is up to date. A dump was taken first.
   - Dev API health, public posts and the web blog return 200; AI admin routes return 401 without a session.

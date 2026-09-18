@@ -782,6 +782,134 @@
         ]
       }
     },
+    "/api/v1/admin/ai-content/topics/{id}/images": {
+      "post": {
+        "operationId": "AiGenerationController_generateImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateImageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      },
+      "get": {
+        "operationId": "AiGenerationController_images",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/images/{id}/approve": {
+      "post": {
+        "operationId": "AiGenerationController_approveImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveImageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/images/{id}/reject": {
+      "post": {
+        "operationId": "AiGenerationController_rejectImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectImageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
     "/api/v1/admin/ai-content/runs/{id}/apply": {
       "post": {
         "operationId": "AiGenerationController_applyProposal",
@@ -945,332 +1073,33 @@
         ]
       }
     },
-    "/api/v1/admin/system/cache": {
+    "/api/v1/admin/media": {
       "get": {
-        "operationId": "CacheAdminController_status",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CacheStatusDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Cache availability, registered caches and when each was last cleared",
-        "tags": [
-          "admin-system"
-        ]
-      }
-    },
-    "/api/v1/admin/system/cache/clear": {
-      "post": {
-        "operationId": "CacheAdminController_clear",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ClearCacheDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClearCacheResultDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Clear one registered cache. Unknown keys are refused; nothing accepts a pattern.",
-        "tags": [
-          "admin-system"
-        ]
-      }
-    },
-    "/api/v1/admin/activity": {
-      "get": {
-        "operationId": "AuditController_list",
+        "operationId": "MediaAdminController_list",
         "parameters": [
           {
-            "name": "page",
+            "name": "status",
             "required": false,
             "in": "query",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Object"
-                }
-              ]
-            }
-          },
-          {
-            "name": "pageSize",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 50,
-              "default": 20,
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Object"
-                }
-              ]
-            }
-          },
-          {
-            "name": "order",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "default": "desc",
-              "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
-            }
-          },
-          {
-            "name": "action",
-            "required": false,
-            "in": "query",
-            "description": "Exact action key or prefix ending with \"*\" (e.g. auth.*)",
-            "schema": {
-              "maxLength": 64,
-              "type": "string"
-            }
-          },
-          {
-            "name": "actorAdminId",
-            "required": false,
-            "in": "query",
-            "description": "An administrator id, or \"system\" for events the system recorded itself",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "targetType",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "targetId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "from",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "format": "date-time",
-              "type": "string"
-            }
-          },
-          {
-            "name": "to",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "format": "date-time",
-              "type": "string"
-            }
-          },
-          {
-            "name": "category",
-            "required": false,
-            "in": "query",
-            "description": "Groups events by what they are about (SRS 1.2 ACT 002/005).",
             "schema": {
               "type": "string",
               "enum": [
-                "authentication",
-                "access_control",
-                "content",
-                "moderation",
-                "communication",
-                "configuration",
-                "system"
+                "quarantined",
+                "ready",
+                "rejected"
               ]
             }
           },
           {
-            "name": "outcome",
+            "name": "kind",
             "required": false,
             "in": "query",
-            "description": "Derived from the event code; a refused privileged operation is a failure.",
+            "description": "Images or documents; both when omitted",
             "schema": {
               "type": "string",
               "enum": [
-                "success",
-                "failure"
-              ]
-            }
-          },
-          {
-            "name": "requestId",
-            "required": false,
-            "in": "query",
-            "description": "Exact request id, so one request can be followed across events.",
-            "schema": {
-              "maxLength": 64,
-              "type": "string"
-            }
-          },
-          {
-            "name": "grouped",
-            "required": false,
-            "in": "query",
-            "description": "Collapse repeated events (same action and actor, same request or minute) into one row with a count (change log 1.14).",
-            "schema": {
-              "default": "false",
-              "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
-            }
-          },
-          {
-            "name": "groupKey",
-            "required": false,
-            "in": "query",
-            "description": "The members of one group, as returned in `groupKey` by a grouped list.",
-            "schema": {
-              "maxLength": 400,
-              "type": "string"
-            }
-          },
-          {
-            "name": "sort",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "default": "createdAt",
-              "type": "string",
-              "enum": [
-                "createdAt"
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "{data: AuditEntry[], meta}"
-          }
-        },
-        "summary": "List activity events, newest first; grouped, or the members of one group",
-        "tags": [
-          "admin-activity"
-        ]
-      }
-    },
-    "/api/v1/admin/activity/summary": {
-      "get": {
-        "operationId": "AuditController_summary",
-        "parameters": [
-          {
-            "name": "from",
-            "required": false,
-            "in": "query",
-            "description": "Count events from this instant; the interface sends the start of the Adelaide day.",
-            "schema": {
-              "format": "date-time",
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "How many events each visible area has had since an instant (the area chips)",
-        "tags": [
-          "admin-activity"
-        ]
-      }
-    },
-    "/api/v1/admin/permissions": {
-      "get": {
-        "operationId": "AuthorizationController_permissions",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "The registered permission catalogue, grouped by module (read-only)",
-        "tags": [
-          "admin-authorization"
-        ]
-      }
-    },
-    "/api/v1/admin/roles": {
-      "get": {
-        "operationId": "AuthorizationController_listRoles",
-        "parameters": [
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Object"
-                }
-              ]
-            }
-          },
-          {
-            "name": "pageSize",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 50,
-              "default": 20,
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Object"
-                }
-              ]
-            }
-          },
-          {
-            "name": "order",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "default": "asc",
-              "type": "string",
-              "enum": [
-                "asc",
-                "desc"
+                "image",
+                "document"
               ]
             }
           },
@@ -1278,72 +1107,106 @@
             "name": "q",
             "required": false,
             "in": "query",
-            "description": "Matches the role key or name",
             "schema": {
-              "maxLength": 80,
+              "maxLength": 120,
               "type": "string"
+            }
+          },
+          {
+            "name": "unused",
+            "required": false,
+            "in": "query",
+            "description": "Only assets that are not used anywhere",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
             }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MediaAssetDto"
+                  }
+                }
+              }
+            }
           }
         },
-        "summary": "List roles (paginated; q)",
+        "summary": "List media assets (kind, status, q, unused)",
         "tags": [
-          "admin-authorization"
+          "admin-media"
         ]
-      },
+      }
+    },
+    "/api/v1/admin/media/uploads": {
       "post": {
-        "operationId": "AuthorizationController_createRole",
+        "operationId": "MediaAdminController_requestUpload",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateRoleDto"
+                "$ref": "#/components/schemas/RequestUploadDto"
               }
             }
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadTicketDto"
+                }
+              }
+            }
           }
         },
-        "summary": "Create a role",
+        "summary": "Request a short-lived signed upload for the private quarantine bucket",
         "tags": [
-          "admin-authorization"
+          "admin-media"
         ]
       }
     },
-    "/api/v1/admin/roles/{id}": {
-      "get": {
-        "operationId": "AuthorizationController_getRole",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "One role with the permissions it carries",
-        "tags": [
-          "admin-authorization"
-        ]
-      },
-      "patch": {
-        "operationId": "AuthorizationController_updateRole",
+    "/api/v1/admin/media/{id}/complete": {
+      "post": {
+        "operationId": "MediaAdminController_complete",
         "parameters": [
           {
             "name": "id",
@@ -1359,23 +1222,99 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateRoleDto"
+                "$ref": "#/components/schemas/CompleteUploadDto"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaAssetDto"
+                }
+              }
+            }
           }
         },
-        "summary": "Edit role details or activation (expectedVersion required)",
+        "summary": "Validate the uploaded bytes and queue variant processing",
         "tags": [
-          "admin-authorization"
+          "admin-media"
+        ]
+      }
+    },
+    "/api/v1/admin/media/{id}": {
+      "get": {
+        "operationId": "MediaAdminController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaAssetDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-media"
+        ]
+      },
+      "patch": {
+        "operationId": "MediaAdminController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMediaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaAssetDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Edit alt text, credit, rights note and focal point",
+        "tags": [
+          "admin-media"
         ]
       },
       "delete": {
-        "operationId": "AuthorizationController_deleteRole",
+        "operationId": "MediaAdminController_remove",
         "parameters": [
           {
             "name": "id",
@@ -1391,52 +1330,18 @@
             "description": ""
           }
         },
-        "summary": "Delete an unused, non-system role",
+        "summary": "Delete an unused asset; refused while any usage exists",
         "tags": [
-          "admin-authorization"
+          "admin-media"
         ]
       }
     },
-    "/api/v1/admin/roles/{id}/permissions": {
-      "put": {
-        "operationId": "AuthorizationController_replaceRolePermissions",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReplaceRolePermissionsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Replace a role's permissions completely (idempotent; expectedVersion required)",
-        "tags": [
-          "admin-authorization"
-        ]
-      }
-    },
-    "/api/v1/admin/admins/{id}/access": {
+    "/api/v1/admin/businesses/{businessId}/gallery": {
       "get": {
-        "operationId": "AuthorizationController_adminAccess",
+        "operationId": "BusinessGalleryController_get",
         "parameters": [
           {
-            "name": "id",
+            "name": "businessId",
             "required": true,
             "in": "path",
             "schema": {
@@ -1446,21 +1351,28 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GalleryEntryDto"
+                  }
+                }
+              }
+            }
           }
         },
-        "summary": "An administrator's roles, direct permissions, effective permissions and their sources",
         "tags": [
-          "admin-authorization"
+          "admin-businesses"
         ]
-      }
-    },
-    "/api/v1/admin/admins/{id}/roles": {
+      },
       "put": {
-        "operationId": "AuthorizationController_replaceAdminRoles",
+        "operationId": "BusinessGalleryController_set",
         "parameters": [
           {
-            "name": "id",
+            "name": "businessId",
             "required": true,
             "in": "path",
             "schema": {
@@ -1473,53 +1385,29 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReplaceAdminRolesDto"
+                "$ref": "#/components/schemas/SetGalleryDto"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": ""
-          }
-        },
-        "summary": "Replace an administrator's roles completely (expectedVersion required)",
-        "tags": [
-          "admin-authorization"
-        ]
-      }
-    },
-    "/api/v1/admin/admins/{id}/permissions": {
-      "put": {
-        "operationId": "AuthorizationController_replaceAdminPermissions",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReplaceAdminPermissionsDto"
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GalleryEntryDto"
+                  }
+                }
               }
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Replace an administrator's direct permissions completely (expectedVersion required)",
+        "summary": "Replace the gallery (order, captions, alt overrides, cover) with expectedVersion",
         "tags": [
-          "admin-authorization"
+          "admin-businesses"
         ]
       }
     },
@@ -1886,6 +1774,584 @@
         "summary": "Disable TOTP (recent authentication + a valid code)",
         "tags": [
           "admin-auth"
+        ]
+      }
+    },
+    "/api/v1/admin/permissions": {
+      "get": {
+        "operationId": "AuthorizationController_permissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "The registered permission catalogue, grouped by module (read-only)",
+        "tags": [
+          "admin-authorization"
+        ]
+      }
+    },
+    "/api/v1/admin/roles": {
+      "get": {
+        "operationId": "AuthorizationController_listRoles",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "asc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Matches the role key or name",
+            "schema": {
+              "maxLength": 80,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List roles (paginated; q)",
+        "tags": [
+          "admin-authorization"
+        ]
+      },
+      "post": {
+        "operationId": "AuthorizationController_createRole",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Create a role",
+        "tags": [
+          "admin-authorization"
+        ]
+      }
+    },
+    "/api/v1/admin/roles/{id}": {
+      "get": {
+        "operationId": "AuthorizationController_getRole",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "One role with the permissions it carries",
+        "tags": [
+          "admin-authorization"
+        ]
+      },
+      "patch": {
+        "operationId": "AuthorizationController_updateRole",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoleDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Edit role details or activation (expectedVersion required)",
+        "tags": [
+          "admin-authorization"
+        ]
+      },
+      "delete": {
+        "operationId": "AuthorizationController_deleteRole",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "Delete an unused, non-system role",
+        "tags": [
+          "admin-authorization"
+        ]
+      }
+    },
+    "/api/v1/admin/roles/{id}/permissions": {
+      "put": {
+        "operationId": "AuthorizationController_replaceRolePermissions",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceRolePermissionsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Replace a role's permissions completely (idempotent; expectedVersion required)",
+        "tags": [
+          "admin-authorization"
+        ]
+      }
+    },
+    "/api/v1/admin/admins/{id}/access": {
+      "get": {
+        "operationId": "AuthorizationController_adminAccess",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "An administrator's roles, direct permissions, effective permissions and their sources",
+        "tags": [
+          "admin-authorization"
+        ]
+      }
+    },
+    "/api/v1/admin/admins/{id}/roles": {
+      "put": {
+        "operationId": "AuthorizationController_replaceAdminRoles",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceAdminRolesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Replace an administrator's roles completely (expectedVersion required)",
+        "tags": [
+          "admin-authorization"
+        ]
+      }
+    },
+    "/api/v1/admin/admins/{id}/permissions": {
+      "put": {
+        "operationId": "AuthorizationController_replaceAdminPermissions",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceAdminPermissionsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Replace an administrator's direct permissions completely (expectedVersion required)",
+        "tags": [
+          "admin-authorization"
+        ]
+      }
+    },
+    "/api/v1/admin/system/cache": {
+      "get": {
+        "operationId": "CacheAdminController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CacheStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Cache availability, registered caches and when each was last cleared",
+        "tags": [
+          "admin-system"
+        ]
+      }
+    },
+    "/api/v1/admin/system/cache/clear": {
+      "post": {
+        "operationId": "CacheAdminController_clear",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClearCacheDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClearCacheResultDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Clear one registered cache. Unknown keys are refused; nothing accepts a pattern.",
+        "tags": [
+          "admin-system"
+        ]
+      }
+    },
+    "/api/v1/admin/activity": {
+      "get": {
+        "operationId": "AuditController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "desc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "description": "Exact action key or prefix ending with \"*\" (e.g. auth.*)",
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "name": "actorAdminId",
+            "required": false,
+            "in": "query",
+            "description": "An administrator id, or \"system\" for events the system recorded itself",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "description": "Groups events by what they are about (SRS 1.2 ACT 002/005).",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "authentication",
+                "access_control",
+                "content",
+                "moderation",
+                "communication",
+                "configuration",
+                "system"
+              ]
+            }
+          },
+          {
+            "name": "outcome",
+            "required": false,
+            "in": "query",
+            "description": "Derived from the event code; a refused privileged operation is a failure.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "success",
+                "failure"
+              ]
+            }
+          },
+          {
+            "name": "requestId",
+            "required": false,
+            "in": "query",
+            "description": "Exact request id, so one request can be followed across events.",
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "name": "grouped",
+            "required": false,
+            "in": "query",
+            "description": "Collapse repeated events (same action and actor, same request or minute) into one row with a count (change log 1.14).",
+            "schema": {
+              "default": "false",
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "groupKey",
+            "required": false,
+            "in": "query",
+            "description": "The members of one group, as returned in `groupKey` by a grouped list.",
+            "schema": {
+              "maxLength": 400,
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "createdAt",
+              "type": "string",
+              "enum": [
+                "createdAt"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{data: AuditEntry[], meta}"
+          }
+        },
+        "summary": "List activity events, newest first; grouped, or the members of one group",
+        "tags": [
+          "admin-activity"
+        ]
+      }
+    },
+    "/api/v1/admin/activity/summary": {
+      "get": {
+        "operationId": "AuditController_summary",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Count events from this instant; the interface sends the start of the Adelaide day.",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "How many events each visible area has had since an instant (the area chips)",
+        "tags": [
+          "admin-activity"
         ]
       }
     },
@@ -3214,344 +3680,6 @@
         },
         "tags": [
           "admin-taxonomy"
-        ]
-      }
-    },
-    "/api/v1/admin/media": {
-      "get": {
-        "operationId": "MediaAdminController_list",
-        "parameters": [
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "quarantined",
-                "ready",
-                "rejected"
-              ]
-            }
-          },
-          {
-            "name": "kind",
-            "required": false,
-            "in": "query",
-            "description": "Images or documents; both when omitted",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "image",
-                "document"
-              ]
-            }
-          },
-          {
-            "name": "q",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "maxLength": 120,
-              "type": "string"
-            }
-          },
-          {
-            "name": "unused",
-            "required": false,
-            "in": "query",
-            "description": "Only assets that are not used anywhere",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "page",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "default": 1,
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Object"
-                }
-              ]
-            }
-          },
-          {
-            "name": "pageSize",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 50,
-              "default": 20,
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Object"
-                }
-              ]
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/MediaAssetDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "summary": "List media assets (kind, status, q, unused)",
-        "tags": [
-          "admin-media"
-        ]
-      }
-    },
-    "/api/v1/admin/media/uploads": {
-      "post": {
-        "operationId": "MediaAdminController_requestUpload",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RequestUploadDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UploadTicketDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Request a short-lived signed upload for the private quarantine bucket",
-        "tags": [
-          "admin-media"
-        ]
-      }
-    },
-    "/api/v1/admin/media/{id}/complete": {
-      "post": {
-        "operationId": "MediaAdminController_complete",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CompleteUploadDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MediaAssetDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Validate the uploaded bytes and queue variant processing",
-        "tags": [
-          "admin-media"
-        ]
-      }
-    },
-    "/api/v1/admin/media/{id}": {
-      "get": {
-        "operationId": "MediaAdminController_get",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MediaAssetDto"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "admin-media"
-        ]
-      },
-      "patch": {
-        "operationId": "MediaAdminController_update",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateMediaDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MediaAssetDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Edit alt text, credit, rights note and focal point",
-        "tags": [
-          "admin-media"
-        ]
-      },
-      "delete": {
-        "operationId": "MediaAdminController_remove",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": ""
-          }
-        },
-        "summary": "Delete an unused asset; refused while any usage exists",
-        "tags": [
-          "admin-media"
-        ]
-      }
-    },
-    "/api/v1/admin/businesses/{businessId}/gallery": {
-      "get": {
-        "operationId": "BusinessGalleryController_get",
-        "parameters": [
-          {
-            "name": "businessId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/GalleryEntryDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "admin-businesses"
-        ]
-      },
-      "put": {
-        "operationId": "BusinessGalleryController_set",
-        "parameters": [
-          {
-            "name": "businessId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetGalleryDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/GalleryEntryDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "summary": "Replace the gallery (order, captions, alt overrides, cover) with expectedVersion",
-        "tags": [
-          "admin-businesses"
         ]
       }
     },
@@ -11686,6 +11814,15 @@
             "type": "object",
             "nullable": true,
             "description": "Existing category the generated article uses."
+          },
+          "imageMode": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "hybrid"
+            ],
+            "nullable": true,
+            "description": "Per-article image mode; null follows AI Settings."
           }
         },
         "required": [
@@ -12028,6 +12165,15 @@
             "type": "number",
             "minimum": 1
           },
+          "imageMode": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "hybrid"
+            ],
+            "nullable": true,
+            "description": "Per-article image mode; null follows AI Settings. Automatic is not approved."
+          },
           "categoryId": {
             "type": "object",
             "nullable": true,
@@ -12117,6 +12263,63 @@
           "note"
         ]
       },
+      "GenerateImageDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "prompt": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "A generic scene; names of places, businesses or events are refused. Defaults to the draft's image brief."
+          }
+        },
+        "required": [
+          "expectedVersion"
+        ]
+      },
+      "ApproveImageDto": {
+        "type": "object",
+        "properties": {
+          "expectedPostVersion": {
+            "type": "number",
+            "minimum": 1,
+            "description": "The article version the reviewer is looking at."
+          },
+          "altText": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Alt text written from the generated image itself."
+          },
+          "altWrittenFromImage": {
+            "type": "boolean",
+            "description": "The reviewer confirms the alt text describes the actual image."
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "expectedPostVersion",
+          "altText",
+          "altWrittenFromImage"
+        ]
+      },
+      "RejectImageDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "note"
+        ]
+      },
       "ApplyProposalDto": {
         "type": "object",
         "properties": {
@@ -12180,7 +12383,8 @@
             "type": "string",
             "enum": [
               "gpt-5.6-terra",
-              "gpt-5.6-luna"
+              "gpt-5.6-luna",
+              "gpt-image-2.5-flare"
             ]
           },
           "currency": {
@@ -12206,6 +12410,30 @@
             "type": "number",
             "description": "Input tokens above which a different price applies; such calls are refused."
           },
+          "imageSize": {
+            "type": "string",
+            "enum": [
+              "1536x1024",
+              "1024x1024",
+              "1024x1536"
+            ],
+            "description": "Image models only: the size this price covers."
+          },
+          "imageQuality": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "description": "Image models only: the quality this price covers."
+          },
+          "maxOutputTokens": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "Image models only: the most output tokens one image at this size and quality may use. A call is bounded by it; usage above it halts paid calls."
+          },
           "sourceUrl": {
             "type": "string",
             "maxLength": 500
@@ -12227,182 +12455,386 @@
           "effectiveFrom"
         ]
       },
-      "CacheStatusDto": {
-        "type": "object",
-        "properties": {
-          "redis": {
-            "type": "object",
-            "description": "Whether Redis is reachable, and what it means for the site if it is not."
-          },
-          "namespaces": {
-            "description": "Caches this API holds. Entry counts are approximate and capped.",
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "tags": {
-            "description": "Public page caches, cleared through the ordinary invalidation pipeline.",
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          }
-        },
-        "required": [
-          "redis",
-          "namespaces",
-          "tags"
-        ]
-      },
-      "ClearCacheDto": {
+      "MediaVariantDto": {
         "type": "object",
         "properties": {
           "kind": {
             "type": "string",
             "enum": [
-              "namespace",
-              "tag"
-            ],
-            "description": "Which registry the key belongs to."
+              "thumbnail",
+              "card",
+              "hero"
+            ]
           },
-          "key": {
-            "type": "string",
-            "maxLength": 40,
-            "description": "A registered cache key. Patterns and raw Redis keys are not accepted."
+          "url": {
+            "type": "string"
+          },
+          "width": {
+            "type": "number"
+          },
+          "height": {
+            "type": "number"
           }
         },
         "required": [
           "kind",
-          "key"
+          "url",
+          "width",
+          "height"
         ]
       },
-      "ClearCacheResultDto": {
+      "MediaUsageDto": {
         "type": "object",
         "properties": {
-          "cleared": {
-            "type": "number",
-            "description": "Entries removed, for a namespace held by this API."
+          "kind": {
+            "type": "string",
+            "enum": [
+              "business",
+              "post",
+              "page",
+              "author",
+              "testimonial",
+              "partner",
+              "category",
+              "area",
+              "blogCategory",
+              "blogTag",
+              "faq",
+              "setting",
+              "menu"
+            ]
           },
-          "accepted": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "label"
+        ]
+      },
+      "MediaAssetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sourceName": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "image",
+              "document"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "A document's display name"
+          },
+          "documentUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "The published PDF, once its upload has been checked"
+          },
+          "pageCount": {
+            "type": "number",
+            "nullable": true
+          },
+          "mimeType": {
+            "type": "string"
+          },
+          "bytes": {
+            "type": "number"
+          },
+          "width": {
+            "type": "number",
+            "nullable": true
+          },
+          "height": {
+            "type": "number",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "quarantined",
+              "ready",
+              "rejected"
+            ]
+          },
+          "rejectionReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "altText": {
+            "type": "string",
+            "nullable": true
+          },
+          "credit": {
+            "type": "string",
+            "nullable": true
+          },
+          "rightsNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "focalX": {
+            "type": "number",
+            "nullable": true
+          },
+          "focalY": {
+            "type": "number",
+            "nullable": true
+          },
+          "variants": {
+            "description": "Empty until processing finishes; a quarantined asset has no public URL",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaVariantDto"
+            }
+          },
+          "usages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaUsageDto"
+            }
+          },
+          "version": {
+            "type": "number"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "sourceName",
+          "kind",
+          "title",
+          "documentUrl",
+          "pageCount",
+          "mimeType",
+          "bytes",
+          "width",
+          "height",
+          "status",
+          "rejectionReason",
+          "altText",
+          "credit",
+          "rightsNote",
+          "focalX",
+          "focalY",
+          "variants",
+          "usages",
+          "version",
+          "createdAt"
+        ]
+      },
+      "RequestUploadDto": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Original file name, for admin display only"
+          },
+          "contentType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "application/pdf"
+            ],
+            "description": "An image type, or application/pdf for a document (change log 1.16)"
+          },
+          "bytes": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 20971520,
+            "description": "Images up to 10 MB, documents up to 20 MB; the service applies the limit for the kind"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 180,
+            "description": "A document's display name; required for a PDF"
+          }
+        },
+        "required": [
+          "fileName",
+          "contentType",
+          "bytes"
+        ]
+      },
+      "UploadTicketDto": {
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "string"
+          },
+          "uploadUrl": {
+            "type": "string",
+            "description": "Short-lived signed PUT URL; the key is server-generated"
+          },
+          "headers": {
+            "type": "object",
+            "description": "Headers that must accompany the PUT"
+          },
+          "expiresInSeconds": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "assetId",
+          "uploadUrl",
+          "headers",
+          "expiresInSeconds"
+        ]
+      },
+      "CompleteUploadDto": {
+        "type": "object",
+        "properties": {
+          "checksum": {
+            "type": "string",
+            "description": "SHA-256 of the uploaded bytes, hex; verified when supplied"
+          },
+          "altText": {
+            "type": "object",
+            "maxLength": 255,
+            "description": "Alt text; required before the asset can be used on a page (SRS MED 003)"
+          }
+        }
+      },
+      "UpdateMediaDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number"
+          },
+          "altText": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 180,
+            "description": "A document's display name; documents only"
+          },
+          "credit": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "rightsNote": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 500
+          },
+          "focalX": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Focal point as a fraction of the width"
+          },
+          "focalY": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "expectedVersion"
+        ]
+      },
+      "GalleryEntryDto": {
+        "type": "object",
+        "properties": {
+          "mediaId": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "caption": {
+            "type": "string",
+            "nullable": true
+          },
+          "alt": {
+            "type": "string",
+            "description": "Alt text actually used: the override when set, otherwise the asset alt text"
+          },
+          "isCover": {
             "type": "boolean"
-          }
-        },
-        "required": [
-          "accepted"
-        ]
-      },
-      "CreateRoleDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "description": "Stable key: lower-case letters, digits and underscores",
-            "example": "editor"
           },
-          "name": {
-            "type": "string",
-            "maxLength": 80
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 255
-          },
-          "permissions": {
-            "description": "Registered permission codes this role carries",
+          "variants": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/MediaVariantDto"
             }
           }
         },
         "required": [
-          "key",
-          "name",
-          "description",
-          "permissions"
+          "mediaId",
+          "sortOrder",
+          "caption",
+          "alt",
+          "isCover",
+          "variants"
         ]
       },
-      "UpdateRoleDto": {
+      "GalleryItemDto": {
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string",
-            "maxLength": 80
+          "mediaId": {
+            "type": "string"
           },
-          "description": {
+          "caption": {
             "type": "string",
+            "nullable": true,
             "maxLength": 255
           },
-          "isActive": {
+          "altOverride": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255,
+            "description": "Alt text for this context; falls back to the asset alt text"
+          },
+          "isCover": {
             "type": "boolean",
-            "description": "An inactive role grants nothing"
-          },
-          "expectedVersion": {
-            "type": "number",
-            "description": "Version the edit was made against; a mismatch is refused with 409"
+            "description": "Exactly one item may be the cover"
           }
         },
         "required": [
-          "expectedVersion"
+          "mediaId"
         ]
       },
-      "ReplaceRolePermissionsDto": {
+      "SetGalleryDto": {
         "type": "object",
         "properties": {
-          "permissions": {
-            "description": "The complete set after the change; anything absent is removed",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
           "expectedVersion": {
             "type": "number"
-          }
-        },
-        "required": [
-          "permissions",
-          "expectedVersion"
-        ]
-      },
-      "ReplaceAdminRolesDto": {
-        "type": "object",
-        "properties": {
-          "roleIds": {
-            "description": "The complete set of role ids after the change",
+          },
+          "items": {
+            "maxItems": 24,
+            "description": "Replaces the gallery; order is the array order",
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/GalleryItemDto"
             }
-          },
-          "expectedVersion": {
-            "type": "number",
-            "description": "The administrator record's version"
           }
         },
         "required": [
-          "roleIds",
-          "expectedVersion"
-        ]
-      },
-      "ReplaceAdminPermissionsDto": {
-        "type": "object",
-        "properties": {
-          "permissions": {
-            "description": "The complete set of directly granted permission codes after the change",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "expectedVersion": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "permissions",
-          "expectedVersion"
+          "expectedVersion",
+          "items"
         ]
       },
       "LoginDto": {
@@ -12781,6 +13213,184 @@
             "description": "Current TOTP code or a recovery code"
           }
         }
+      },
+      "CreateRoleDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Stable key: lower-case letters, digits and underscores",
+            "example": "editor"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "permissions": {
+            "description": "Registered permission codes this role carries",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "description",
+          "permissions"
+        ]
+      },
+      "UpdateRoleDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "An inactive role grants nothing"
+          },
+          "expectedVersion": {
+            "type": "number",
+            "description": "Version the edit was made against; a mismatch is refused with 409"
+          }
+        },
+        "required": [
+          "expectedVersion"
+        ]
+      },
+      "ReplaceRolePermissionsDto": {
+        "type": "object",
+        "properties": {
+          "permissions": {
+            "description": "The complete set after the change; anything absent is removed",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expectedVersion": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "permissions",
+          "expectedVersion"
+        ]
+      },
+      "ReplaceAdminRolesDto": {
+        "type": "object",
+        "properties": {
+          "roleIds": {
+            "description": "The complete set of role ids after the change",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expectedVersion": {
+            "type": "number",
+            "description": "The administrator record's version"
+          }
+        },
+        "required": [
+          "roleIds",
+          "expectedVersion"
+        ]
+      },
+      "ReplaceAdminPermissionsDto": {
+        "type": "object",
+        "properties": {
+          "permissions": {
+            "description": "The complete set of directly granted permission codes after the change",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expectedVersion": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "permissions",
+          "expectedVersion"
+        ]
+      },
+      "CacheStatusDto": {
+        "type": "object",
+        "properties": {
+          "redis": {
+            "type": "object",
+            "description": "Whether Redis is reachable, and what it means for the site if it is not."
+          },
+          "namespaces": {
+            "description": "Caches this API holds. Entry counts are approximate and capped.",
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "tags": {
+            "description": "Public page caches, cleared through the ordinary invalidation pipeline.",
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "redis",
+          "namespaces",
+          "tags"
+        ]
+      },
+      "ClearCacheDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "namespace",
+              "tag"
+            ],
+            "description": "Which registry the key belongs to."
+          },
+          "key": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "A registered cache key. Patterns and raw Redis keys are not accepted."
+          }
+        },
+        "required": [
+          "kind",
+          "key"
+        ]
+      },
+      "ClearCacheResultDto": {
+        "type": "object",
+        "properties": {
+          "cleared": {
+            "type": "number",
+            "description": "Entries removed, for a namespace held by this API."
+          },
+          "accepted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accepted"
+        ]
       },
       "AdminListItemDto": {
         "type": "object",
@@ -14088,388 +14698,6 @@
         },
         "required": [
           "expectedVersion"
-        ]
-      },
-      "MediaVariantDto": {
-        "type": "object",
-        "properties": {
-          "kind": {
-            "type": "string",
-            "enum": [
-              "thumbnail",
-              "card",
-              "hero"
-            ]
-          },
-          "url": {
-            "type": "string"
-          },
-          "width": {
-            "type": "number"
-          },
-          "height": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "kind",
-          "url",
-          "width",
-          "height"
-        ]
-      },
-      "MediaUsageDto": {
-        "type": "object",
-        "properties": {
-          "kind": {
-            "type": "string",
-            "enum": [
-              "business",
-              "post",
-              "page",
-              "author",
-              "testimonial",
-              "partner",
-              "category",
-              "area",
-              "blogCategory",
-              "blogTag",
-              "faq",
-              "setting",
-              "menu"
-            ]
-          },
-          "id": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "kind",
-          "id",
-          "label"
-        ]
-      },
-      "MediaAssetDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "sourceName": {
-            "type": "string"
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "image",
-              "document"
-            ]
-          },
-          "title": {
-            "type": "string",
-            "nullable": true,
-            "description": "A document's display name"
-          },
-          "documentUrl": {
-            "type": "string",
-            "nullable": true,
-            "description": "The published PDF, once its upload has been checked"
-          },
-          "pageCount": {
-            "type": "number",
-            "nullable": true
-          },
-          "mimeType": {
-            "type": "string"
-          },
-          "bytes": {
-            "type": "number"
-          },
-          "width": {
-            "type": "number",
-            "nullable": true
-          },
-          "height": {
-            "type": "number",
-            "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "quarantined",
-              "ready",
-              "rejected"
-            ]
-          },
-          "rejectionReason": {
-            "type": "string",
-            "nullable": true
-          },
-          "altText": {
-            "type": "string",
-            "nullable": true
-          },
-          "credit": {
-            "type": "string",
-            "nullable": true
-          },
-          "rightsNote": {
-            "type": "string",
-            "nullable": true
-          },
-          "focalX": {
-            "type": "number",
-            "nullable": true
-          },
-          "focalY": {
-            "type": "number",
-            "nullable": true
-          },
-          "variants": {
-            "description": "Empty until processing finishes; a quarantined asset has no public URL",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MediaVariantDto"
-            }
-          },
-          "usages": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MediaUsageDto"
-            }
-          },
-          "version": {
-            "type": "number"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "id",
-          "sourceName",
-          "kind",
-          "title",
-          "documentUrl",
-          "pageCount",
-          "mimeType",
-          "bytes",
-          "width",
-          "height",
-          "status",
-          "rejectionReason",
-          "altText",
-          "credit",
-          "rightsNote",
-          "focalX",
-          "focalY",
-          "variants",
-          "usages",
-          "version",
-          "createdAt"
-        ]
-      },
-      "RequestUploadDto": {
-        "type": "object",
-        "properties": {
-          "fileName": {
-            "type": "string",
-            "maxLength": 255,
-            "description": "Original file name, for admin display only"
-          },
-          "contentType": {
-            "type": "string",
-            "enum": [
-              "image/jpeg",
-              "image/png",
-              "image/webp",
-              "application/pdf"
-            ],
-            "description": "An image type, or application/pdf for a document (change log 1.16)"
-          },
-          "bytes": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 20971520,
-            "description": "Images up to 10 MB, documents up to 20 MB; the service applies the limit for the kind"
-          },
-          "title": {
-            "type": "string",
-            "maxLength": 180,
-            "description": "A document's display name; required for a PDF"
-          }
-        },
-        "required": [
-          "fileName",
-          "contentType",
-          "bytes"
-        ]
-      },
-      "UploadTicketDto": {
-        "type": "object",
-        "properties": {
-          "assetId": {
-            "type": "string"
-          },
-          "uploadUrl": {
-            "type": "string",
-            "description": "Short-lived signed PUT URL; the key is server-generated"
-          },
-          "headers": {
-            "type": "object",
-            "description": "Headers that must accompany the PUT"
-          },
-          "expiresInSeconds": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "assetId",
-          "uploadUrl",
-          "headers",
-          "expiresInSeconds"
-        ]
-      },
-      "CompleteUploadDto": {
-        "type": "object",
-        "properties": {
-          "checksum": {
-            "type": "string",
-            "description": "SHA-256 of the uploaded bytes, hex; verified when supplied"
-          },
-          "altText": {
-            "type": "object",
-            "maxLength": 255,
-            "description": "Alt text; required before the asset can be used on a page (SRS MED 003)"
-          }
-        }
-      },
-      "UpdateMediaDto": {
-        "type": "object",
-        "properties": {
-          "expectedVersion": {
-            "type": "number"
-          },
-          "altText": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "title": {
-            "type": "string",
-            "maxLength": 180,
-            "description": "A document's display name; documents only"
-          },
-          "credit": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "rightsNote": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 500
-          },
-          "focalX": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1,
-            "description": "Focal point as a fraction of the width"
-          },
-          "focalY": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1
-          }
-        },
-        "required": [
-          "expectedVersion"
-        ]
-      },
-      "GalleryEntryDto": {
-        "type": "object",
-        "properties": {
-          "mediaId": {
-            "type": "string"
-          },
-          "sortOrder": {
-            "type": "number"
-          },
-          "caption": {
-            "type": "string",
-            "nullable": true
-          },
-          "alt": {
-            "type": "string",
-            "description": "Alt text actually used: the override when set, otherwise the asset alt text"
-          },
-          "isCover": {
-            "type": "boolean"
-          },
-          "variants": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MediaVariantDto"
-            }
-          }
-        },
-        "required": [
-          "mediaId",
-          "sortOrder",
-          "caption",
-          "alt",
-          "isCover",
-          "variants"
-        ]
-      },
-      "GalleryItemDto": {
-        "type": "object",
-        "properties": {
-          "mediaId": {
-            "type": "string"
-          },
-          "caption": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255
-          },
-          "altOverride": {
-            "type": "string",
-            "nullable": true,
-            "maxLength": 255,
-            "description": "Alt text for this context; falls back to the asset alt text"
-          },
-          "isCover": {
-            "type": "boolean",
-            "description": "Exactly one item may be the cover"
-          }
-        },
-        "required": [
-          "mediaId"
-        ]
-      },
-      "SetGalleryDto": {
-        "type": "object",
-        "properties": {
-          "expectedVersion": {
-            "type": "number"
-          },
-          "items": {
-            "maxItems": 24,
-            "description": "Replaces the gallery; order is the array order",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GalleryItemDto"
-            }
-          }
-        },
-        "required": [
-          "expectedVersion",
-          "items"
         ]
       },
       "BusinessListItemDto": {
@@ -19087,6 +19315,11 @@
             "type": "string",
             "nullable": true,
             "description": "Reader disclosure for an AI-assisted article: the wording recorded with the draft it came from. Absent for other articles."
+          },
+          "coverDisclosure": {
+            "type": "string",
+            "nullable": true,
+            "description": "Disclosure shown under an AI-generated featured image (for example \"Illustrative image created with AI.\"). Absent for photographs and uploaded images."
           },
           "updatedAt": {
             "type": "string",

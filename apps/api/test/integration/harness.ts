@@ -8,6 +8,7 @@ import { resolveTestDatabaseUrl } from './test-database-url.js';
 export const APPLICATION_TABLES = [
   // ai_automation_controls is deliberately kept: its one row is seeded by the
   // migration and the code reads it as deployment state, never test data.
+  'ai_image_jobs',
   'ai_budget_buckets',
   'ai_price_schedules',
   'ai_claim_sources',

@@ -47,3 +47,39 @@ export function capabilityProblem(provider: string, model: string, role: ModelCa
   if (inputBytes + maxOutputTokens > cap.contextTokens) return 'input_too_large';
   return null;
 }
+
+/**
+ * The approved image model and its declared capabilities (Phase 1E). Source:
+ * the provider's official model and API reference pages, checked 19 September
+ * 2026 (https://developers.openai.com/api/docs/models/gpt-image-2.5-flare and
+ * .../api-reference/images/create): POST /v1/images/generations, base64
+ * output only, sizes 1024x1024 / 1536x1024 / 1024x1536 among others, quality
+ * low to max, png/jpeg/webp, usage reported in tokens, no idempotency key and
+ * no background mode. Only what this site uses is declared.
+ */
+export const APPROVED_IMAGE_MODEL = { provider: 'openai', model: 'gpt-image-2.5-flare' } as const;
+
+export interface ImageModelCapability {
+  sizes: readonly string[];
+  qualities: readonly string[];
+  outputFormat: 'png';
+  maxPromptChars: number;
+}
+
+export const IMAGE_PROVIDER_CAPABILITIES: Readonly<Record<string, Readonly<Record<string, ImageModelCapability>>>> = {
+  openai: {
+    'gpt-image-2.5-flare': { sizes: ['1536x1024', '1024x1024', '1024x1536'], qualities: ['low', 'medium', 'high'], outputFormat: 'png', maxPromptChars: 32_000 },
+  },
+};
+
+/** Null when the image model can serve this size, quality and prompt; otherwise why not (checked before any reservation). */
+export function imageCapabilityProblem(provider: string, model: string, size: string, quality: string, promptChars: number): 'unknown_provider' | 'unknown_model' | 'unsupported_size' | 'unsupported_quality' | 'prompt_too_long' | null {
+  const models = IMAGE_PROVIDER_CAPABILITIES[provider];
+  if (!models) return 'unknown_provider';
+  const cap = models[model];
+  if (!cap) return 'unknown_model';
+  if (!cap.sizes.includes(size)) return 'unsupported_size';
+  if (!cap.qualities.includes(quality)) return 'unsupported_quality';
+  if (promptChars > cap.maxPromptChars) return 'prompt_too_long';
+  return null;
+}

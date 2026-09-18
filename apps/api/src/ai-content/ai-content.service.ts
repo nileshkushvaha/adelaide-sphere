@@ -63,6 +63,7 @@ const PUBLIC_SELECT = {
   followUpOfPostId: true,
   followUpReason: true,
   categoryId: true,
+  imageMode: true,
 } as const;
 const stale = () =>
   new ConflictException({

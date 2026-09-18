@@ -340,6 +340,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/ai-content/topics/{id}/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AiGenerationController_images"];
+        put?: never;
+        post: operations["AiGenerationController_generateImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/images/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AiGenerationController_approveImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/images/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AiGenerationController_rejectImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/ai-content/runs/{id}/apply": {
         parameters: {
             query?: never;
@@ -436,15 +484,15 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/system/cache": {
+    "/api/v1/admin/media": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Cache availability, registered caches and when each was last cleared */
-        get: operations["CacheAdminController_status"];
+        /** List media assets (kind, status, q, unused) */
+        get: operations["MediaAdminController_list"];
         put?: never;
         post?: never;
         delete?: never;
@@ -453,7 +501,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/system/cache/clear": {
+    "/api/v1/admin/media/uploads": {
         parameters: {
             query?: never;
             header?: never;
@@ -462,103 +510,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Clear one registered cache. Unknown keys are refused; nothing accepts a pattern. */
-        post: operations["CacheAdminController_clear"];
+        /** Request a short-lived signed upload for the private quarantine bucket */
+        post: operations["MediaAdminController_requestUpload"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/activity": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List activity events, newest first; grouped, or the members of one group */
-        get: operations["AuditController_list"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/activity/summary": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** How many events each visible area has had since an instant (the area chips) */
-        get: operations["AuditController_summary"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/permissions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** The registered permission catalogue, grouped by module (read-only) */
-        get: operations["AuthorizationController_permissions"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/roles": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List roles (paginated; q) */
-        get: operations["AuthorizationController_listRoles"];
-        put?: never;
-        /** Create a role */
-        post: operations["AuthorizationController_createRole"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/roles/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** One role with the permissions it carries */
-        get: operations["AuthorizationController_getRole"];
-        put?: never;
-        post?: never;
-        /** Delete an unused, non-system role */
-        delete: operations["AuthorizationController_deleteRole"];
-        options?: never;
-        head?: never;
-        /** Edit role details or activation (expectedVersion required) */
-        patch: operations["AuthorizationController_updateRole"];
-        trace?: never;
-    };
-    "/api/v1/admin/roles/{id}/permissions": {
+    "/api/v1/admin/media/{id}/complete": {
         parameters: {
             query?: never;
             header?: never;
@@ -566,59 +526,43 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Replace a role's permissions completely (idempotent; expectedVersion required) */
-        put: operations["AuthorizationController_replaceRolePermissions"];
-        post?: never;
+        put?: never;
+        /** Validate the uploaded bytes and queue variant processing */
+        post: operations["MediaAdminController_complete"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/admins/{id}/access": {
+    "/api/v1/admin/media/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** An administrator's roles, direct permissions, effective permissions and their sources */
-        get: operations["AuthorizationController_adminAccess"];
+        get: operations["MediaAdminController_get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete an unused asset; refused while any usage exists */
+        delete: operations["MediaAdminController_remove"];
         options?: never;
         head?: never;
-        patch?: never;
+        /** Edit alt text, credit, rights note and focal point */
+        patch: operations["MediaAdminController_update"];
         trace?: never;
     };
-    "/api/v1/admin/admins/{id}/roles": {
+    "/api/v1/admin/businesses/{businessId}/gallery": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        /** Replace an administrator's roles completely (expectedVersion required) */
-        put: operations["AuthorizationController_replaceAdminRoles"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/admins/{id}/permissions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** Replace an administrator's direct permissions completely (expectedVersion required) */
-        put: operations["AuthorizationController_replaceAdminPermissions"];
+        get: operations["BusinessGalleryController_get"];
+        /** Replace the gallery (order, captions, alt overrides, cover) with expectedVersion */
+        put: operations["BusinessGalleryController_set"];
         post?: never;
         delete?: never;
         options?: never;
@@ -839,6 +783,196 @@ export interface paths {
         put?: never;
         /** Disable TOTP (recent authentication + a valid code) */
         post: operations["AuthController_totpDisable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The registered permission catalogue, grouped by module (read-only) */
+        get: operations["AuthorizationController_permissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List roles (paginated; q) */
+        get: operations["AuthorizationController_listRoles"];
+        put?: never;
+        /** Create a role */
+        post: operations["AuthorizationController_createRole"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/roles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One role with the permissions it carries */
+        get: operations["AuthorizationController_getRole"];
+        put?: never;
+        post?: never;
+        /** Delete an unused, non-system role */
+        delete: operations["AuthorizationController_deleteRole"];
+        options?: never;
+        head?: never;
+        /** Edit role details or activation (expectedVersion required) */
+        patch: operations["AuthorizationController_updateRole"];
+        trace?: never;
+    };
+    "/api/v1/admin/roles/{id}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace a role's permissions completely (idempotent; expectedVersion required) */
+        put: operations["AuthorizationController_replaceRolePermissions"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/admins/{id}/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** An administrator's roles, direct permissions, effective permissions and their sources */
+        get: operations["AuthorizationController_adminAccess"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/admins/{id}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace an administrator's roles completely (expectedVersion required) */
+        put: operations["AuthorizationController_replaceAdminRoles"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/admins/{id}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace an administrator's direct permissions completely (expectedVersion required) */
+        put: operations["AuthorizationController_replaceAdminPermissions"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/system/cache": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Cache availability, registered caches and when each was last cleared */
+        get: operations["CacheAdminController_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/system/cache/clear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Clear one registered cache. Unknown keys are refused; nothing accepts a pattern. */
+        post: operations["CacheAdminController_clear"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List activity events, newest first; grouped, or the members of one group */
+        get: operations["AuditController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/activity/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** How many events each visible area has had since an instant (the area chips) */
+        get: operations["AuditController_summary"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1201,92 +1335,6 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["AdminLocalAreasController_activate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/media": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List media assets (kind, status, q, unused) */
-        get: operations["MediaAdminController_list"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/media/uploads": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Request a short-lived signed upload for the private quarantine bucket */
-        post: operations["MediaAdminController_requestUpload"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/media/{id}/complete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Validate the uploaded bytes and queue variant processing */
-        post: operations["MediaAdminController_complete"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/media/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["MediaAdminController_get"];
-        put?: never;
-        post?: never;
-        /** Delete an unused asset; refused while any usage exists */
-        delete: operations["MediaAdminController_remove"];
-        options?: never;
-        head?: never;
-        /** Edit alt text, credit, rights note and focal point */
-        patch: operations["MediaAdminController_update"];
-        trace?: never;
-    };
-    "/api/v1/admin/businesses/{businessId}/gallery": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["BusinessGalleryController_get"];
-        /** Replace the gallery (order, captions, alt overrides, cover) with expectedVersion */
-        put: operations["BusinessGalleryController_set"];
-        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4044,6 +4092,11 @@ export interface components {
             followUpReason?: Record<string, never> | null;
             /** @description Existing category the generated article uses. */
             categoryId?: Record<string, never> | null;
+            /**
+             * @description Per-article image mode; null follows AI Settings.
+             * @enum {string|null}
+             */
+            imageMode?: "manual" | "hybrid" | null;
         };
         CreateTopicDto: {
             title: string;
@@ -4126,6 +4179,11 @@ export interface components {
         };
         TopicArticleSettingsDto: {
             expectedVersion: number;
+            /**
+             * @description Per-article image mode; null follows AI Settings. Automatic is not approved.
+             * @enum {string|null}
+             */
+            imageMode?: "manual" | "hybrid" | null;
             /** @description An existing active blog category; null clears it. */
             categoryId?: Record<string, never> | null;
         };
@@ -4153,6 +4211,23 @@ export interface components {
             /** @description What was checked against the evidence. */
             note: string;
         };
+        GenerateImageDto: {
+            expectedVersion: number;
+            /** @description A generic scene; names of places, businesses or events are refused. Defaults to the draft's image brief. */
+            prompt?: string;
+        };
+        ApproveImageDto: {
+            /** @description The article version the reviewer is looking at. */
+            expectedPostVersion: number;
+            /** @description Alt text written from the generated image itself. */
+            altText: string;
+            /** @description The reviewer confirms the alt text describes the actual image. */
+            altWrittenFromImage: boolean;
+            note?: string;
+        };
+        RejectImageDto: {
+            note: string;
+        };
         ApplyProposalDto: {
             /** @description The article version the proposal was compared with. */
             expectedPostVersion: number;
@@ -4171,7 +4246,7 @@ export interface components {
             /** @enum {string} */
             provider: "openai";
             /** @enum {string} */
-            model: "gpt-5.6-terra" | "gpt-5.6-luna";
+            model: "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-image-2.5-flare";
             /** @enum {string} */
             currency: "USD" | "AUD" | "EUR" | "GBP";
             /** @description Millionths of the currency per million input tokens (USD 2.00 = 2000000). */
@@ -4180,65 +4255,122 @@ export interface components {
             outputMicrosPerMTok: number;
             /** @description Input tokens above which a different price applies; such calls are refused. */
             longContextThresholdTokens: number;
+            /**
+             * @description Image models only: the size this price covers.
+             * @enum {string}
+             */
+            imageSize?: "1536x1024" | "1024x1024" | "1024x1536";
+            /**
+             * @description Image models only: the quality this price covers.
+             * @enum {string}
+             */
+            imageQuality?: "low" | "medium" | "high";
+            /** @description Image models only: the most output tokens one image at this size and quality may use. A call is bounded by it; usage above it halts paid calls. */
+            maxOutputTokens?: number;
             sourceUrl: string;
             effectiveFrom: string;
         };
-        CacheStatusDto: {
-            /** @description Whether Redis is reachable, and what it means for the site if it is not. */
-            redis: Record<string, never>;
-            /** @description Caches this API holds. Entry counts are approximate and capped. */
-            namespaces: Record<string, never>[];
-            /** @description Public page caches, cleared through the ordinary invalidation pipeline. */
-            tags: Record<string, never>[];
+        MediaVariantDto: {
+            /** @enum {string} */
+            kind: "thumbnail" | "card" | "hero";
+            url: string;
+            width: number;
+            height: number;
         };
-        ClearCacheDto: {
+        MediaUsageDto: {
+            /** @enum {string} */
+            kind: "business" | "post" | "page" | "author" | "testimonial" | "partner" | "category" | "area" | "blogCategory" | "blogTag" | "faq" | "setting" | "menu";
+            id: string;
+            label: string;
+        };
+        MediaAssetDto: {
+            id: string;
+            sourceName: string;
+            /** @enum {string} */
+            kind: "image" | "document";
+            /** @description A document's display name */
+            title: string | null;
+            /** @description The published PDF, once its upload has been checked */
+            documentUrl: string | null;
+            pageCount: number | null;
+            mimeType: string;
+            bytes: number;
+            width: number | null;
+            height: number | null;
+            /** @enum {string} */
+            status: "quarantined" | "ready" | "rejected";
+            rejectionReason: string | null;
+            altText: string | null;
+            credit: string | null;
+            rightsNote: string | null;
+            focalX: number | null;
+            focalY: number | null;
+            /** @description Empty until processing finishes; a quarantined asset has no public URL */
+            variants: components["schemas"]["MediaVariantDto"][];
+            usages: components["schemas"]["MediaUsageDto"][];
+            version: number;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        RequestUploadDto: {
+            /** @description Original file name, for admin display only */
+            fileName: string;
             /**
-             * @description Which registry the key belongs to.
+             * @description An image type, or application/pdf for a document (change log 1.16)
              * @enum {string}
              */
-            kind: "namespace" | "tag";
-            /** @description A registered cache key. Patterns and raw Redis keys are not accepted. */
-            key: string;
+            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf";
+            /** @description Images up to 10 MB, documents up to 20 MB; the service applies the limit for the kind */
+            bytes: number;
+            /** @description A document's display name; required for a PDF */
+            title?: string;
         };
-        ClearCacheResultDto: {
-            /** @description Entries removed, for a namespace held by this API. */
-            cleared?: number;
-            accepted: boolean;
+        UploadTicketDto: {
+            assetId: string;
+            /** @description Short-lived signed PUT URL; the key is server-generated */
+            uploadUrl: string;
+            /** @description Headers that must accompany the PUT */
+            headers: Record<string, never>;
+            expiresInSeconds: number;
         };
-        CreateRoleDto: {
-            /**
-             * @description Stable key: lower-case letters, digits and underscores
-             * @example editor
-             */
-            key: string;
-            name: string;
-            description: string;
-            /** @description Registered permission codes this role carries */
-            permissions: string[];
+        CompleteUploadDto: {
+            /** @description SHA-256 of the uploaded bytes, hex; verified when supplied */
+            checksum?: string;
+            /** @description Alt text; required before the asset can be used on a page (SRS MED 003) */
+            altText?: Record<string, never>;
         };
-        UpdateRoleDto: {
-            name?: string;
-            description?: string;
-            /** @description An inactive role grants nothing */
-            isActive?: boolean;
-            /** @description Version the edit was made against; a mismatch is refused with 409 */
+        UpdateMediaDto: {
             expectedVersion: number;
+            altText?: string | null;
+            /** @description A document's display name; documents only */
+            title?: string;
+            credit?: string | null;
+            rightsNote?: string | null;
+            /** @description Focal point as a fraction of the width */
+            focalX?: number;
+            focalY?: number;
         };
-        ReplaceRolePermissionsDto: {
-            /** @description The complete set after the change; anything absent is removed */
-            permissions: string[];
-            expectedVersion: number;
+        GalleryEntryDto: {
+            mediaId: string;
+            sortOrder: number;
+            caption: string | null;
+            /** @description Alt text actually used: the override when set, otherwise the asset alt text */
+            alt: string;
+            isCover: boolean;
+            variants: components["schemas"]["MediaVariantDto"][];
         };
-        ReplaceAdminRolesDto: {
-            /** @description The complete set of role ids after the change */
-            roleIds: string[];
-            /** @description The administrator record's version */
-            expectedVersion: number;
+        GalleryItemDto: {
+            mediaId: string;
+            caption?: string | null;
+            /** @description Alt text for this context; falls back to the asset alt text */
+            altOverride?: string | null;
+            /** @description Exactly one item may be the cover */
+            isCover?: boolean;
         };
-        ReplaceAdminPermissionsDto: {
-            /** @description The complete set of directly granted permission codes after the change */
-            permissions: string[];
+        SetGalleryDto: {
             expectedVersion: number;
+            /** @description Replaces the gallery; order is the array order */
+            items: components["schemas"]["GalleryItemDto"][];
         };
         LoginDto: {
             /** @example admin@example.com */
@@ -4366,6 +4498,63 @@ export interface components {
              * @example 123456
              */
             code?: string;
+        };
+        CreateRoleDto: {
+            /**
+             * @description Stable key: lower-case letters, digits and underscores
+             * @example editor
+             */
+            key: string;
+            name: string;
+            description: string;
+            /** @description Registered permission codes this role carries */
+            permissions: string[];
+        };
+        UpdateRoleDto: {
+            name?: string;
+            description?: string;
+            /** @description An inactive role grants nothing */
+            isActive?: boolean;
+            /** @description Version the edit was made against; a mismatch is refused with 409 */
+            expectedVersion: number;
+        };
+        ReplaceRolePermissionsDto: {
+            /** @description The complete set after the change; anything absent is removed */
+            permissions: string[];
+            expectedVersion: number;
+        };
+        ReplaceAdminRolesDto: {
+            /** @description The complete set of role ids after the change */
+            roleIds: string[];
+            /** @description The administrator record's version */
+            expectedVersion: number;
+        };
+        ReplaceAdminPermissionsDto: {
+            /** @description The complete set of directly granted permission codes after the change */
+            permissions: string[];
+            expectedVersion: number;
+        };
+        CacheStatusDto: {
+            /** @description Whether Redis is reachable, and what it means for the site if it is not. */
+            redis: Record<string, never>;
+            /** @description Caches this API holds. Entry counts are approximate and capped. */
+            namespaces: Record<string, never>[];
+            /** @description Public page caches, cleared through the ordinary invalidation pipeline. */
+            tags: Record<string, never>[];
+        };
+        ClearCacheDto: {
+            /**
+             * @description Which registry the key belongs to.
+             * @enum {string}
+             */
+            kind: "namespace" | "tag";
+            /** @description A registered cache key. Patterns and raw Redis keys are not accepted. */
+            key: string;
+        };
+        ClearCacheResultDto: {
+            /** @description Entries removed, for a namespace held by this API. */
+            cleared?: number;
+            accepted: boolean;
         };
         AdminListItemDto: {
             id: string;
@@ -4677,108 +4866,6 @@ export interface components {
             seoKeywords?: string | null;
             /** @description Share image (media asset id); the area image, then the site image, is used when empty */
             ogImageMediaId?: string | null;
-        };
-        MediaVariantDto: {
-            /** @enum {string} */
-            kind: "thumbnail" | "card" | "hero";
-            url: string;
-            width: number;
-            height: number;
-        };
-        MediaUsageDto: {
-            /** @enum {string} */
-            kind: "business" | "post" | "page" | "author" | "testimonial" | "partner" | "category" | "area" | "blogCategory" | "blogTag" | "faq" | "setting" | "menu";
-            id: string;
-            label: string;
-        };
-        MediaAssetDto: {
-            id: string;
-            sourceName: string;
-            /** @enum {string} */
-            kind: "image" | "document";
-            /** @description A document's display name */
-            title: string | null;
-            /** @description The published PDF, once its upload has been checked */
-            documentUrl: string | null;
-            pageCount: number | null;
-            mimeType: string;
-            bytes: number;
-            width: number | null;
-            height: number | null;
-            /** @enum {string} */
-            status: "quarantined" | "ready" | "rejected";
-            rejectionReason: string | null;
-            altText: string | null;
-            credit: string | null;
-            rightsNote: string | null;
-            focalX: number | null;
-            focalY: number | null;
-            /** @description Empty until processing finishes; a quarantined asset has no public URL */
-            variants: components["schemas"]["MediaVariantDto"][];
-            usages: components["schemas"]["MediaUsageDto"][];
-            version: number;
-            /** Format: date-time */
-            createdAt: string;
-        };
-        RequestUploadDto: {
-            /** @description Original file name, for admin display only */
-            fileName: string;
-            /**
-             * @description An image type, or application/pdf for a document (change log 1.16)
-             * @enum {string}
-             */
-            contentType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf";
-            /** @description Images up to 10 MB, documents up to 20 MB; the service applies the limit for the kind */
-            bytes: number;
-            /** @description A document's display name; required for a PDF */
-            title?: string;
-        };
-        UploadTicketDto: {
-            assetId: string;
-            /** @description Short-lived signed PUT URL; the key is server-generated */
-            uploadUrl: string;
-            /** @description Headers that must accompany the PUT */
-            headers: Record<string, never>;
-            expiresInSeconds: number;
-        };
-        CompleteUploadDto: {
-            /** @description SHA-256 of the uploaded bytes, hex; verified when supplied */
-            checksum?: string;
-            /** @description Alt text; required before the asset can be used on a page (SRS MED 003) */
-            altText?: Record<string, never>;
-        };
-        UpdateMediaDto: {
-            expectedVersion: number;
-            altText?: string | null;
-            /** @description A document's display name; documents only */
-            title?: string;
-            credit?: string | null;
-            rightsNote?: string | null;
-            /** @description Focal point as a fraction of the width */
-            focalX?: number;
-            focalY?: number;
-        };
-        GalleryEntryDto: {
-            mediaId: string;
-            sortOrder: number;
-            caption: string | null;
-            /** @description Alt text actually used: the override when set, otherwise the asset alt text */
-            alt: string;
-            isCover: boolean;
-            variants: components["schemas"]["MediaVariantDto"][];
-        };
-        GalleryItemDto: {
-            mediaId: string;
-            caption?: string | null;
-            /** @description Alt text for this context; falls back to the asset alt text */
-            altOverride?: string | null;
-            /** @description Exactly one item may be the cover */
-            isCover?: boolean;
-        };
-        SetGalleryDto: {
-            expectedVersion: number;
-            /** @description Replaces the gallery; order is the array order */
-            items: components["schemas"]["GalleryItemDto"][];
         };
         BusinessListItemDto: {
             id: string;
@@ -6062,6 +6149,8 @@ export interface components {
             firstPublishedAt: string;
             /** @description Reader disclosure for an AI-assisted article: the wording recorded with the draft it came from. Absent for other articles. */
             aiDisclosure?: string | null;
+            /** @description Disclosure shown under an AI-generated featured image (for example "Illustrative image created with AI."). Absent for photographs and uploaded images. */
+            coverDisclosure?: string | null;
             /** Format: date-time */
             updatedAt: string;
             /** @description Up to four related articles (SRS BLOG 004) */
@@ -7993,6 +8082,96 @@ export interface operations {
             };
         };
     };
+    AiGenerationController_images: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiGenerationController_generateImage: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateImageDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiGenerationController_approveImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproveImageDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiGenerationController_rejectImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RejectImageDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     AiGenerationController_applyProposal: {
         parameters: {
             query?: never;
@@ -8134,134 +8313,17 @@ export interface operations {
             };
         };
     };
-    CacheAdminController_status: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CacheStatusDto"];
-                };
-            };
-        };
-    };
-    CacheAdminController_clear: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ClearCacheDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ClearCacheResultDto"];
-                };
-            };
-        };
-    };
-    AuditController_list: {
+    MediaAdminController_list: {
         parameters: {
             query?: {
-                page?: components["schemas"]["Object"];
-                pageSize?: components["schemas"]["Object"];
-                order?: "asc" | "desc";
-                /** @description Exact action key or prefix ending with "*" (e.g. auth.*) */
-                action?: string;
-                /** @description An administrator id, or "system" for events the system recorded itself */
-                actorAdminId?: string;
-                targetType?: string;
-                targetId?: string;
-                from?: string;
-                to?: string;
-                /** @description Groups events by what they are about (SRS 1.2 ACT 002/005). */
-                category?: "authentication" | "access_control" | "content" | "moderation" | "communication" | "configuration" | "system";
-                /** @description Derived from the event code; a refused privileged operation is a failure. */
-                outcome?: "success" | "failure";
-                /** @description Exact request id, so one request can be followed across events. */
-                requestId?: string;
-                /** @description Collapse repeated events (same action and actor, same request or minute) into one row with a count (change log 1.14). */
-                grouped?: "true" | "false";
-                /** @description The members of one group, as returned in `groupKey` by a grouped list. */
-                groupKey?: string;
-                sort?: "createdAt";
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description {data: AuditEntry[], meta} */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    AuditController_summary: {
-        parameters: {
-            query?: {
-                /** @description Count events from this instant; the interface sends the start of the Adelaide day. */
-                from?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    AuthorizationController_permissions: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    AuthorizationController_listRoles: {
-        parameters: {
-            query?: {
-                page?: components["schemas"]["Object"];
-                pageSize?: components["schemas"]["Object"];
-                order?: "asc" | "desc";
-                /** @description Matches the role key or name */
+                status?: "quarantined" | "ready" | "rejected";
+                /** @description Images or documents; both when omitted */
+                kind?: "image" | "document";
                 q?: string;
+                /** @description Only assets that are not used anywhere */
+                unused?: boolean;
+                page?: components["schemas"]["Object"];
+                pageSize?: components["schemas"]["Object"];
             };
             header?: never;
             path?: never;
@@ -8273,11 +8335,13 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["MediaAssetDto"][];
+                };
             };
         };
     };
-    AuthorizationController_createRole: {
+    MediaAdminController_requestUpload: {
         parameters: {
             query?: never;
             header?: never;
@@ -8286,19 +8350,46 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateRoleDto"];
+                "application/json": components["schemas"]["RequestUploadDto"];
             };
         };
         responses: {
-            201: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["UploadTicketDto"];
+                };
             };
         };
     };
-    AuthorizationController_getRole: {
+    MediaAdminController_complete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteUploadDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaAssetDto"];
+                };
+            };
+        };
+    };
+    MediaAdminController_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -8313,11 +8404,13 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["MediaAssetDto"];
+                };
             };
         };
     };
-    AuthorizationController_deleteRole: {
+    MediaAdminController_remove: {
         parameters: {
             query?: never;
             header?: never;
@@ -8336,7 +8429,7 @@ export interface operations {
             };
         };
     };
-    AuthorizationController_updateRole: {
+    MediaAdminController_update: {
         parameters: {
             query?: never;
             header?: never;
@@ -8347,7 +8440,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateRoleDto"];
+                "application/json": components["schemas"]["UpdateMediaDto"];
             };
         };
         responses: {
@@ -8355,39 +8448,18 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-        };
-    };
-    AuthorizationController_replaceRolePermissions: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ReplaceRolePermissionsDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
+                content: {
+                    "application/json": components["schemas"]["MediaAssetDto"];
                 };
-                content?: never;
             };
         };
     };
-    AuthorizationController_adminAccess: {
+    BusinessGalleryController_get: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                businessId: string;
             };
             cookie?: never;
         };
@@ -8397,22 +8469,24 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["GalleryEntryDto"][];
+                };
             };
         };
     };
-    AuthorizationController_replaceAdminRoles: {
+    BusinessGalleryController_set: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                businessId: string;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ReplaceAdminRolesDto"];
+                "application/json": components["schemas"]["SetGalleryDto"];
             };
         };
         responses: {
@@ -8420,30 +8494,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
-            };
-        };
-    };
-    AuthorizationController_replaceAdminPermissions: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ReplaceAdminPermissionsDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
+                content: {
+                    "application/json": components["schemas"]["GalleryEntryDto"][];
                 };
-                content?: never;
             };
         };
     };
@@ -8751,6 +8804,319 @@ export interface operations {
         };
         responses: {
             204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthorizationController_permissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthorizationController_listRoles: {
+        parameters: {
+            query?: {
+                page?: components["schemas"]["Object"];
+                pageSize?: components["schemas"]["Object"];
+                order?: "asc" | "desc";
+                /** @description Matches the role key or name */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthorizationController_createRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRoleDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthorizationController_getRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthorizationController_deleteRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthorizationController_updateRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRoleDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthorizationController_replaceRolePermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceRolePermissionsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthorizationController_adminAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthorizationController_replaceAdminRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceAdminRolesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuthorizationController_replaceAdminPermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceAdminPermissionsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CacheAdminController_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CacheStatusDto"];
+                };
+            };
+        };
+    };
+    CacheAdminController_clear: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClearCacheDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClearCacheResultDto"];
+                };
+            };
+        };
+    };
+    AuditController_list: {
+        parameters: {
+            query?: {
+                page?: components["schemas"]["Object"];
+                pageSize?: components["schemas"]["Object"];
+                order?: "asc" | "desc";
+                /** @description Exact action key or prefix ending with "*" (e.g. auth.*) */
+                action?: string;
+                /** @description An administrator id, or "system" for events the system recorded itself */
+                actorAdminId?: string;
+                targetType?: string;
+                targetId?: string;
+                from?: string;
+                to?: string;
+                /** @description Groups events by what they are about (SRS 1.2 ACT 002/005). */
+                category?: "authentication" | "access_control" | "content" | "moderation" | "communication" | "configuration" | "system";
+                /** @description Derived from the event code; a refused privileged operation is a failure. */
+                outcome?: "success" | "failure";
+                /** @description Exact request id, so one request can be followed across events. */
+                requestId?: string;
+                /** @description Collapse repeated events (same action and actor, same request or minute) into one row with a count (change log 1.14). */
+                grouped?: "true" | "false";
+                /** @description The members of one group, as returned in `groupKey` by a grouped list. */
+                groupKey?: string;
+                sort?: "createdAt";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description {data: AuditEntry[], meta} */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AuditController_summary: {
+        parameters: {
+            query?: {
+                /** @description Count events from this instant; the interface sends the start of the Adelaide day. */
+                from?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9475,193 +9841,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-        };
-    };
-    MediaAdminController_list: {
-        parameters: {
-            query?: {
-                status?: "quarantined" | "ready" | "rejected";
-                /** @description Images or documents; both when omitted */
-                kind?: "image" | "document";
-                q?: string;
-                /** @description Only assets that are not used anywhere */
-                unused?: boolean;
-                page?: components["schemas"]["Object"];
-                pageSize?: components["schemas"]["Object"];
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MediaAssetDto"][];
-                };
-            };
-        };
-    };
-    MediaAdminController_requestUpload: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RequestUploadDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UploadTicketDto"];
-                };
-            };
-        };
-    };
-    MediaAdminController_complete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CompleteUploadDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MediaAssetDto"];
-                };
-            };
-        };
-    };
-    MediaAdminController_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MediaAssetDto"];
-                };
-            };
-        };
-    };
-    MediaAdminController_remove: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    MediaAdminController_update: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateMediaDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MediaAssetDto"];
-                };
-            };
-        };
-    };
-    BusinessGalleryController_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                businessId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GalleryEntryDto"][];
-                };
-            };
-        };
-    };
-    BusinessGalleryController_set: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                businessId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SetGalleryDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GalleryEntryDto"][];
-                };
             };
         };
     };

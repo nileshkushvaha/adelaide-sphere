@@ -107,7 +107,12 @@ export function ArticleView({ post, preview = false }: Props) {
               {/* The photographer credit, which a CC Attribution licence requires
                   wherever the image appears. The alt text is not printed: it is
                   already carried by the image, and the data model has no caption. */}
-              {post.coverCredit && <figcaption className="mt-3 text-sm text-text-muted">Photograph: {post.coverCredit}</figcaption>}
+              {/* An AI-generated image says so in its own words (recorded with the image), never as a "Photograph". */}
+              {'coverDisclosure' in post && post.coverDisclosure ? (
+                <figcaption className="mt-3 text-sm text-text-muted">{post.coverDisclosure}</figcaption>
+              ) : (
+                post.coverCredit && <figcaption className="mt-3 text-sm text-text-muted">Photograph: {post.coverCredit}</figcaption>
+              )}
             </figure>
           )}
 

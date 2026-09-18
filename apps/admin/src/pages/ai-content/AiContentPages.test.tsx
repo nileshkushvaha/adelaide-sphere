@@ -52,6 +52,10 @@ vi.mock("@/api/ai-content", async (importOriginal) => ({
     prices: vi.fn(),
     proposePrice: vi.fn(),
     approvePrice: vi.fn(),
+    images: vi.fn(),
+    generateImage: vi.fn(),
+    approveImage: vi.fn(),
+    rejectImage: vi.fn(),
   },
 }));
 vi.mock("@/api/blog", () => ({
@@ -95,6 +99,7 @@ const topic = {
   followUpOfPostId: null,
   followUpReason: null,
   categoryId: null,
+  imageMode: null,
 };
 const budget = {
   enabled: true,
@@ -103,6 +108,8 @@ const budget = {
   workflowLimitMicros: 250_000,
   day: { period: "2026-09-18", reservedMicros: 0, settledMicros: 380_000, limitMicros: 500_000, warning: true },
   month: { period: "2026-09", reservedMicros: 0, settledMicros: 380_000, limitMicros: 10_000_000, warning: false },
+  imageDay: { period: "2026-09-18", reservedMicros: 0, settledMicros: 0, limitMicros: 0, warning: false },
+  imageMonth: { period: "2026-09", reservedMicros: 0, settledMicros: 0, limitMicros: 0, warning: false },
   uncertainOperations: 0,
   uncertainMicros: 0,
   outcomeUnknownOperations: 0,
@@ -110,11 +117,34 @@ const budget = {
   paidHaltReason: null as string | null,
 };
 const options = { authProvider: providerWithPermissions(permissions) };
+const imagePost = { id: "cmpostabcdefghijklmnopqr", version: 4, coverMediaId: null, coverAlt: null };
+const noImages = { globalMode: "hybrid" as const, override: null, brief: null, size: "1536x1024", quality: "medium", disclosureText: "Illustrative image created with AI.", post: null, jobs: [] };
+const storedImage = {
+  id: "cmimagejobabcdefghijklmn",
+  imageVersion: 1,
+  status: "stored" as const,
+  prompt: "A generic café counter",
+  model: "gpt-image-2.5-flare",
+  size: "1536x1024",
+  quality: "medium",
+  width: 1536,
+  height: 1024,
+  disclosureText: "Illustrative image created with AI.",
+  approvedAt: null,
+  reviewNote: null,
+  failureCode: null,
+  createdAt: "2026-09-19T01:00:00.000Z",
+  operationId: "cmimageopabcdefghijklmno",
+  operation: { state: "succeeded", costState: "settled" as const, reservedMicros: 60_000, settledMicros: 48_000, errorClass: null, priceSchedule: { version: "openai-gpt-image-2.5-flare-v1", currency: "USD" } },
+  media: { id: "cmmediaabcdefghijklmnopq", status: "ready" as const, rejectionReason: null, previewUrl: "http://127.0.0.1:9020/adelaide-sphere-media/media/x/card.webp" },
+  isFeatured: false,
+};
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(aiContentApi.research).mockResolvedValue({ packets: [], packet: null });
   vi.mocked(aiContentApi.generation).mockResolvedValue({ runs: [], operations: [], approvals: [], post: null, factReview: null });
   vi.mocked(aiContentApi.budget).mockResolvedValue(budget);
+  vi.mocked(aiContentApi.images).mockResolvedValue(noImages);
   vi.mocked(aiContentApi.list).mockResolvedValue({
     data: [topic],
     meta: { total: 1, page: 1, pageSize: 20 },
@@ -486,6 +516,49 @@ it("asks a reviewer to confirm the facts of the exact version, shows possible na
   await waitFor(() => expect(confirm).toBeEnabled());
   await ue.click(confirm);
   await waitFor(() => expect(aiContentApi.confirmFacts).toHaveBeenCalledWith(expect.objectContaining({ version: 9 }), 4, "Checked hours and address against the council page"));
+});
+it("generates a featured image only after confirming the cost, with one request key per intended image", async () => {
+  const ue = user();
+  vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, status: "ready_for_review", postId: imagePost.id, version: 9 });
+  vi.mocked(aiContentApi.images).mockResolvedValue({ ...noImages, brief: { prompt: "A generic café counter with pastries", altDraft: "Illustration of a cafe counter" }, post: imagePost });
+  vi.mocked(aiContentApi.generateImage).mockResolvedValue({ operationId: "cmop", jobId: "cmjob", created: true });
+  renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  expect(await screen.findByDisplayValue("A generic café counter with pastries")).toBeInTheDocument();
+  expect(screen.getByText("Alt draft (written before any image exists)")).toBeInTheDocument();
+  await ue.click(screen.getByRole("button", { name: "Generate image" }));
+  expect(aiContentApi.generateImage).not.toHaveBeenCalled();
+  const dialog = await screen.findByRole("dialog");
+  expect(within(dialog).getByText(/reserved from the image budget/)).toBeInTheDocument();
+  await ue.click(within(dialog).getByRole("button", { name: "Generate image" }));
+  await waitFor(() => expect(aiContentApi.generateImage).toHaveBeenCalledWith(expect.objectContaining({ version: 9 }), expect.stringMatching(/^[0-9a-f-]{36}$/), undefined));
+});
+it("offers no Generate image action in manual mode, and holds a request whose outcome is unknown", async () => {
+  vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, status: "ready_for_review", postId: imagePost.id, version: 9, imageMode: "manual" });
+  vi.mocked(aiContentApi.images).mockResolvedValue({ ...noImages, override: "manual", post: imagePost, jobs: [{ ...storedImage, status: "outcome_unknown", media: null, operation: { ...storedImage.operation, costState: "reserved", settledMicros: null } }] });
+  renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  expect(await screen.findByText("The provider may have made this image")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Generate/ })).not.toBeInTheDocument();
+  expect(screen.getByText("up to USD 0.06 reserved")).toBeInTheDocument();
+});
+it("approves the actual image only with alt text written from it, for the article version shown", async () => {
+  const ue = user();
+  vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, status: "ready_for_review", postId: imagePost.id, version: 9 });
+  vi.mocked(aiContentApi.images).mockResolvedValue({ ...noImages, post: imagePost, jobs: [storedImage] });
+  vi.mocked(aiContentApi.approveImage).mockResolvedValue({ postId: imagePost.id, postVersion: 5 });
+  renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  expect(await screen.findByAltText("Generated image 1, awaiting description")).toBeInTheDocument();
+  expect(screen.getByText("USD 0.05 (settled)")).toBeInTheDocument();
+  const approve = screen.getByText("Approve and use as featured image").closest("button")!;
+  expect(approve).toBeDisabled();
+  await ue.type(screen.getByLabelText("Alt text for image 1"), "Illustration of a café counter with a coffee machine and pastries");
+  expect(approve).toBeDisabled();
+  await ue.click(screen.getByRole("checkbox", { name: /from the image above/ }));
+  await waitFor(() => expect(approve).toBeEnabled());
+  await ue.click(approve);
+  const dialog = await screen.findByRole("dialog");
+  expect(within(dialog).getByText(/Facts and approval must be confirmed again/)).toBeInTheDocument();
+  await ue.click(within(dialog).getByRole("button", { name: "Approve and use" }));
+  await waitFor(() => expect(aiContentApi.approveImage).toHaveBeenCalledWith(storedImage.id, 4, "Illustration of a café counter with a coffee machine and pastries"));
 });
 it("shows a paid-call halt with its reason and the over-threshold warning", async () => {
   vi.mocked(aiContentApi.budget).mockResolvedValue({ ...budget, paidCallsHaltedAt: "2026-09-18T01:00:00.000Z", paidHaltReason: "provider reported model gpt-5.6-sol, approved gpt-5.6-terra" });

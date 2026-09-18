@@ -1,3 +1,4 @@
+import { coverImageDisclosure } from '@adelaide-sphere/database/editorial';
 import type { MediaVariantKind } from '@adelaide-sphere/database';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@adelaide-sphere/database';
@@ -109,12 +110,14 @@ export class BlogPublicService {
     const db = await this.database.client();
     const row = await db.post.findFirst({ where: { slug, status: 'published' }, include: cardInclude });
     if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Article not found' });
-    const [related, approvedCommentCount, businesses, aiRun] = await Promise.all([
+    const [related, approvedCommentCount, businesses, aiRun, coverDisclosure] = await Promise.all([
       this.related(row),
       db.comment.count({ where: visibleCommentsWhere(row.id) }),
       this.embeddedBusinesses(row.sanitizedBody),
       // An article is AI-assisted only through its item link; its disclosure is the one recorded with its draft.
       db.aIGenerationRun.findFirst({ where: { item: { postId: row.id }, status: 'applied', disclosureText: { not: null } }, orderBy: { generationVersion: 'desc' }, select: { disclosureText: true } }),
+      // An approved AI-generated featured image carries its own disclosure, recorded with the image.
+      coverImageDisclosure(db, row.coverMediaId),
     ]);
     return {
       ...this.toCard(row),
@@ -128,6 +131,7 @@ export class BlogPublicService {
       related,
       businesses,
       ...(aiRun?.disclosureText ? { aiDisclosure: aiRun.disclosureText } : {}),
+      ...(coverDisclosure ? { coverDisclosure } : {}),
     };
   }
 

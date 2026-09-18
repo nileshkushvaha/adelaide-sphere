@@ -114,4 +114,5 @@ export class TopicDto {
   @ApiPropertyOptional({ nullable: true }) followUpOfPostId!: string | null;
   @ApiPropertyOptional({ nullable: true }) followUpReason!: string | null;
   @ApiPropertyOptional({ nullable: true, description: 'Existing category the generated article uses.' }) categoryId!: string | null;
+  @ApiPropertyOptional({ enum: ['manual', 'hybrid'], nullable: true, description: 'Per-article image mode; null follows AI Settings.' }) imageMode!: 'manual' | 'hybrid' | null;
 }

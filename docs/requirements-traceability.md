@@ -154,3 +154,26 @@ Fixes from a static review of `9b90b6b`:
 - **P2:** Retry-After is honoured in full (ms, seconds, HTTP date). Longer than one hour, or unparseable, is held rather than retried.
 
 Additive migration `20260918210000_ai_content_fact_confirmation` (test DB only). Five mutation checks were all caught. Details: [Phase 1D completion record §16](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1d-completion.md).
+
+## AI Automation Phase 1E delivery — 19 September 2026
+
+Workstream 1E only, under the owner's image decisions, verified locally against the isolated test database with fake providers and in-memory storage. It adds hybrid, prompt-only-by-default featured images:
+
+- **Generation:** a paid image only through an explicit Generate image action. Automatic mode is not approved and is refused.
+- **Provider:** a provider-neutral image seam with the OpenAI Image API adapter, and a code-declared model (`gpt-image-2.5-flare`).
+- **Cost:** a versioned image price with a per-image output bound, a separate image budget (default zero), and images counted in the cumulative per-article cap.
+- **Media:** intake through the existing quarantine and media processing; no provider URL is stored or published.
+- **Approval:** a person's approval of the actual image, with alt text written from it, bound to checksum, alt text and disclosure. A regeneration supersedes it.
+- **Publication:** a required ready featured image (uploaded or approved AI) in the shared policy for both paths. Attaching an image invalidates the fact confirmation and content approval.
+- **Failures:** unknown outcomes are held, never re-sent.
+- **Disclosure:** configurable, shown as the caption of an approved AI cover.
+
+Evidence:
+
+- new 1E spec 10/10 (twice);
+- full integration 393/393 plus 5/5; all unit suites; e2e 20/20;
+- eight mutation checks, all caught.
+
+Details: [Phase 1E completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1e-completion.md).
+
+Not migrated on any retained database (dev is 1 migration behind; its article detail route fails until migrated), not deployed, not enabled, not live-provider tested. No external paid call was made. Automatic image mode (AI-149, AI-384) remains open by owner decision. 1F has not started.

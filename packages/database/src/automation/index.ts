@@ -56,7 +56,7 @@ export {
   type ResearchUrl,
 } from './research.js';
 export { MAX_DISCOVERY_CANDIDATES, recordDiscoveryCandidates, requestDiscovery, type DiscoveryResult, type DiscoverySignal } from './discovery.js';
-export { APPROVED_TEXT_MODELS, TEXT_PROVIDER_CAPABILITIES, capabilityProblem, type CapabilityProblem, type ModelCapability } from './providers.js';
+export { APPROVED_IMAGE_MODEL, APPROVED_TEXT_MODELS, IMAGE_PROVIDER_CAPABILITIES, TEXT_PROVIDER_CAPABILITIES, capabilityProblem, imageCapabilityProblem, type CapabilityProblem, type ImageModelCapability, type ModelCapability } from './providers.js';
 export {
   BudgetRefusal,
   approvedPrice,
@@ -68,6 +68,7 @@ export {
   reserveBudget,
   settleOperation,
   type ApprovedPrice,
+  type BudgetCategory,
   type BudgetLimits,
   type SettlementInput,
 } from './budget.js';
@@ -87,3 +88,18 @@ export {
   type TextRequest,
 } from './generation.js';
 export { applyProposal, approveContent, approvePrice, confirmFacts, currentFactConfirmation, postCoverage, postFactReview, proposePrice, recheckFacts, resolveUnknownOperation, resumePaidCalls, type PriceInput } from './review.js';
+export {
+  approveImage,
+  beginImageSend,
+  completeImage,
+  featuredBrief,
+  loadImageRequest,
+  readImageSettings,
+  recordImageRejected,
+  recordImageUnknown,
+  rejectImage,
+  requestImage,
+  type ImageRequest,
+  type ImageResult,
+  type ImageSettings,
+} from './images.js';

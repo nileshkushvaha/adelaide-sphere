@@ -32,6 +32,7 @@ import { useUnsavedChanges } from "@/shared/useUnsavedChanges";
 import { useDocumentTitle } from "@/shared/useDocumentTitle";
 import { NoveltyCard, ResearchCard, SourcesCard } from "./ResearchPanels";
 import { ArticleCard, BudgetCard } from "./GenerationPanels";
+import { FeaturedImageCard } from "./ImagePanels";
 
 export function AutomationNotice() {
   return (
@@ -194,6 +195,7 @@ export function AiTopicDetailPage() {
           <SourcesCard key={`${state.data.id}-${state.data.version}`} topic={state.data} canReview={canReview} onChange={() => reload()} />
           <ResearchCard topic={state.data} canReview={canReview} onChange={() => reload()} />
           <ArticleCard topic={state.data} onChange={() => reload()} />
+          {state.data.postId && <FeaturedImageCard topic={state.data} onChange={() => reload()} />}
         </>
       )}
     </>

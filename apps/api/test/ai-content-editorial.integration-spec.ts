@@ -113,8 +113,15 @@ describe('AI Content Phase 1B editorial foundation (real MySQL/API)', () => {
     await db().aIApproval.create({ data: { ...bound, kind: 'content' } });
   }
 
+  /** An editor's uploaded, ready featured image (1E requires one to publish); set as if it came with the draft. */
+  async function withUploadedCover(postId: string) {
+    const asset = await db().mediaAsset.create({ data: { sourceName: 'photo.jpg', mimeType: 'image/jpeg', bytes: 1000, width: 1600, height: 900, checksum: 'c'.repeat(64), objectKey: `quarantine/${randomUUID()}.jpg`, status: 'ready', altText: 'A photograph of a laneway' } });
+    await db().post.update({ where: { id: postId }, data: { coverMediaId: asset.id, coverAlt: 'A photograph of a laneway' } });
+  }
+
   /** What the research verifier and the 1D approval command will write; fixtures only. */
   async function approveAndVerify(itemId: string, postId: string) {
+    await withUploadedCover(postId);
     await verifiedPacket(itemId);
     const material = await currentMaterial(postId);
     await db().aIGenerationRun.updateMany({ where: { itemId, status: 'applied' }, data: { factCheck: 'passed' } });
@@ -373,7 +380,8 @@ describe('AI Content Phase 1B editorial foundation (real MySQL/API)', () => {
       expect(blocked.body.error.fields.publication).toEqual(expect.arrayContaining([expect.stringMatching(/approve the current version/), expect.stringMatching(/facts .* have not been verified/)]));
       expect((await schedule()).status).toBe(409);
 
-      // Approved, with verified research, but the run's fact gate is still closed: still refused.
+      // Approved, with verified research and a ready featured image, but the run's fact gate is still closed: still refused.
+      await withUploadedCover(postId);
       await verifiedPacket(itemId);
       const material = await currentMaterial(postId);
       await recordApproval(itemId, postId, material);

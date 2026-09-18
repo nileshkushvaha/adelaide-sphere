@@ -25,7 +25,7 @@ const declaration = (
   enforcedBy:
     'packages/database/src/automation (research, generation requests, budget reservations and settlement read these values in their transactions)',
   consequence:
-    'While enabled: free public research, and budgeted drafts from verified research that always need human approval. No paid images, cadence or auto-publishing.',
+    'While enabled: free public research, budgeted drafts from verified research, and featured images generated only when a person asks. Everything needs human approval; no cadence or auto-publishing.',
 });
 export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
   key: 'ai_content',
@@ -36,11 +36,12 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
   storeKey: 'defaults',
   viewPermission: 'ai_content.configure',
   updatePermission: 'ai_content.configure',
-  validate: (values): Record<string, string> =>
-    values.timezone === 'Australia/Adelaide'
-      ? {}
-      : { timezone: 'This deployment uses Australia/Adelaide' },
-  note: 'Phase 1D: drafts are generated only from verified research, within the budget, and never publish without human approval. Paid images, cadence and auto-publishing stay off.',
+  validate: (values): Record<string, string> => ({
+    ...(values.timezone === 'Australia/Adelaide' ? {} : { timezone: 'This deployment uses Australia/Adelaide' }),
+    // Owner decision (Phase 1E): paid images only through an explicit Generate image action.
+    ...(values.imageMode === 'automatic' ? { imageMode: 'Automatic image generation is not approved. Use hybrid or manual.' } : {}),
+  }),
+  note: 'Phase 1E: images are generated only when a person asks, within the image budget, and every AI image needs human approval. Cadence and auto-publishing stay off.',
   settings: [
     declaration(
       'enabled',
@@ -70,9 +71,9 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
       'imageMode',
       'Image mode',
       'enum',
-      'manual',
+      'hybrid',
       { values: ['manual', 'hybrid', 'automatic'] },
-      'Configuration only; no image providers are called.',
+      'Manual: prompt only. Hybrid: prompt only, plus a Generate image action per article. Automatic is not approved.',
     ),
     declaration(
       'location',
@@ -193,6 +194,54 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
       'AI-assisted content: This article was prepared with AI assistance and reviewed against source information before publication.',
       { min: 1, max: 500 },
       'Shown on published AI-assisted articles; each draft records the wording it used.',
+    ),
+    declaration(
+      'featuredImageRequired',
+      'Featured image required to publish',
+      'boolean',
+      true,
+      {},
+      'A ready featured image with alt text is needed before an AI article publishes. It can be uploaded or chosen from the library.',
+    ),
+    declaration(
+      'imageSize',
+      'Generated image size',
+      'enum',
+      '1536x1024',
+      { values: ['1536x1024', '1024x1024', '1024x1536'] },
+      'Landscape suits a featured image. The approved price must cover this size.',
+    ),
+    declaration(
+      'imageQuality',
+      'Generated image quality',
+      'enum',
+      'medium',
+      { values: ['low', 'medium', 'high'] },
+      'Higher quality costs more. The approved price must cover this quality.',
+    ),
+    declaration(
+      'imageDailyLimitMinor',
+      'Image budget per day (minor units)',
+      'integer',
+      0,
+      { min: 0, max: 100000000 },
+      'Separate from the text budget. Zero allows no image generation.',
+    ),
+    declaration(
+      'imageMonthlyLimitMinor',
+      'Image budget per month (minor units)',
+      'integer',
+      0,
+      { min: 0, max: 100000000 },
+      'Separate from the text budget. Zero allows no image generation.',
+    ),
+    declaration(
+      'imageDisclosureText',
+      'AI image disclosure',
+      'string',
+      'Illustrative image created with AI.',
+      { min: 1, max: 255 },
+      'Shown under an AI-generated featured image; each image records the wording it used.',
     ),
     declaration(
       'discoveryKeywords',

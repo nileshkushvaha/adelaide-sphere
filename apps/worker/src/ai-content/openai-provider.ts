@@ -51,7 +51,7 @@ export function retryAfterMs(headers: { get(name: string): string | null }, now 
   return delay <= MAX_PROVIDER_RETRY_DELAY_MS ? delay : null;
 }
 
-const safeJson = (text: string): unknown => {
+export const safeJson = (text: string): unknown => {
   try {
     return JSON.parse(text);
   } catch {
@@ -60,7 +60,7 @@ const safeJson = (text: string): unknown => {
 };
 
 /** Classifies an HTTP refusal. Only statuses that mean "not processed" are definite rejections. */
-function classify(status: number, body: unknown): { errorClass: string; retryable: boolean } | null {
+export function classify(status: number, body: unknown): { errorClass: string; retryable: boolean } | null {
   const code = (body as { error?: { code?: string; type?: string } } | null)?.error?.code ?? (body as { error?: { type?: string } } | null)?.error?.type ?? '';
   if (status === 400 || status === 422) return { errorClass: 'invalid_request', retryable: false };
   if (status === 401) return { errorClass: 'authentication', retryable: false };

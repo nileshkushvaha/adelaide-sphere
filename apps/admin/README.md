@@ -154,3 +154,14 @@ Budgeted, reviewed text generation from the verified research packet:
 - research-bound approval and unknown-outcome resolution.
 
 New permissions: `ai_content.generate` and `ai_content.approve`. Migration `20260918190000_ai_content_generation` has been applied only to the isolated test database. No live provider call has been made. See the [Phase 1D completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1d-completion.md).
+
+## AI Content Phase 1E
+
+Featured images: hybrid and prompt-only by default. A paid image is made only through an explicit Generate image action; automatic mode is not approved.
+
+- **Provider:** a provider-neutral image seam with the OpenAI Image API adapter in the worker, using the same server-side `OPENAI_API_KEY`.
+- **Cost:** versioned image prices with a per-image output-token bound, and a separate image budget.
+- **Media:** intake through the existing quarantine and media processing; a provider URL is never kept.
+- **Approval and publication:** human approval with alt text written from the actual image; a required featured image in the shared publication policy.
+
+Migration `20260919100000_ai_content_images` has been applied only to the isolated test database. See the [Phase 1E completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1e-completion.md).

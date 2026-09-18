@@ -84,6 +84,8 @@ model AdminUser {
   aiClaimsCreated       AIFactClaim[]          @relation("AIClaimCreator")
   aiOperationsRequested AIOperation[]          @relation("AIOperationRequester")
   aiPricesCreated       AIPriceSchedule[]      @relation("AIPriceCreator")
+  aiImagesRequested     AIImageJob[]           @relation("AIImageRequester")
+  aiImagesApproved      AIImageJob[]           @relation("AIImageApprover")
   aiPricesApproved      AIPriceSchedule[]      @relation("AIPriceApprover")
   roles                 AdminRole[]
   directPermissions     AdminPermission[]      @relation("AdminDirectPermission")
@@ -1352,6 +1354,8 @@ model MediaAsset {
   bodyReferences           ContentMediaReference[] @relation("ContentBodyMedia")
   /// Menu items that link this document (change log 1.16).
   menuItemDocuments        MenuItem[]              @relation("MenuItemDocument")
+  /// Set when the asset came from an AI image generation (Phase 1E); its provenance and approval.
+  aiImageJob               AIImageJob?
 
   @@index([status, createdAt])
   @@index([kind, status, createdAt])
@@ -1979,6 +1983,8 @@ model AIContentItem {
   followUpReason         String?            @db.VarChar(500)
   /// The existing category the generated article will use; chosen by an editor, never invented.
   categoryId             String?
+  /// Per-article image mode; null follows the global setting (SRS §12 "global default plus per-post override").
+  imageMode              AIImageMode?
   createdBy              AdminUser?         @relation("AITopicCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
   humanModifiedBy        AdminUser?         @relation("AITopicHumanEditor", fields: [humanModifiedByAdminId], references: [id], onDelete: SetNull)
   post                   Post?              @relation(fields: [postId], references: [id], onDelete: Restrict)
@@ -1988,6 +1994,7 @@ model AIContentItem {
   packets                AIResearchPacket[]
   runs                   AIGenerationRun[]
   operations             AIOperation[]
+  imageJobs              AIImageJob[]
   approvals              AIApproval[]
 
   @@index([status, priority, createdAt, id])
@@ -2089,6 +2096,8 @@ enum AIOperationKind {
   discovery
   /// One billable text-generation request. Never retried blindly: see providerPhase.
   generate
+  /// One billable image-generation request (Phase 1E), only on a person's explicit action. Never retried blindly.
+  image
 }
 
 enum AIOperationState {
@@ -2164,6 +2173,7 @@ model AIOperation {
   requestedBy        AdminUser?        @relation("AIOperationRequester", fields: [requestedByAdminId], references: [id], onDelete: SetNull)
   run                AIGenerationRun?  @relation(fields: [runId], references: [id], onDelete: Restrict)
   packet             AIResearchPacket? @relation(fields: [packetId], references: [id], onDelete: Restrict)
+  imageJob           AIImageJob?
 
   @@index([packetId])
   @@index([priceScheduleId])
@@ -2431,6 +2441,11 @@ model AIPriceSchedule {
   cachedInputMicrosPerMTok   Int
   outputMicrosPerMTok        Int
   longContextThresholdTokens Int
+  /// Image models only: the size and quality this price covers, and the approved bound on output
+  /// tokens for one image at that size and quality (the provider does not publish one for every model).
+  imageSize                  String?       @db.VarChar(16)
+  imageQuality               String?       @db.VarChar(16)
+  maxOutputTokens            Int?
   sourceUrl                  String        @db.VarChar(500)
   effectiveFrom              DateTime      @db.DateTime(3)
   status                     AIPriceStatus @default(proposed)
@@ -2451,6 +2466,9 @@ model AIPriceSchedule {
 enum AIBudgetScope {
   day
   month
+  /// The separate image budget category (owner decision, Phase 1E).
+  image_day
+  image_month
 }
 
 /// Spend per business day and month in the configured timezone (plan §I). Every paid call
@@ -2469,4 +2487,79 @@ model AIBudgetBucket {
 
   @@unique([scope, period, currency])
   @@map("ai_budget_buckets")
+}
+
+/// Image mode for AI articles (Phase 1E). "automatic" is not approved and is not stored.
+enum AIImageMode {
+  manual
+  hybrid
+}
+
+enum AIImageSlot {
+  featured
+}
+
+enum AIImageJobStatus {
+  /// Reserved and queued; the provider may not have been called yet.
+  requested
+  /// The image is stored through the media pipeline and awaits a person's review.
+  stored
+  /// A person approved it, with alt text written from the actual image, and it became the featured image.
+  approved
+  rejected
+  failed
+  /// The request may have reached the provider, but no result could be established.
+  outcome_unknown
+  /// A newer image for the same slot replaced it; its approval no longer counts.
+  superseded
+}
+
+/// One AI image generation for an article's slot (SRS §12, §27 AIImageJob; plan §E "run + image slot +
+/// explicit image version"). Bytes live only in the media pipeline (MediaAsset); a provider URL is never kept.
+/// The approval is bound to the asset checksum, the alt text and the disclosure wording.
+model AIImageJob {
+  id                     String           @id @default(cuid())
+  itemId                 String
+  slot                   AIImageSlot      @default(featured)
+  /// Explicit image version for the slot; a regeneration is the next version, never a retry.
+  imageVersion           Int
+  operationId            String           @unique
+  status                 AIImageJobStatus @default(requested)
+  /// The exact prompt sent (policy suffix included), and the policy version it follows.
+  prompt                 String           @db.VarChar(1500)
+  promptHash             String           @db.Char(64)
+  policyVersion          String           @db.VarChar(32)
+  provider               String           @db.VarChar(32)
+  model                  String           @db.VarChar(64)
+  size                   String           @db.VarChar(16)
+  quality                String           @db.VarChar(16)
+  mediaAssetId           String?          @unique
+  checksum               String?          @db.Char(64)
+  width                  Int?
+  height                 Int?
+  disclosureText         String           @db.VarChar(255)
+  disclosureHash         String           @db.Char(64)
+  requestedByAdminId     String?
+  approvedByAdminId      String?
+  approvedAt             DateTime?        @db.DateTime(3)
+  approvedChecksum       String?          @db.Char(64)
+  approvedAltHash        String?          @db.Char(64)
+  approvedDisclosureHash String?          @db.Char(64)
+  approvedPostVersion    Int?
+  reviewNote             String?          @db.VarChar(500)
+  failureCode            String?          @db.VarChar(64)
+  supersededAt           DateTime?        @db.DateTime(3)
+  version                Int              @default(1)
+  createdAt              DateTime         @default(now()) @db.DateTime(3)
+  updatedAt              DateTime         @updatedAt @db.DateTime(3)
+  item                   AIContentItem    @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  operation              AIOperation      @relation(fields: [operationId], references: [id], onDelete: Restrict)
+  mediaAsset             MediaAsset?      @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
+  requestedBy            AdminUser?       @relation("AIImageRequester", fields: [requestedByAdminId], references: [id], onDelete: SetNull)
+  approvedBy             AdminUser?       @relation("AIImageApprover", fields: [approvedByAdminId], references: [id], onDelete: SetNull)
+
+  @@unique([itemId, slot, imageVersion])
+  @@index([requestedByAdminId])
+  @@index([approvedByAdminId])
+  @@map("ai_image_jobs")
 }
