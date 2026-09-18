@@ -86,6 +86,7 @@ const NAV_GROUPS: NavGroup[] = [
       { key: '/ai-content', label: 'AI Content', icon: <ReadOutlined aria-hidden="true" />, permission: 'ai_content.view' },
       { key: '/ai-content/topics', label: 'Topic Queue', icon: <EditOutlined aria-hidden="true" />, permission: 'ai_content.view' },
       { key: '/ai-content/fact-review', label: 'Fact Review', icon: <FileSearchOutlined aria-hidden="true" />, permission: 'ai_content.view' },
+      { key: '/ai-content/pricing', label: 'AI Pricing', icon: <GlobalOutlined aria-hidden="true" />, permission: 'ai_content.configure' },
       { key: '/ai-content/sources', label: 'Research Sources', icon: <GlobalOutlined aria-hidden="true" />, permission: 'ai_content.configure' },
       { key: '/ai-content/settings', label: 'AI Settings', icon: <SettingOutlined aria-hidden="true" />, permission: 'ai_content.configure' },
       { key: '/posts', label: 'Articles', icon: <ReadOutlined aria-hidden="true" />, permission: 'posts.view' },

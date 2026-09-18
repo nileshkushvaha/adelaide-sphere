@@ -56,3 +56,34 @@ export {
   type ResearchUrl,
 } from './research.js';
 export { MAX_DISCOVERY_CANDIDATES, recordDiscoveryCandidates, requestDiscovery, type DiscoveryResult, type DiscoverySignal } from './discovery.js';
+export { APPROVED_TEXT_MODELS, TEXT_PROVIDER_CAPABILITIES, capabilityProblem, type CapabilityProblem, type ModelCapability } from './providers.js';
+export {
+  BudgetRefusal,
+  approvedPrice,
+  budgetStatus,
+  haltPaidCalls,
+  paidCallsHalt,
+  readBudgetLimits,
+  releaseReservation,
+  reserveBudget,
+  settleOperation,
+  type ApprovedPrice,
+  type BudgetLimits,
+  type SettlementInput,
+} from './budget.js';
+export {
+  GenerationCommandError,
+  beginSend,
+  completeGeneration,
+  loadGenerationRequest,
+  readGenerationSettings,
+  recordAccepted,
+  recordRejected,
+  recordUnknown,
+  requestBytes,
+  requestGeneration,
+  verifiedClaims,
+  type ProviderResult,
+  type TextRequest,
+} from './generation.js';
+export { applyProposal, approveContent, approvePrice, postCoverage, proposePrice, recheckFacts, resolveUnknownOperation, resumePaidCalls, type PriceInput } from './review.js';

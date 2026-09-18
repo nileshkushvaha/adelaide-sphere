@@ -8,6 +8,8 @@ import { ResendEnquiryMailer } from './mailer/resend-mailer.js';
 import { SmtpEnquiryMailer } from './mailer/smtp-mailer.js';
 import { randomBytes } from 'node:crypto';
 import { AI_OPERATION_JOB, CACHE_INVALIDATE_JOB, ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB, QUEUE_NAME, SCHEDULED_TASK_JOB, buildEnquiryMail, redisConnectionFromUrl } from '@adelaide-sphere/domain';
+import { OpenAiTextProvider } from './ai-content/openai-provider.js';
+import type { TextProvider } from './ai-content/text-provider.js';
 import { runAiOperation, type AiOperationJobData } from './ai-content/operations.js';
 import { ScheduleRunner } from './schedule-runner.js';
 import { WorkerHeartbeatPublisher } from './heartbeat.js';
@@ -45,6 +47,10 @@ async function main(): Promise<void> {
   const runnerId = `${process.pid}-${randomBytes(4).toString('hex')}`;
   const schedules = new ScheduleRunner(db, config.redisUrl, runnerId, (line) => log.line(line), storage);
 
+  // Only a provider with a server-side credential exists; the key never leaves this process except to the provider.
+  const textProviders: Record<string, TextProvider> = {};
+  if (config.aiText.openaiApiKey) textProviders.openai = new OpenAiTextProvider(config.aiText.openaiApiKey);
+  const aiDeps = { textProviders };
   const worker = new Worker<DeliveryJobData & MediaJobData & CacheInvalidationJobData & ScheduledTaskJobData>(
     QUEUE_NAME,
     async (job: Job<DeliveryJobData & MediaJobData & CacheInvalidationJobData & ScheduledTaskJobData>) => {
@@ -63,7 +69,7 @@ async function main(): Promise<void> {
   async function route(job: Job<DeliveryJobData & MediaJobData & CacheInvalidationJobData & ScheduledTaskJobData>): Promise<unknown> {
     if (job.name === SCHEDULED_TASK_JOB) return schedules.run(job.data);
     if (job.name === CACHE_INVALIDATE_JOB) return invalidateCache(job.data, { target: config.revalidate });
-    if (job.name === AI_OPERATION_JOB) return runAiOperation(db, job.data as AiOperationJobData, runnerId);
+    if (job.name === AI_OPERATION_JOB) return runAiOperation(db, job.data as AiOperationJobData, runnerId, aiDeps);
     if (job.name === MEDIA_PROCESS_JOB) {
       return processMediaAsset(job.data, {
         db,

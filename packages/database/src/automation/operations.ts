@@ -218,6 +218,27 @@ export async function cancelItemOperations(tx: Tx, itemId: string): Promise<numb
   return result.count;
 }
 
+/**
+ * A paid generation whose worker vanished. Nothing sent: safe to run again.
+ * Accepted with a response id: run again to *retrieve*, never to re-send.
+ * Possibly sent without an id: the outcome is unknown and an operator decides
+ * (a lapsed lease is not proof the provider did no work).
+ */
+async function recoverGeneration(db: DatabaseClient, operationId: string, phase: string | null, attempts: number): Promise<void> {
+  await db.$transaction(async (tx) => {
+    // Out of attempts while holding a sent request is as unresolved as a lost send.
+    if (phase === 'sending' || (phase === 'sent' && attempts >= MAX_OPERATION_ATTEMPTS)) {
+      const updated = await tx.$executeRaw`UPDATE ai_operations SET state = 'outcome_unknown', leaseOwner = NULL, leaseUntil = NULL, errorClass = 'worker_lost_during_send', resultCode = 'outcome_unknown', updatedAt = UTC_TIMESTAMP(3)
+        WHERE id = ${operationId} AND state = 'running' AND leaseUntil < UTC_TIMESTAMP(3)`;
+      if (updated === 1) await tx.auditLog.create({ data: { action: 'ai_content.generation.outcome_unknown', targetType: 'ai_operation', targetId: operationId, metadata: { errorClass: 'worker_lost_during_send' } } });
+      return;
+    }
+    const updated = await tx.$executeRaw`UPDATE ai_operations SET state = 'pending', leaseOwner = NULL, leaseUntil = NULL, resultCode = 'lease_expired', nextAttemptAt = UTC_TIMESTAMP(3), updatedAt = UTC_TIMESTAMP(3)
+      WHERE id = ${operationId} AND state = 'running' AND leaseUntil < UTC_TIMESTAMP(3)`;
+    if (updated === 1) await enqueueOperationDelivery(tx, operationId);
+  });
+}
+
 export interface RecoveryResult {
   reclaimed: number;
   redelivered: number;
@@ -230,12 +251,17 @@ export interface RecoveryResult {
  */
 export async function recoverOperations(db: DatabaseClient, redeliverAfterMs = REDELIVERY_AFTER_MS): Promise<RecoveryResult> {
   const result: RecoveryResult = { reclaimed: 0, redelivered: 0, exhausted: 0 };
-  const expired = await db.$queryRaw<{ id: string; kind: string; attempts: number; itemId: string | null }[]>`
-    SELECT id, kind, attempts, itemId FROM ai_operations
+  const expired = await db.$queryRaw<{ id: string; kind: string; attempts: number; itemId: string | null; providerPhase: string | null }[]>`
+    SELECT id, kind, attempts, itemId, providerPhase FROM ai_operations
      WHERE state = 'running' AND leaseUntil < UTC_TIMESTAMP(3)
      ORDER BY leaseUntil LIMIT ${RECOVERY_BATCH}`;
   for (const op of expired) {
-    // Only DB-local work is retried; anything with an external effect would need reconciling first.
+    if (op.kind === 'generate') {
+      await recoverGeneration(db, op.id, op.providerPhase, Number(op.attempts));
+      result.reclaimed += 1;
+      continue;
+    }
+    // Only DB-local or read-only work is retried; anything with an external effect would need reconciling first.
     if (!RETRY_SAFE_KINDS.has(op.kind)) continue;
     await db.$transaction(async (tx) => {
       const exhausted = Number(op.attempts) >= MAX_OPERATION_ATTEMPTS;

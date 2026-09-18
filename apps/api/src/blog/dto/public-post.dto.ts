@@ -97,6 +97,8 @@ export class PublicPostDto extends PublicPostCardDto {
   @ApiProperty({ description: 'Whether the article accepts new comments (SRS COM 002)' }) commentsEnabled!: boolean;
   @ApiProperty() approvedCommentCount!: number;
   @ApiProperty({ format: 'date-time' }) firstPublishedAt!: string;
+  @ApiPropertyOptional({ type: String, nullable: true, description: 'Reader disclosure for an AI-assisted article: the wording recorded with the draft it came from. Absent for other articles.' })
+  aiDisclosure?: string | null;
   @ApiProperty({ format: 'date-time' }) updatedAt!: string;
   @ApiProperty({ type: [PublicPostCardDto], description: 'Up to four related articles (SRS BLOG 004)' }) related!: PublicPostCardDto[];
   @ApiProperty({ type: [PublicEmbeddedBusinessDto], description: 'Published businesses the body shows as cards; a card whose business is not here is not shown' }) businesses!: PublicEmbeddedBusinessDto[];

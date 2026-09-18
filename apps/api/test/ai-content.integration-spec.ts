@@ -97,7 +97,7 @@ describe('AI Content Phase 1A (real MySQL/API)', () => {
     expect(settings.body.data.values).toMatchObject({
       enabled: false,
       postingEnabled: false,
-      hardMonthlyLimitMinor: 0,
+      hardMonthlyLimitMinor: 1000,
     });
     const overview = await agent()
       .get(`${base}/overview`)

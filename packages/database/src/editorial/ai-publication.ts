@@ -71,6 +71,12 @@ export async function aiPublicationDecision(tx: Tx, input: { postId: string; act
   const approval = await currentContentApproval(tx, item.id, input.postId);
   if (!approval || approval.materialHash !== material.hash || approval.adminId === null) {
     reasons.push('An administrator must approve the current version of this AI article.');
+  } else {
+    // The approval certified one research packet; newer or changed research needs a new approval.
+    const packet = await tx.aIResearchPacket.findFirst({ where: { itemId: item.id }, orderBy: { version: 'desc' }, select: { id: true, contentHash: true } });
+    if (!packet || approval.researchPacketId !== packet.id || approval.researchPacketHash !== packet.contentHash) {
+      reasons.push('The research changed after approval; approve the article again.');
+    }
   }
   const run = await tx.aIGenerationRun.findFirst({ where: { itemId: item.id, status: 'applied' }, orderBy: { generationVersion: 'desc' }, select: { factCheck: true } });
   if (run?.factCheck !== 'passed') reasons.push('The facts in this AI article have not been verified.');
@@ -90,7 +96,7 @@ export function currentContentApproval(tx: Tx, itemId: string, postId: string) {
   return tx.aIApproval.findFirst({
     where: { itemId, postId, kind: 'content', invalidatedAt: null },
     orderBy: { createdAt: 'desc' },
-    select: { id: true, materialHash: true, adminId: true },
+    select: { id: true, materialHash: true, adminId: true, researchPacketId: true, researchPacketHash: true },
   });
 }
 

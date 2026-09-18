@@ -118,6 +118,11 @@ export function ArticleView({ post, preview = false }: Props) {
             <p className="rounded-card border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">This is a paid guest post. It was reviewed by our editors before publishing.</p>
           )}
 
+          {/* An AI-assisted article says so before it starts, in the wording recorded with its draft. */}
+          {'aiDisclosure' in post && post.aiDisclosure && (
+            <p className="rounded-card border border-sky-300 bg-sky-50 px-4 py-3 text-sm text-sky-950">{post.aiDisclosure}</p>
+          )}
+
           {/* Reading depth is measured on the published article only, never on a private preview (SRS 1.10 BLOG 006). */}
           <div data-track-read={preview ? undefined : post.slug}>
             <ArticleBody post={post} body={outline.html} />

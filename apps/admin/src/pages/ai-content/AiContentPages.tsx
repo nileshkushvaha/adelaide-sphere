@@ -31,14 +31,15 @@ import { errorMessage, fieldErrors, useAsync } from "@/shared/useAsync";
 import { useUnsavedChanges } from "@/shared/useUnsavedChanges";
 import { useDocumentTitle } from "@/shared/useDocumentTitle";
 import { NoveltyCard, ResearchCard, SourcesCard } from "./ResearchPanels";
+import { ArticleCard, BudgetCard } from "./GenerationPanels";
 
 export function AutomationNotice() {
   return (
     <Alert
       type="info"
       showIcon
-      message="Research only: no article generation"
-      description="While enabled, approved topics are checked against free public pages. No provider is paid."
+      message="Human review required"
+      description="Drafts come only from verified research, within the budget, and never publish without approval."
       style={{ marginBottom: 20 }}
     />
   );
@@ -70,7 +71,7 @@ export function AiOverviewPage() {
             Automation configured:{" "}
             <strong>{state.data.enabled ? "Enabled" : "Disabled"}</strong>.
             Research: <strong>{state.data.executionActive ? "Active" : "Inactive"}</strong>. Article generation:{" "}
-            <strong>Not available</strong>.
+            <strong>{state.data.generationAvailable ? "Available (budgeted, reviewed)" : "Not available"}</strong>.
           </Typography.Paragraph>
           <Descriptions
             items={TOPIC_STATUSES.map((key) => ({
@@ -81,6 +82,7 @@ export function AiOverviewPage() {
           />
         </Card>
       )}
+      {state.status === "ready" && <BudgetCard />}
       <Space wrap style={{ marginTop: 16 }}>
         <Link to="/ai-content/topics">Topic Queue</Link>
         {can(PERMISSION.aiContentConfigure) && (
@@ -191,6 +193,7 @@ export function AiTopicDetailPage() {
           <NoveltyCard topic={state.data} canReview={canReview} onChange={() => reload()} />
           <SourcesCard key={`${state.data.id}-${state.data.version}`} topic={state.data} canReview={canReview} onChange={() => reload()} />
           <ResearchCard topic={state.data} canReview={canReview} onChange={() => reload()} />
+          <ArticleCard topic={state.data} onChange={() => reload()} />
         </>
       )}
     </>

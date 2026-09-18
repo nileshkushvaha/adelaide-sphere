@@ -487,3 +487,20 @@ Workstream 1C only, under the owner's pilot policy, verified locally against the
 Evidence: new 1C spec 20/20; full integration 364/364 plus 5/5; all unit suites; mutation checks on the admission lock and the SSRF check. A live free public retrieval succeeded on an official council page. Details: [Phase 1C completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1c-completion.md).
 
 Not migrated on any retained database, not deployed; research runs only while automation is enabled. No paid call, generation, image, cadence or social functionality. 1D is blocked on the owner's provider, credential, pricing, budget and byline decisions.
+
+## AI Automation Phase 1D delivery — 18 September 2026
+
+Workstream 1D only, under the owner's Phase 1D decisions, verified locally against the isolated test database with a fake provider:
+
+- the provider-neutral text adapter (OpenAI Responses, background mode) with the approved models as code constants;
+- versioned approved price schedules; day/month/workflow budget reservations and single settlement;
+- a fail-closed paid-call halt on price, model or usage discrepancy;
+- structured generation from the verified research packet only, with deterministic fact and name coverage (violations go to Needs Fact Review);
+- light-model metadata proposals; proposals for human-edited drafts applied only by compare-and-set;
+- approval bound to the article and the research packet;
+- unknown-outcome operator resolution;
+- owner byline and disclosure settings, with the disclosure shown publicly.
+
+Evidence: new 1D spec 16/16; full integration 380/380 plus 5/5; all unit suites; e2e 20/20; six mutation checks, all caught. Details: [Phase 1D completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1d-completion.md).
+
+Not migrated on any retained database, not deployed, not enabled, not live-provider tested. No external paid call was made. Images (1E), cadence (1F), auto-publish (1G) and Phase 2 remain planned.

@@ -61,7 +61,7 @@ export async function SiteHeader() {
           <Link href="/" className="flex shrink-0 items-center gap-2.5 rounded-lg py-1 text-text">
               <span className={settings.branding.logo ? "block w-[230px] max-w-full sm:w-[280px]" : "relative block aspect-[7.5/1] w-[230px] max-w-full overflow-hidden sm:w-[280px]"}>
               <Image
-                src={settings.branding.logo?.url ?? '/Adelaide_Sphere_Light_Logo.png'}
+                src={settings.branding.logo?.url ?? '/images/Adelaide_Sphere_Light_Logo.png'}
                 alt={settings.name}
                 priority
                 width={settings.branding.logo?.width ?? 2172}

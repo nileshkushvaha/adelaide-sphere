@@ -586,6 +586,332 @@
         ]
       }
     },
+    "/api/v1/admin/ai-content/topics/{id}/article": {
+      "put": {
+        "operationId": "AiGenerationController_articleSettings",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TopicArticleSettingsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/topics/{id}/generate": {
+      "post": {
+        "operationId": "AiGenerationController_generate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/topics/{id}/generation": {
+      "get": {
+        "operationId": "AiGenerationController_history",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/topics/{id}/approve": {
+      "post": {
+        "operationId": "AiGenerationController_approve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveContentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/topics/{id}/recheck-facts": {
+      "post": {
+        "operationId": "AiGenerationController_recheck",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TopicVersionOnlyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/runs/{id}/apply": {
+      "post": {
+        "operationId": "AiGenerationController_applyProposal",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyProposalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/operations/{id}/resolve": {
+      "post": {
+        "operationId": "AiGenerationController_resolve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveOperationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/budget": {
+      "get": {
+        "operationId": "AiGenerationController_budget",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/budget/resume": {
+      "post": {
+        "operationId": "AiGenerationController_resume",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResumePaidCallsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/prices": {
+      "get": {
+        "operationId": "AiGenerationController_prices",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      },
+      "post": {
+        "operationId": "AiGenerationController_propose",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposePriceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/prices/{id}/approve": {
+      "post": {
+        "operationId": "AiGenerationController_approvePrice",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
     "/api/v1/admin/system/cache": {
       "get": {
         "operationId": "CacheAdminController_status",
@@ -11322,6 +11648,11 @@
           "followUpReason": {
             "type": "object",
             "nullable": true
+          },
+          "categoryId": {
+            "type": "object",
+            "nullable": true,
+            "description": "Existing category the generated article uses."
           }
         },
         "required": [
@@ -11655,6 +11986,188 @@
         },
         "required": [
           "expectedVersion"
+        ]
+      },
+      "TopicArticleSettingsDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "categoryId": {
+            "type": "object",
+            "nullable": true,
+            "description": "An existing active blog category; null clears it."
+          }
+        },
+        "required": [
+          "expectedVersion"
+        ]
+      },
+      "GenerateDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "full",
+              "metadata"
+            ],
+            "description": "A full draft, or title/summary/SEO suggestions for an article in review."
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "scope"
+        ]
+      },
+      "ApproveContentDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "postVersion": {
+            "type": "number",
+            "minimum": 1,
+            "description": "The article version the reviewer read."
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "postVersion"
+        ]
+      },
+      "TopicVersionOnlyDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "expectedVersion"
+        ]
+      },
+      "ApplyProposalDto": {
+        "type": "object",
+        "properties": {
+          "expectedPostVersion": {
+            "type": "number",
+            "minimum": 1,
+            "description": "The article version the proposal was compared with."
+          }
+        },
+        "required": [
+          "expectedPostVersion"
+        ]
+      },
+      "ResolveOperationDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "reconcile",
+              "abandon"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "What was checked, and why this is safe."
+          }
+        },
+        "required": [
+          "action",
+          "note"
+        ]
+      },
+      "ResumePaidCallsDto": {
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "note"
+        ]
+      },
+      "ProposePriceDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "openai"
+            ]
+          },
+          "model": {
+            "type": "string",
+            "enum": [
+              "gpt-5.6-terra",
+              "gpt-5.6-luna"
+            ]
+          },
+          "currency": {
+            "type": "string",
+            "enum": [
+              "USD",
+              "AUD",
+              "EUR",
+              "GBP"
+            ]
+          },
+          "inputMicrosPerMTok": {
+            "type": "number",
+            "description": "Millionths of the currency per million input tokens (USD 2.00 = 2000000)."
+          },
+          "cachedInputMicrosPerMTok": {
+            "type": "number"
+          },
+          "outputMicrosPerMTok": {
+            "type": "number"
+          },
+          "longContextThresholdTokens": {
+            "type": "number",
+            "description": "Input tokens above which a different price applies; such calls are refused."
+          },
+          "sourceUrl": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "effectiveFrom": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "provider",
+          "model",
+          "currency",
+          "inputMicrosPerMTok",
+          "cachedInputMicrosPerMTok",
+          "outputMicrosPerMTok",
+          "longContextThresholdTokens",
+          "sourceUrl",
+          "effectiveFrom"
         ]
       },
       "CacheStatusDto": {
@@ -18512,6 +19025,11 @@
           "firstPublishedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "aiDisclosure": {
+            "type": "string",
+            "nullable": true,
+            "description": "Reader disclosure for an AI-assisted article: the wording recorded with the draft it came from. Absent for other articles."
           },
           "updatedAt": {
             "type": "string",

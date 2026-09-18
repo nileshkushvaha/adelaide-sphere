@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Header, Put, Req } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpException, Put, Req } from '@nestjs/common';
+import { DatabaseService } from '../database/database.service.js';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { RequestContext } from '../auth/auth.service.js';
 import { CurrentAdmin, RequirePermissions, SessionOnly, type AuthenticatedRequest } from '../auth/decorators.js';
@@ -28,6 +29,7 @@ export class SettingsGroupsController {
   constructor(
     private readonly store: SettingsStoreService,
     private readonly consequences: SecurityConsequenceService,
+    private readonly database: DatabaseService,
   ) {}
 
   @SessionOnly()
@@ -52,6 +54,13 @@ export class SettingsGroupsController {
   @Header('Cache-Control', 'no-store')
   @ApiOkResponse({ type: SettingGroupValuesDto })
   async updateAiContent(@Body() body: UpdateSettingGroupDto, @CurrentAdmin() admin: AdminPrincipal, @Req() req: AuthenticatedRequest) {
+    // The byline must be an existing, active author: never invented, never a guess (owner decision).
+    const authorId = (body.values as Record<string, unknown>).articleAuthorId;
+    if (typeof authorId === 'string' && authorId.trim()) {
+      const db = await this.database.client();
+      const author = await db.author.findUnique({ where: { id: authorId.trim() }, select: { active: true } });
+      if (!author?.active) throw new HttpException({ code: 'VALIDATION_ERROR', message: 'Some fields are invalid', fields: { articleAuthorId: ['Choose an existing active author'] } }, 400);
+    }
     return { data: await this.store.update('ai_content', body.values, body.expectedVersion, admin, ctxOf(req)) };
   }
 

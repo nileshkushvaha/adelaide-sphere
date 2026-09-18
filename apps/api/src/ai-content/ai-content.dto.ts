@@ -113,4 +113,5 @@ export class TopicDto {
   @ApiPropertyOptional({ nullable: true }) topicApprovedByAdminId!: string | null;
   @ApiPropertyOptional({ nullable: true }) followUpOfPostId!: string | null;
   @ApiPropertyOptional({ nullable: true }) followUpReason!: string | null;
+  @ApiPropertyOptional({ nullable: true, description: 'Existing category the generated article uses.' }) categoryId!: string | null;
 }

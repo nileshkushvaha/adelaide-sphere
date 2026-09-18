@@ -109,7 +109,13 @@ export class BlogPublicService {
     const db = await this.database.client();
     const row = await db.post.findFirst({ where: { slug, status: 'published' }, include: cardInclude });
     if (!row) throw new NotFoundException({ code: 'NOT_FOUND', message: 'Article not found' });
-    const [related, approvedCommentCount, businesses] = await Promise.all([this.related(row), db.comment.count({ where: visibleCommentsWhere(row.id) }), this.embeddedBusinesses(row.sanitizedBody)]);
+    const [related, approvedCommentCount, businesses, aiRun] = await Promise.all([
+      this.related(row),
+      db.comment.count({ where: visibleCommentsWhere(row.id) }),
+      this.embeddedBusinesses(row.sanitizedBody),
+      // An article is AI-assisted only through its item link; its disclosure is the one recorded with its draft.
+      db.aIGenerationRun.findFirst({ where: { item: { postId: row.id }, status: 'applied', disclosureText: { not: null } }, orderBy: { generationVersion: 'desc' }, select: { disclosureText: true } }),
+    ]);
     return {
       ...this.toCard(row),
       body: sponsoredLinks(row.sanitizedBody, row.guestPost),
@@ -121,6 +127,7 @@ export class BlogPublicService {
       updatedAt: row.updatedAt.toISOString(),
       related,
       businesses,
+      ...(aiRun?.disclosureText ? { aiDisclosure: aiRun.disclosureText } : {}),
     };
   }
 

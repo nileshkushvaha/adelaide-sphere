@@ -2614,3 +2614,16 @@ The isolated test harness applied the AI migration and the pre-existing pending 
 - **Environment:** migration applied to `adelaide_sphere_test` only. `adelaide_sphere_dev` is now 4 migrations behind (domain `.com`, 1A, 1B, 1C). Retained, dev and production migrations remain unauthorised. Nothing deployed.
 - **Next:** 1D is blocked on owner decisions (provider, credentials, model/pricing, budgets, byline/disclosure, 1C acceptance). Record: [Phase 1C completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1c-completion.md).
 
+
+## AI Content Phase 1D — 18 September 2026
+
+- **Scope:** plan §O workstream 1D under the owner's decisions (OpenAI; Terra for articles, Luna for light work, Sol not approved; USD 0.50/day, 10.00/month, 0.25/article, 70% warning).
+  - Additive migration `20260918190000_ai_content_generation`: price schedules, budget buckets, generation/cost/provenance fields, `outcome_unknown`, research-bound approvals, the paid-call halt. Two seeded prices are *proposed*, not approved.
+  - Database seam: `automation/{budget,providers,generation,review}.ts`.
+  - Worker: `openai-provider.ts` and `generation.ts`, built only when `OPENAI_API_KEY` is set.
+  - API: generation, approval, proposal, budget, pricing and resolution routes; new `ai_content.generate` and `ai_content.approve` permissions.
+  - Admin: article card, budget, Pricing page, author and disclosure settings.
+  - Web: the AI disclosure line.
+- **Checks:** 1D spec 16/16; `pnpm test:integration` 380/380 + 5/5; `pnpm test` all passed; e2e 20/20; typecheck, lint, builds (web `tsc` only), contracts, migration policy; mutation checks M1–M6 caught.
+- **Environment:** migration applied to `adelaide_sphere_test` only; `adelaide_sphere_dev` is 5 migrations behind. No key configured; **no live or paid call made**. Nothing deployed or enabled.
+- **Next:** 1E is blocked on owner image decisions. Record: [Phase 1D completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1d-completion.md).

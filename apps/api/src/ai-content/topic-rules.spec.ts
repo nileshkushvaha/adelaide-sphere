@@ -78,8 +78,16 @@ describe('Phase 1A topic invariants', () => {
       titleMode: 'manual',
       publicationMode: 'review_required',
       imageMode: 'manual',
-      hardMonthlyLimitMinor: 0,
       timezone: 'Australia/Adelaide',
+      // Owner budget decision of 18 September 2026 (Phase 1D): USD, 0.50/day, 10.00/month, 0.25/article, warn at 70%.
+      budgetCurrency: 'USD',
+      hardDailyLimitMinor: 50,
+      hardMonthlyLimitMinor: 1000,
+      maxWorkflowCostMinor: 25,
+      warningThreshold: 70,
+      // No byline until the owner chooses an existing author: generation stays blocked.
+      articleAuthorId: '',
+      disclosureText: 'AI-assisted content: This article was prepared with AI assistance and reviewed against source information before publication.',
     });
     expect(
       validateGroupPayload(

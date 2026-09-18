@@ -102,7 +102,12 @@ describe('AI Content Phase 1B editorial foundation (real MySQL/API)', () => {
   /** A verified, current research packet, as Phase 1C research produces; the gate now requires one. */
   async function verifiedPacket(itemId: string) {
     const latest = await db().aIResearchPacket.findFirst({ where: { itemId }, orderBy: { version: 'desc' }, select: { version: true } });
-    await db().aIResearchPacket.create({ data: { itemId, version: (latest?.version ?? 0) + 1, status: 'verified', inventoryEpoch: 1, freshUntil: new Date(Date.now() + 12 * 3_600_000) } });
+    return db().aIResearchPacket.create({ data: { itemId, version: (latest?.version ?? 0) + 1, status: 'verified', inventoryEpoch: 1, freshUntil: new Date(Date.now() + 12 * 3_600_000), contentHash: 'a'.repeat(64) } });
+  }
+  /** An approval as the 1D approve command records it: bound to the article and to the research it certified. */
+  async function recordApproval(itemId: string, postId: string, material: { post: { version: number }; hash: string }) {
+    const packet = await db().aIResearchPacket.findFirstOrThrow({ where: { itemId }, orderBy: { version: 'desc' } });
+    await db().aIApproval.create({ data: { itemId, kind: 'content', postId, postVersion: material.post.version, materialHash: material.hash, adminId, researchPacketId: packet.id, researchPacketHash: packet.contentHash } });
   }
 
   /** What the research verifier and the 1D approval command will write; fixtures only. */
@@ -110,7 +115,7 @@ describe('AI Content Phase 1B editorial foundation (real MySQL/API)', () => {
     await verifiedPacket(itemId);
     const material = await currentMaterial(postId);
     await db().aIGenerationRun.updateMany({ where: { itemId, status: 'applied' }, data: { factCheck: 'passed' } });
-    await db().aIApproval.create({ data: { itemId, kind: 'content', postId, postVersion: material.post.version, materialHash: material.hash, adminId } });
+    await recordApproval(itemId, postId, material);
     await db().aIContentItem.update({ where: { id: itemId }, data: { status: 'approved' } });
   }
 
@@ -367,7 +372,7 @@ describe('AI Content Phase 1B editorial foundation (real MySQL/API)', () => {
       // Approved, with verified research, but the run's fact gate is still closed: still refused.
       await verifiedPacket(itemId);
       const material = await currentMaterial(postId);
-      await db().aIApproval.create({ data: { itemId, kind: 'content', postId, postVersion: material.post.version, materialHash: material.hash, adminId } });
+      await recordApproval(itemId, postId, material);
       await db().aIContentItem.update({ where: { id: itemId }, data: { status: 'approved' } });
       const factBlocked = await publish();
       expect(factBlocked.status).toBe(409);
@@ -392,7 +397,7 @@ describe('AI Content Phase 1B editorial foundation (real MySQL/API)', () => {
 
       // Re-approved and scheduled, but automation switched off: automated publication is held.
       const again = await currentMaterial(postId);
-      await db().aIApproval.create({ data: { itemId, kind: 'content', postId, postVersion: again.post.version, materialHash: again.hash, adminId } });
+      await recordApproval(itemId, postId, again);
       await db().aIContentItem.update({ where: { id: itemId }, data: { status: 'approved' } });
       expect((await schedule()).status).toBe(200);
       await saveSettings({ enabled: false });

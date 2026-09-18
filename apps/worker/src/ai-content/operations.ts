@@ -1,5 +1,6 @@
 import type { DatabaseClient } from '@adelaide-sphere/database';
 import { applyOperation, claimOperation, DEFAULT_LEASE_MS } from '@adelaide-sphere/database/automation';
+import { runGeneration, type GenerationDeps } from './generation.js';
 import { runDiscovery, runResearch, type ResearchDeps } from './research.js';
 
 export interface AiOperationJobData {
@@ -13,12 +14,13 @@ export interface AiOperationJobData {
  * Retries are the database's (bounded, with backoff and a new delivery),
  * never BullMQ's, so a failing attempt is never repeated outside the cap.
  */
-export async function runAiOperation(db: DatabaseClient, data: AiOperationJobData, owner: string, deps: ResearchDeps = {}): Promise<string> {
+export async function runAiOperation(db: DatabaseClient, data: AiOperationJobData, owner: string, deps: ResearchDeps & GenerationDeps = {}): Promise<string> {
   if (typeof data.operationId !== 'string' || !/^[a-z0-9]{20,40}$/.test(data.operationId)) return 'ignored: no operation id';
   const lease = await claimOperation(db, { operationId: data.operationId, owner, leaseMs: DEFAULT_LEASE_MS });
   if (!lease) return 'not claimable';
   const op = await db.aIOperation.findUniqueOrThrow({ where: { id: lease.operationId }, select: { kind: true } });
   if (op.kind === 'research') return runResearch(db, lease, deps);
   if (op.kind === 'discovery') return runDiscovery(db, lease, deps);
+  if (op.kind === 'generate') return runGeneration(db, lease, deps);
   return applyOperation(db, lease);
 }

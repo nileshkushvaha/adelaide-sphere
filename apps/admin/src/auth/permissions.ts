@@ -13,6 +13,8 @@ export const PERMISSION = {
   aiContentView: 'ai_content.view',
   aiContentManageTopics: 'ai_content.manage_topics',
   aiContentReview: 'ai_content.review',
+  aiContentGenerate: 'ai_content.generate',
+  aiContentApprove: 'ai_content.approve',
   aiContentConfigure: 'ai_content.configure',
   // Business
   listingsRead: 'listings.read',
@@ -184,6 +186,9 @@ export const ROUTE_PERMISSIONS: { path: string; permissions: PermissionCode[]; a
   { path: '/ai-content', permissions: [PERMISSION.aiContentView] },
   { path: '/ai-content/topics', permissions: [PERMISSION.aiContentView] },
   { path: '/ai-content/topics/:id', permissions: [PERMISSION.aiContentView] },
+  { path: '/ai-content/fact-review', permissions: [PERMISSION.aiContentView] },
+  { path: '/ai-content/sources', permissions: [PERMISSION.aiContentConfigure] },
+  { path: '/ai-content/pricing', permissions: [PERMISSION.aiContentConfigure] },
   { path: '/ai-content/settings', permissions: [PERMISSION.aiContentConfigure] },
   // Business. An editor route opens with View; the screen itself goes read-only without Update.
   { path: '/businesses', permissions: [PERMISSION.listingsRead] },

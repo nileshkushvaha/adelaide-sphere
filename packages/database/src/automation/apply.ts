@@ -226,7 +226,8 @@ async function applyWithin(tx: Tx, lease: OperationLease): Promise<ApplyResult> 
   const appliedHash = postMaterialHash(after, after.tags.map((t) => t.tagId));
   await tx.aIGenerationRun.update({ where: { id: run.id }, data: { status: 'applied', appliedPostVersion: postVersion, appliedMaterialHash: appliedHash } });
   const invalidated = await invalidateApprovals(tx, item.id, 'regenerated');
-  await moveAiItem(tx, item, 'ready_for_review', { ...(created ? { postId } : {}), failureStage: null, failureCode: null });
+  // A draft whose facts are not all covered by verified evidence is held in fact review, never offered for approval.
+  await moveAiItem(tx, item, run.factCheck === 'failed' ? 'needs_fact_review' : 'ready_for_review', { ...(created ? { postId } : {}), failureStage: null, failureCode: null });
   await finishOperation(tx, lease, 'succeeded', created ? 'applied:created' : 'applied:updated');
   await audit(tx, 'ai_content.run.applied', item.id, { ...meta, postId, postVersion, created, approvalsInvalidated: invalidated });
   return created ? 'applied:created' : 'applied:updated';

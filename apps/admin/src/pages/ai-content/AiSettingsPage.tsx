@@ -10,6 +10,7 @@ import {
   Switch,
 } from "antd";
 import { settingsGroupsApi } from "@/api/settings-groups";
+import { blogApi } from "@/api/blog";
 import { ErrorState, PageHeader, PageLoader } from "@/components/ui";
 import { errorMessage, fieldErrors, useAsync } from "@/shared/useAsync";
 import { useUnsavedChanges } from "@/shared/useUnsavedChanges";
@@ -105,7 +106,8 @@ export function AiSettingsPage() {
                         ]
                       : [
                           {
-                            required: true,
+                            // An optional text setting (minimum length 0) may be left empty.
+                            required: setting.bounds.min !== 0,
                             ...(setting.type === "string"
                               ? {
                                   whitespace: true,
@@ -132,7 +134,9 @@ export function AiSettingsPage() {
                     max={setting.bounds.max}
                     style={{ width: "100%", maxWidth: 320 }}
                   />
-                ) : setting.key === "editorialStrategy" ? (
+                ) : setting.key === "articleAuthorId" ? (
+                  <AuthorSelect />
+                ) : setting.key === "editorialStrategy" || setting.key === "disclosureText" ? (
                   <Input.TextArea maxLength={setting.bounds.max} rows={4} />
                 ) : (
                   <Input maxLength={setting.bounds.max} />
@@ -165,5 +169,23 @@ export function AiSettingsPage() {
         </Card>
       )}
     </>
+  );
+}
+
+/** The byline for AI-assisted articles: an existing, active author only; never invented (owner decision). */
+function AuthorSelect(props: { value?: string; onChange?: (value: string) => void; id?: string }) {
+  const [authors] = useAsync((signal) => blogApi().listAuthors({ status: "active" }, signal), []);
+  return (
+    <Select
+      id={props.id}
+      aria-label="Author of AI-assisted articles"
+      allowClear
+      placeholder="Not chosen: generation stays blocked"
+      loading={authors.status === "loading"}
+      value={props.value || undefined}
+      onChange={(value) => props.onChange?.(value ?? "")}
+      options={authors.status === "ready" ? authors.data.map((a) => ({ value: a.id, label: a.displayName })) : []}
+      style={{ maxWidth: 420 }}
+    />
   );
 }

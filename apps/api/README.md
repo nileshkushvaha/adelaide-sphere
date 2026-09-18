@@ -151,3 +151,16 @@ The article seam shared by the API and the worker lives in `@adelaide-sphere/dat
 ## AI Content Phase 1C
 
 Free public research (SSRF-safe retrieval in the worker, evidence, typed claims, freshness), Needs Fact Review, local novelty admission with the inventory epoch, feed discovery and the research source registry. Shared rules are in `@adelaide-sphere/domain` (`ai-novelty`, `ai-research`); the database seam is in `@adelaide-sphere/database/automation`. Migration `20260918170000_ai_content_research` has been applied only to the isolated test database. See the [Phase 1C completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1c-completion.md).
+
+## AI Content Phase 1D
+
+Budgeted, reviewed text generation from the verified research packet:
+
+- a provider-neutral text seam, with the OpenAI Responses adapter in the worker (built only when `OPENAI_API_KEY` is set in the server environment);
+- approved models as code constants;
+- versioned approved prices and day/month/workflow reservations, with the paid-call halt on discrepancy;
+- fact and name coverage;
+- proposals with CAS apply;
+- research-bound approval and unknown-outcome resolution.
+
+New permissions: `ai_content.generate` and `ai_content.approve`. Migration `20260918190000_ai_content_generation` has been applied only to the isolated test database. No live provider call has been made. See the [Phase 1D completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1d-completion.md).

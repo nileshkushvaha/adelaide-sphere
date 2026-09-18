@@ -62,6 +62,7 @@ const PUBLIC_SELECT = {
   topicApprovedByAdminId: true,
   followUpOfPostId: true,
   followUpReason: true,
+  categoryId: true,
 } as const;
 const stale = () =>
   new ConflictException({
@@ -96,7 +97,8 @@ export class AiContentService {
       enabled: settings.values.enabled,
       // Research and discovery run only while enabled; generation does not exist in this release.
       executionActive: settings.values.enabled === true,
-      generationAvailable: false,
+      // Drafts need automation on and a chosen byline; price approval and budget are checked per request.
+      generationAvailable: settings.values.enabled === true && typeof settings.values.articleAuthorId === 'string' && settings.values.articleAuthorId.length > 0,
       counts: Object.fromEntries(
         TOPIC_STATUSES.map((status) => [
           status,

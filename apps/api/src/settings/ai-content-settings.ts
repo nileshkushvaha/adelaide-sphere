@@ -23,15 +23,15 @@ const declaration = (
   updatePermission: 'ai_content.configure',
   invalidates: [],
   enforcedBy:
-    'packages/database/src/automation (research admission, evaluation and discovery read these values in their transactions)',
+    'packages/database/src/automation (research, generation requests, budget reservations and settlement read these values in their transactions)',
   consequence:
-    'Research and discovery read only free public sources and run only while automation is enabled. Generation, images, scheduling and auto-publishing are not available in this release.',
+    'While enabled: free public research, and budgeted drafts from verified research that always need human approval. No paid images, cadence or auto-publishing.',
 });
 export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
   key: 'ai_content',
   label: 'AI Content',
   description:
-    'Topic administration, free public research and fact review. No article generation.',
+    'Topics, free public research, fact review and budgeted, human-approved drafts.',
   owner: 'AiContentModule',
   storeKey: 'defaults',
   viewPermission: 'ai_content.configure',
@@ -40,7 +40,7 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
     values.timezone === 'Australia/Adelaide'
       ? {}
       : { timezone: 'This deployment uses Australia/Adelaide' },
-  note: 'Phase 1C: when enabled, approved topics are researched from free public sources and discovery reads configured feeds. Nothing is generated or published automatically.',
+  note: 'Phase 1D: drafts are generated only from verified research, within the budget, and never publish without human approval. Paid images, cadence and auto-publishing stay off.',
   settings: [
     declaration(
       'enabled',
@@ -126,7 +126,7 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
       'budgetCurrency',
       'Budget currency',
       'enum',
-      'AUD',
+      'USD',
       { values: ['AUD', 'USD', 'EUR', 'GBP'] },
       'Currency of the intended limit; no currency conversion or billing is performed.',
     ),
@@ -134,7 +134,7 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
       'warningThreshold',
       'Budget warning threshold (%)',
       'integer',
-      80,
+      70,
       { min: 1, max: 100 },
       'Configured percentage for future budget warnings; no usage statistics exist yet.',
     ),
@@ -142,9 +142,57 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
       'hardMonthlyLimitMinor',
       'Hard monthly limit (minor currency units)',
       'integer',
-      0,
+      1000,
       { min: 0, max: 100000000 },
-      'Integer cents/pence: 100 = 1.00 in the selected currency. Zero means no paid budget approved. Not an active ledger.',
+      'Cents: 1000 = 10.00. Every paid call reserves its maximum against this first; zero allows none.',
+    ),
+    declaration(
+      'hardDailyLimitMinor',
+      'Hard daily limit (minor currency units)',
+      'integer',
+      50,
+      { min: 0, max: 100000000 },
+      'Cents: 50 = 0.50, per day in the configured timezone. Zero allows no paid call.',
+    ),
+    declaration(
+      'maxWorkflowCostMinor',
+      'Maximum cost of one article generation (minor units)',
+      'integer',
+      25,
+      { min: 0, max: 100000000 },
+      'A generation whose worst-case cost exceeds this is refused before any call.',
+    ),
+    declaration(
+      'generationOutputTokenLimit',
+      'Maximum output tokens per draft',
+      'integer',
+      8000,
+      { min: 1000, max: 16000 },
+      'Caps each draft, reasoning included, and so its worst-case cost.',
+    ),
+    declaration(
+      'maxInternalLinks',
+      'Internal links per draft',
+      'integer',
+      3,
+      { min: 0, max: 5 },
+      'Links go only to related published articles, each once.',
+    ),
+    declaration(
+      'articleAuthorId',
+      'Author of AI-assisted articles',
+      'string',
+      '',
+      { min: 0, max: 64 },
+      'An existing active author. Generation stays blocked until one is chosen.',
+    ),
+    declaration(
+      'disclosureText',
+      'Reader disclosure',
+      'string',
+      'AI-assisted content: This article was prepared with AI assistance and reviewed against source information before publication.',
+      { min: 1, max: 500 },
+      'Shown on published AI-assisted articles; each draft records the wording it used.',
     ),
     declaration(
       'discoveryKeywords',

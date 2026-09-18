@@ -364,9 +364,17 @@ export async function evaluatePacket(tx: Tx, packetId: string, now: Date) {
     }
   }
   const reasons = [...result.reasons, ...(changes.length > 0 ? [`${changes.length} material value${changes.length === 1 ? '' : 's'} changed since the last verification`] : [])];
+  // What an approval certifies: the verified material claims and the exact evidence behind them.
+  const certified = claims
+    .filter((c) => c.material && verdicts.get(c.id)?.status === 'verified')
+    .map((c) => [c.kind, c.subject, c.value, c.sources.map((s) => s.evidence.id).sort()])
+    .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  const evidenceHashes = await tx.aISourceEvidence.findMany({ where: { packetId, fetchStatus: 'ok' }, select: { id: true, contentHash: true }, orderBy: { id: 'asc' } });
+  const contentHash = result.status === 'verified' ? sha256(JSON.stringify([certified, evidenceHashes])) : null;
   await tx.aIResearchPacket.update({
     where: { id: packetId },
     data: {
+      contentHash,
       status: result.status,
       failureCode: result.status === 'failed' ? 'no_evidence' : null,
       reasons,

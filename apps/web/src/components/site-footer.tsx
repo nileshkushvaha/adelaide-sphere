@@ -36,7 +36,7 @@ export async function SiteFooter() {
             <p className="as-footer-heading flex flex-wrap items-center gap-2.5">
               <span className={settings.branding.darkLogo ? "block w-[230px] max-w-full sm:w-[280px]" : "relative block aspect-[7.5/1] w-[230px] max-w-full overflow-hidden sm:w-[280px]"}>
               <Image
-                src={settings.branding.darkLogo?.url ?? '/Adelaide_Sphere_Dark_Logo.png'}
+                src={settings.branding.darkLogo?.url ?? '/images/Adelaide_Sphere_Dark_Logo.png'}
                 alt={settings.name}
                 width={settings.branding.darkLogo?.width ?? 2172}
                 height={settings.branding.darkLogo?.height ?? 724}

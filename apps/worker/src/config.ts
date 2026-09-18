@@ -31,6 +31,12 @@ export interface WorkerConfig {
    */
   backupStateDir: string | null;
   logLevel: 'debug' | 'info' | 'warn' | 'error';
+  /**
+   * Server-side text provider credentials (AI Content 1D). Absent means the
+   * provider is not configured: generation fails before any request is made.
+   * Never logged; read only from the environment or a secret store.
+   */
+  aiText: { openaiApiKey: string | null };
   /** Web tier purge endpoint; null when no cached HTML tier is deployed (SRS CACHE 002). */
   revalidate: { url: string; token: string } | null;
   media: {
@@ -126,6 +132,7 @@ export function loadWorkerConfig(env: NodeJS.ProcessEnv = process.env): WorkerCo
     metricsBind,
     backupStateDir,
     logLevel: logLevelFromEnv(env.LOG_LEVEL, nodeEnv === 'production' ? 'info' : 'debug'),
+    aiText: { openaiApiKey: (env.OPENAI_API_KEY ?? '').trim() || null },
     revalidate: revalidateUrl !== '' && revalidateToken !== '' ? { url: revalidateUrl, token: revalidateToken } : null,
     media: {
       endpoint: (env.MEDIA_S3_ENDPOINT ?? '').trim() || undefined,

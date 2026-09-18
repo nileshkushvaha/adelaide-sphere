@@ -6,6 +6,7 @@ import {
   AiTopicQueuePage,
 } from "./AiContentPages";
 import { ResearchSourcesPage } from "./ResearchSourcesPage";
+import { PricingPage } from "./PricingPage";
 import { AiSettingsPage } from "./AiSettingsPage";
 import { AdminShell } from "@/layouts/AdminShell";
 import {
@@ -38,7 +39,22 @@ vi.mock("@/api/ai-content", async (importOriginal) => ({
     sources: vi.fn(),
     createSource: vi.fn(),
     updateSource: vi.fn(),
+    setArticleSettings: vi.fn(),
+    generate: vi.fn(),
+    generation: vi.fn(),
+    approve: vi.fn(),
+    recheckFacts: vi.fn(),
+    applyProposal: vi.fn(),
+    resolveOperation: vi.fn(),
+    budget: vi.fn(),
+    resumePaidCalls: vi.fn(),
+    prices: vi.fn(),
+    proposePrice: vi.fn(),
+    approvePrice: vi.fn(),
   },
+}));
+vi.mock("@/api/blog", () => ({
+  blogApi: () => ({ listTerms: vi.fn(async () => [{ id: "cmcategoryabcdefghijklmn", name: "Cafes" }]), listAuthors: vi.fn(async () => []) }),
 }));
 vi.mock("@/api/settings-groups", () => ({
   settingsGroupsApi: { registry: vi.fn(), values: vi.fn(), update: vi.fn() },
@@ -48,6 +64,9 @@ const permissions = [
   "ai_content.manage_topics",
   "ai_content.configure",
   "ai_content.review",
+  "ai_content.generate",
+  "ai_content.approve",
+  "posts.update",
 ];
 const topic = {
   id: "cmabcdefghijklmnopqrstuv",
@@ -74,11 +93,27 @@ const topic = {
   topicApprovedByAdminId: null,
   followUpOfPostId: null,
   followUpReason: null,
+  categoryId: null,
+};
+const budget = {
+  enabled: true,
+  currency: "USD",
+  warningPercent: 70,
+  workflowLimitMicros: 250_000,
+  day: { period: "2026-09-18", reservedMicros: 0, settledMicros: 380_000, limitMicros: 500_000, warning: true },
+  month: { period: "2026-09", reservedMicros: 0, settledMicros: 380_000, limitMicros: 10_000_000, warning: false },
+  uncertainOperations: 0,
+  uncertainMicros: 0,
+  outcomeUnknownOperations: 0,
+  paidCallsHaltedAt: null as string | null,
+  paidHaltReason: null as string | null,
 };
 const options = { authProvider: providerWithPermissions(permissions) };
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(aiContentApi.research).mockResolvedValue({ packets: [], packet: null });
+  vi.mocked(aiContentApi.generation).mockResolvedValue({ runs: [], operations: [], approvals: [], post: null });
+  vi.mocked(aiContentApi.budget).mockResolvedValue(budget);
   vi.mocked(aiContentApi.list).mockResolvedValue({
     data: [topic],
     meta: { total: 1, page: 1, pageSize: 20 },
@@ -111,7 +146,7 @@ it("shows disabled defaults and real queue counts without generation or cost sta
   renderWithProviders(<AiOverviewPage />, options);
   expect(await screen.findByText("Disabled")).toBeInTheDocument();
   expect(screen.getByText("Inactive")).toBeInTheDocument();
-  expect(screen.getByText(/No provider is paid/)).toBeInTheDocument();
+  expect(screen.getByText(/never publish without approval/)).toBeInTheDocument();
   expect(screen.getByText("Not available")).toBeInTheDocument();
   expect(screen.queryByText(/tokens used/i)).not.toBeInTheDocument();
 });
@@ -396,4 +431,57 @@ it("adds a research source and shows the server's validation on the field", asyn
   await ue.click(await screen.findByText("Official: business, venue or organiser"));
   await ue.click(screen.getByRole("button", { name: "Add source" }));
   expect(await screen.findByText("Enter a public host name such as example.org")).toBeInTheDocument();
+});
+
+it("requests a draft with one idempotency key that survives a lost response, and approves the exact article version", async () => {
+  const ue = user();
+  vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, status: "researching", categoryId: "cmcategoryabcdefghijklmn", version: 7 });
+  vi.mocked(aiContentApi.generate).mockRejectedValueOnce(new ApiError({ kind: "network", status: null, code: null, userMessage: "Response was lost" })).mockResolvedValueOnce({ operationId: "op", created: false, topic });
+  renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  await ue.click(await screen.findByRole("button", { name: "Generate draft" }));
+  expect(await screen.findByText("Response was lost")).toBeInTheDocument();
+  // Retry once the button has left its loading state (antd's transition confuses the style-based role query).
+  const retry = screen.getByText("Generate draft").closest("button")!;
+  await waitFor(() => expect(retry).toBeEnabled());
+  await ue.click(retry);
+  await waitFor(() => expect(aiContentApi.generate).toHaveBeenCalledTimes(2));
+  const keys = vi.mocked(aiContentApi.generate).mock.calls.map((c) => c[2]);
+  expect(keys[0]).toBe(keys[1]);
+});
+it("approves the article version the reviewer is looking at, and shows unsupported facts the server lists", async () => {
+  const ue = user();
+  vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, status: "ready_for_review", postId: "cmpostabcdefghijklmnopqr", version: 9 });
+  vi.mocked(aiContentApi.generation).mockResolvedValue({
+    runs: [],
+    operations: [{ id: "cmopabcdefghijklmnopqrst", kind: "generate", scope: "full", state: "succeeded", attempts: 1, provider: "openai", model: "gpt-5.6-terra", providerPhase: "done", resultCode: "generated:covered", errorClass: null, estimatedMaxMicros: 120_000, reservedMicros: 120_000, settledMicros: 38_466, costState: "settled", inputTokens: 1233, cachedInputTokens: 0, outputTokens: 3000, reasoningTokens: 1000, resolutionNote: null, createdAt: "2026-09-18T01:00:00.000Z", priceSchedule: { version: "openai-gpt-5.6-terra-2026-07-30", currency: "USD" } }],
+    approvals: [],
+    post: { id: "cmpostabcdefghijklmnopqr", version: 4, title: "Example Cafe in Norwood", excerpt: "x", seoTitle: null, seoDescription: null, seoKeywords: null, status: "draft", firstPublishedAt: null },
+  });
+  vi.mocked(aiContentApi.approve).mockRejectedValue(new ApiError({ kind: "conflict", status: 409, code: "UNSUPPORTED_FACTS", userMessage: "Some facts in the article are not supported by verified evidence.", fields: { facts: ['body.3: "1999" (unsupported value)'] } }));
+  renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  expect(await screen.findByText(/settled: USD 0\.04/)).toBeInTheDocument();
+  await ue.click(screen.getByRole("button", { name: "Approve version 4" }));
+  expect(await screen.findByText('body.3: "1999" (unsupported value)')).toBeInTheDocument();
+  expect(aiContentApi.approve).toHaveBeenCalledWith(expect.objectContaining({ version: 9 }), 4, undefined);
+});
+it("shows a paid-call halt with its reason and the over-threshold warning", async () => {
+  vi.mocked(aiContentApi.budget).mockResolvedValue({ ...budget, paidCallsHaltedAt: "2026-09-18T01:00:00.000Z", paidHaltReason: "provider reported model gpt-5.6-sol, approved gpt-5.6-terra" });
+  vi.mocked(aiContentApi.prices).mockResolvedValue([]);
+  renderWithProviders(<PricingPage />, options);
+  expect(await screen.findByText("Paid calls are halted")).toBeInTheDocument();
+  expect(screen.getByText(/gpt-5.6-sol/)).toBeInTheDocument();
+  expect(screen.getByText("over 70%")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Resume after reconciling" })).toBeInTheDocument();
+});
+it("approves a proposed price only after confirmation", async () => {
+  const ue = user();
+  vi.mocked(aiContentApi.prices).mockResolvedValue([{ id: "cmpriceabcdefghijklmnopq", version: "openai-gpt-5.6-terra-2026-07-30", provider: "openai", model: "gpt-5.6-terra", serviceTier: "default", currency: "USD", inputMicrosPerMTok: 2_000_000, cachedInputMicrosPerMTok: 200_000, outputMicrosPerMTok: 12_000_000, longContextThresholdTokens: 272000, sourceUrl: "https://developers.openai.com/api/docs/pricing", effectiveFrom: "2026-07-30T00:00:00.000Z", status: "proposed", approvedAt: null }]);
+  vi.mocked(aiContentApi.approvePrice).mockResolvedValue({} as never);
+  renderWithProviders(<PricingPage />, options);
+  expect(await screen.findByText("USD 2.00 / USD 0.20 / USD 12.00")).toBeInTheDocument();
+  await ue.click(screen.getByRole("button", { name: "Approve" }));
+  expect(aiContentApi.approvePrice).not.toHaveBeenCalled();
+  const dialog = await screen.findByRole("dialog");
+  await ue.click(within(dialog).getByRole("button", { name: "OK" }));
+  await waitFor(() => expect(aiContentApi.approvePrice).toHaveBeenCalledWith("cmpriceabcdefghijklmnopq"));
 });

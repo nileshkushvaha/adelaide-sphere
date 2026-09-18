@@ -44,6 +44,7 @@ export interface AiTopic {
   topicApprovedByAdminId: string | null;
   followUpOfPostId: string | null;
   followUpReason: string | null;
+  categoryId: string | null;
 }
 export type NoveltyStatus = "unchecked" | "clear" | "review" | "duplicate";
 export interface NoveltyMatch {
@@ -140,6 +141,89 @@ export interface ResearchSource {
   active: boolean;
   version: number;
 }
+export type CostState = "none" | "reserved" | "settled" | "released" | "uncertain";
+export interface GenerationRun {
+  id: string;
+  generationVersion: number;
+  status: "pending" | "applied" | "proposal" | "failed";
+  proposalReason: string | null;
+  scope: "full" | "metadata";
+  provider: string | null;
+  model: string | null;
+  promptVersion: string | null;
+  promptHash: string | null;
+  schemaVersion: string | null;
+  researchPacketId: string | null;
+  disclosureText: string | null;
+  factCheck: "pending" | "passed" | "failed";
+  coverage: { field: string; token: string; reason: string }[] | null;
+  imageBriefs: { placement: string; prompt: string; aspectRatio: string; altDraft: string; captionDraft: string }[] | null;
+  internalLinks: { postId: string; anchor: string; path: string; reason: string }[] | null;
+  artifact: Record<string, unknown>;
+  appliedPostVersion: number | null;
+  createdAt: string;
+}
+export interface GenerationOperation {
+  id: string;
+  kind: "generate" | "apply";
+  scope: string | null;
+  state: string;
+  attempts: number;
+  provider: string | null;
+  model: string | null;
+  providerPhase: string | null;
+  resultCode: string | null;
+  errorClass: string | null;
+  estimatedMaxMicros: number | null;
+  reservedMicros: number;
+  settledMicros: number | null;
+  costState: CostState;
+  inputTokens: number | null;
+  cachedInputTokens: number | null;
+  outputTokens: number | null;
+  reasoningTokens: number | null;
+  resolutionNote: string | null;
+  createdAt: string;
+  priceSchedule: { version: string; currency: string } | null;
+}
+export interface GenerationHistory {
+  runs: GenerationRun[];
+  operations: GenerationOperation[];
+  approvals: { id: string; postVersion: number; adminId: string | null; reason: string | null; createdAt: string; invalidatedAt: string | null; invalidationReason: string | null }[];
+  post: { id: string; version: number; title: string; excerpt: string; seoTitle: string | null; seoDescription: string | null; seoKeywords: string | null; status: string; firstPublishedAt: string | null } | null;
+}
+export interface BudgetStatus {
+  enabled: boolean;
+  currency: string;
+  warningPercent: number;
+  workflowLimitMicros: number;
+  day: { period: string; reservedMicros: number; settledMicros: number; limitMicros: number; warning: boolean };
+  month: { period: string; reservedMicros: number; settledMicros: number; limitMicros: number; warning: boolean };
+  uncertainOperations: number;
+  uncertainMicros: number;
+  outcomeUnknownOperations: number;
+  paidCallsHaltedAt: string | null;
+  paidHaltReason: string | null;
+}
+export interface PriceSchedule {
+  id: string;
+  version: string;
+  provider: string;
+  model: string;
+  serviceTier: string;
+  currency: string;
+  inputMicrosPerMTok: number;
+  cachedInputMicrosPerMTok: number;
+  outputMicrosPerMTok: number;
+  longContextThresholdTokens: number;
+  sourceUrl: string;
+  effectiveFrom: string;
+  status: "proposed" | "approved" | "retired";
+  approvedAt: string | null;
+}
+/** Micro-units of a currency, shown to the cent (rounded up, so cost is never understated). */
+export const money = (micros: number | null | undefined, currency = "USD") =>
+  micros === null || micros === undefined ? "—" : `${currency} ${(Math.ceil(micros / 10_000) / 100).toFixed(2)}`;
 export interface DiscoveryRun {
   id: string;
   state: string;
@@ -273,4 +357,40 @@ export const aiContentApi = {
         body: { expectedVersion: source.version, ...input },
       })
       .then((r) => r.data.data),
+  setArticleSettings: (topic: AiTopic, categoryId: string | null) =>
+    httpClient
+      .request<{ data: AiTopic }>(`/admin/ai-content/topics/${topic.id}/article`, { method: "PUT", body: { expectedVersion: topic.version, categoryId } })
+      .then((r) => r.data.data),
+  generate: (topic: AiTopic, scope: "full" | "metadata", key: string) =>
+    httpClient
+      .request<{ data: { operationId: string; created: boolean; topic: AiTopic } }>(`/admin/ai-content/topics/${topic.id}/generate`, {
+        method: "POST",
+        headers: { "Idempotency-Key": key },
+        body: { expectedVersion: topic.version, scope },
+      })
+      .then((r) => r.data.data),
+  generation: (id: string) =>
+    httpClient.request<{ data: GenerationHistory }>(`/admin/ai-content/topics/${id}/generation`).then((r) => r.data.data),
+  approve: (topic: AiTopic, postVersion: number, note?: string) =>
+    httpClient
+      .request<{ data: AiTopic }>(`/admin/ai-content/topics/${topic.id}/approve`, { method: "POST", body: { expectedVersion: topic.version, postVersion, ...(note ? { note } : {}) } })
+      .then((r) => r.data.data),
+  recheckFacts: (topic: AiTopic) =>
+    httpClient
+      .request<{ data: { status: TopicStatus; violations: { field: string; token: string; reason: string }[] } }>(`/admin/ai-content/topics/${topic.id}/recheck-facts`, { method: "POST", body: { expectedVersion: topic.version } })
+      .then((r) => r.data.data),
+  applyProposal: (runId: string, expectedPostVersion: number) =>
+    httpClient
+      .request<{ data: { status: TopicStatus } }>(`/admin/ai-content/runs/${runId}/apply`, { method: "POST", body: { expectedPostVersion } })
+      .then((r) => r.data.data),
+  resolveOperation: (operationId: string, action: "reconcile" | "abandon", note: string) =>
+    httpClient.request(`/admin/ai-content/operations/${operationId}/resolve`, { method: "POST", body: { action, note } }).then(() => undefined),
+  budget: () => httpClient.request<{ data: BudgetStatus }>("/admin/ai-content/budget").then((r) => r.data.data),
+  resumePaidCalls: (note: string) =>
+    httpClient.request<{ data: BudgetStatus }>("/admin/ai-content/budget/resume", { method: "POST", body: { note } }).then((r) => r.data.data),
+  prices: () => httpClient.request<{ data: PriceSchedule[] }>("/admin/ai-content/prices").then((r) => r.data.data),
+  proposePrice: (input: Omit<PriceSchedule, "id" | "serviceTier" | "status" | "approvedAt">) =>
+    httpClient.request<{ data: PriceSchedule }>("/admin/ai-content/prices", { method: "POST", body: input }).then((r) => r.data.data),
+  approvePrice: (id: string) =>
+    httpClient.request<{ data: PriceSchedule }>(`/admin/ai-content/prices/${id}/approve`, { method: "POST", body: {} }).then((r) => r.data.data),
 };

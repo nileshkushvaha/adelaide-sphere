@@ -75,52 +75,55 @@ model AdminUser {
   createdAt                  DateTime        @default(now()) @db.DateTime(3)
   updatedAt                  DateTime        @updatedAt @db.DateTime(3)
 
-  aiTopics             AIContentItem[]        @relation("AITopicCreator")
-  aiTopicsHumanEdited  AIContentItem[]        @relation("AITopicHumanEditor")
-  aiApprovals          AIApproval[]           @relation("AIApprovalAdmin")
-  aiTopicsApproved     AIContentItem[]        @relation("AITopicApprover")
-  aiResearchSources    AIResearchSource[]     @relation("AIResearchSourceCreator")
-  aiClaimsResolved     AIFactClaim[]          @relation("AIClaimResolver")
-  aiClaimsCreated      AIFactClaim[]          @relation("AIClaimCreator")
-  roles                AdminRole[]
-  directPermissions    AdminPermission[]      @relation("AdminDirectPermission")
-  grantedRoles         AdminRole[]            @relation("AdminRoleAssignedBy")
-  grantedPermissions   AdminPermission[]      @relation("AdminPermissionAssignedBy")
-  grantedRolePerms     RolePermission[]       @relation("RolePermissionAssignedBy")
-  sessions             AdminSession[]
-  resetTokens          PasswordResetToken[]
-  passwordHistory      AdminPasswordHistory[]
-  recoveryCodes        AdminRecoveryCode[]
-  loginChallenges      AdminLoginChallenge[]
-  auditEntries         AuditLog[]             @relation("AuditActor")
-  settings             Setting[]              @relation("SettingUpdatedBy")
-  faqsCreated          Faq[]                  @relation("FaqCreatedBy")
-  faqsUpdated          Faq[]                  @relation("FaqUpdatedBy")
-  alertsCreated        ServiceAlert[]         @relation("ServiceAlertCreatedBy")
-  alertsUpdated        ServiceAlert[]         @relation("ServiceAlertUpdatedBy")
-  testimonialsCreated  Testimonial[]          @relation("TestimonialCreatedBy")
-  testimonialsUpdated  Testimonial[]          @relation("TestimonialUpdatedBy")
-  partnersAuthorised   PartnerOrganisation[]  @relation("PartnerAuthorisedBy")
-  partnersCreated      PartnerOrganisation[]  @relation("PartnerCreatedBy")
-  partnersUpdated      PartnerOrganisation[]  @relation("PartnerUpdatedBy")
-  moderatedReviews     Review[]               @relation("ReviewModerator")
-  contentRevisions     ContentRevision[]      @relation("ContentRevisionActor")
-  handledEnquiries     Enquiry[]              @relation("EnquiryHandler")
-  uploadedMedia        MediaAsset[]           @relation("MediaUploader")
-  moderatedComments    Comment[]              @relation("CommentModerator")
-  staffComments        Comment[]              @relation("CommentStaffAuthor")
-  moderatedReports     AbuseReport[]          @relation("AbuseReportModerator")
-  redirects            Redirect[]             @relation("RedirectAuthor")
-  staticPages          StaticPage[]           @relation("StaticPageEditor")
-  featuredPlacements   FeaturedPlacement[]    @relation("FeaturedPlacementAuthor")
-  scheduledTaskRuns    ScheduledTaskRun[]
-  scheduledTaskStates  ScheduledTaskState[]   @relation("ScheduledTaskStateUpdatedBy")
-  menusCreated         Menu[]                 @relation("MenuCreatedBy")
-  menusUpdated         Menu[]                 @relation("MenuUpdatedBy")
-  menuLocationsUpdated MenuLocation[]         @relation("MenuLocationUpdatedBy")
-  postAutosaves        PostAutosave[]
-  pageAutosaves        PageAutosave[]
-  defaultAuthor        Author?                @relation("AdminDefaultAuthor", fields: [defaultAuthorId], references: [id], onDelete: SetNull)
+  aiTopics              AIContentItem[]        @relation("AITopicCreator")
+  aiTopicsHumanEdited   AIContentItem[]        @relation("AITopicHumanEditor")
+  aiApprovals           AIApproval[]           @relation("AIApprovalAdmin")
+  aiTopicsApproved      AIContentItem[]        @relation("AITopicApprover")
+  aiResearchSources     AIResearchSource[]     @relation("AIResearchSourceCreator")
+  aiClaimsResolved      AIFactClaim[]          @relation("AIClaimResolver")
+  aiClaimsCreated       AIFactClaim[]          @relation("AIClaimCreator")
+  aiOperationsRequested AIOperation[]          @relation("AIOperationRequester")
+  aiPricesCreated       AIPriceSchedule[]      @relation("AIPriceCreator")
+  aiPricesApproved      AIPriceSchedule[]      @relation("AIPriceApprover")
+  roles                 AdminRole[]
+  directPermissions     AdminPermission[]      @relation("AdminDirectPermission")
+  grantedRoles          AdminRole[]            @relation("AdminRoleAssignedBy")
+  grantedPermissions    AdminPermission[]      @relation("AdminPermissionAssignedBy")
+  grantedRolePerms      RolePermission[]       @relation("RolePermissionAssignedBy")
+  sessions              AdminSession[]
+  resetTokens           PasswordResetToken[]
+  passwordHistory       AdminPasswordHistory[]
+  recoveryCodes         AdminRecoveryCode[]
+  loginChallenges       AdminLoginChallenge[]
+  auditEntries          AuditLog[]             @relation("AuditActor")
+  settings              Setting[]              @relation("SettingUpdatedBy")
+  faqsCreated           Faq[]                  @relation("FaqCreatedBy")
+  faqsUpdated           Faq[]                  @relation("FaqUpdatedBy")
+  alertsCreated         ServiceAlert[]         @relation("ServiceAlertCreatedBy")
+  alertsUpdated         ServiceAlert[]         @relation("ServiceAlertUpdatedBy")
+  testimonialsCreated   Testimonial[]          @relation("TestimonialCreatedBy")
+  testimonialsUpdated   Testimonial[]          @relation("TestimonialUpdatedBy")
+  partnersAuthorised    PartnerOrganisation[]  @relation("PartnerAuthorisedBy")
+  partnersCreated       PartnerOrganisation[]  @relation("PartnerCreatedBy")
+  partnersUpdated       PartnerOrganisation[]  @relation("PartnerUpdatedBy")
+  moderatedReviews      Review[]               @relation("ReviewModerator")
+  contentRevisions      ContentRevision[]      @relation("ContentRevisionActor")
+  handledEnquiries      Enquiry[]              @relation("EnquiryHandler")
+  uploadedMedia         MediaAsset[]           @relation("MediaUploader")
+  moderatedComments     Comment[]              @relation("CommentModerator")
+  staffComments         Comment[]              @relation("CommentStaffAuthor")
+  moderatedReports      AbuseReport[]          @relation("AbuseReportModerator")
+  redirects             Redirect[]             @relation("RedirectAuthor")
+  staticPages           StaticPage[]           @relation("StaticPageEditor")
+  featuredPlacements    FeaturedPlacement[]    @relation("FeaturedPlacementAuthor")
+  scheduledTaskRuns     ScheduledTaskRun[]
+  scheduledTaskStates   ScheduledTaskState[]   @relation("ScheduledTaskStateUpdatedBy")
+  menusCreated          Menu[]                 @relation("MenuCreatedBy")
+  menusUpdated          Menu[]                 @relation("MenuUpdatedBy")
+  menuLocationsUpdated  MenuLocation[]         @relation("MenuLocationUpdatedBy")
+  postAutosaves         PostAutosave[]
+  pageAutosaves         PageAutosave[]
+  defaultAuthor         Author?                @relation("AdminDefaultAuthor", fields: [defaultAuthorId], references: [id], onDelete: SetNull)
 
   @@index([status])
   @@index([defaultAuthorId])
@@ -1067,7 +1070,8 @@ model BlogCategory {
 
   posts     Post[]
   menuItems MenuItem[]
-  ogImage   MediaAsset? @relation("BlogCategoryShareImage", fields: [ogImageMediaId], references: [id], onDelete: Restrict)
+  ogImage   MediaAsset?     @relation("BlogCategoryShareImage", fields: [ogImageMediaId], references: [id], onDelete: Restrict)
+  aiItems   AIContentItem[]
 
   @@index([active, sortOrder])
   @@map("blog_categories")
@@ -1973,11 +1977,14 @@ model AIContentItem {
   /// A legitimate follow-up of an existing article, with the editorial justification (plan §E step 7).
   followUpOfPostId       String?
   followUpReason         String?            @db.VarChar(500)
+  /// The existing category the generated article will use; chosen by an editor, never invented.
+  categoryId             String?
   createdBy              AdminUser?         @relation("AITopicCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
   humanModifiedBy        AdminUser?         @relation("AITopicHumanEditor", fields: [humanModifiedByAdminId], references: [id], onDelete: SetNull)
   post                   Post?              @relation(fields: [postId], references: [id], onDelete: Restrict)
   topicApprovedBy        AdminUser?         @relation("AITopicApprover", fields: [topicApprovedByAdminId], references: [id], onDelete: SetNull)
   followUpOf             Post?              @relation("AITopicFollowUp", fields: [followUpOfPostId], references: [id], onDelete: Restrict)
+  category               BlogCategory?      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   packets                AIResearchPacket[]
   runs                   AIGenerationRun[]
   operations             AIOperation[]
@@ -1990,18 +1997,23 @@ model AIContentItem {
   @@index([eventKey])
   @@index([topicApprovedByAdminId])
   @@index([followUpOfPostId])
+  @@index([categoryId])
   @@map("ai_content_items")
 }
 
 /// Single deployment control row (id 'default'): the epoch advances whenever a
 /// safety-relevant AI setting changes, fencing in-flight work (plan §I, F37/F38).
 model AIAutomationControl {
-  id             String   @id @db.VarChar(16)
-  epoch          Int      @default(1)
+  id                String    @id @db.VarChar(16)
+  epoch             Int       @default(1)
   /// Advances whenever the article inventory changes (an ordinary Post created or retitled/rewritten, AI admission,
   /// cancellation or rejection); a novelty decision made against an older epoch is re-checked (plan §E).
-  inventoryEpoch Int      @default(1)
-  updatedAt      DateTime @updatedAt @db.DateTime(3)
+  inventoryEpoch    Int       @default(1)
+  /// Set when a paid call's reported model, tier or usage did not match the approved price schedule:
+  /// no further paid call is admitted until an administrator reconciles and resumes (owner budget rule).
+  paidCallsHaltedAt DateTime? @db.DateTime(3)
+  paidHaltReason    String?   @db.VarChar(300)
+  updatedAt         DateTime  @updatedAt @db.DateTime(3)
 
   @@map("ai_automation_controls")
 }
@@ -2022,30 +2034,50 @@ enum AIFactCheckStatus {
 /// One attempt at a generation for an item (item + generationVersion unique).
 /// The artifact is the bounded proposed article; it is never a second Post.
 model AIGenerationRun {
-  id                   String            @id @default(cuid())
-  itemId               String
-  generationVersion    Int
-  status               AIRunStatus       @default(pending)
+  id                    String            @id @default(cuid())
+  itemId                String
+  generationVersion     Int
+  status                AIRunStatus       @default(pending)
   /// Why an unapplied artifact was kept as a proposal instead of applied.
-  proposalReason       String?           @db.VarChar(64)
-  settingsVersion      Int
-  controlEpoch         Int
+  proposalReason        String?           @db.VarChar(64)
+  settingsVersion       Int
+  controlEpoch          Int
   /// Null for the first draft; otherwise the Post version/material hash the run was produced from.
-  expectedPostVersion  Int?
-  expectedMaterialHash String?           @db.Char(64)
-  artifact             Json
-  artifactHash         String            @db.Char(64)
+  expectedPostVersion   Int?
+  expectedMaterialHash  String?           @db.Char(64)
+  artifact              Json
+  artifactHash          String            @db.Char(64)
   /// Set only by the research verifier (Phase 1C); anything else keeps the fact gate closed.
-  factCheck            AIFactCheckStatus @default(pending)
-  appliedPostVersion   Int?
-  appliedMaterialHash  String?           @db.Char(64)
-  createdAt            DateTime          @default(now()) @db.DateTime(3)
-  updatedAt            DateTime          @updatedAt @db.DateTime(3)
-  item                 AIContentItem     @relation(fields: [itemId], references: [id], onDelete: Restrict)
-  operations           AIOperation[]
-  approvals            AIApproval[]
+  factCheck             AIFactCheckStatus @default(pending)
+  appliedPostVersion    Int?
+  appliedMaterialHash   String?           @db.Char(64)
+  /// Provenance (AI-058, AI-136, AI-137): who and what produced the artifact.
+  scope                 String            @default("full") @db.VarChar(16)
+  provider              String?           @db.VarChar(32)
+  model                 String?           @db.VarChar(64)
+  promptVersion         String?           @db.VarChar(40)
+  promptHash            String?           @db.Char(64)
+  schemaVersion         String?           @db.VarChar(40)
+  schemaHash            String?           @db.Char(64)
+  researchPacketId      String?
+  researchPacketHash    String?           @db.Char(64)
+  disclosureText        String?           @db.VarChar(500)
+  disclosureHash        String?           @db.Char(64)
+  generationOperationId String?
+  /// Fact coverage of the generated text against the verified packet (bounded list of violations).
+  coverage              Json?
+  /// Prompt-only image briefs (1D: no image API) and the internal links that were resolved.
+  imageBriefs           Json?
+  internalLinks         Json?
+  createdAt             DateTime          @default(now()) @db.DateTime(3)
+  updatedAt             DateTime          @updatedAt @db.DateTime(3)
+  item                  AIContentItem     @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  researchPacket        AIResearchPacket? @relation(fields: [researchPacketId], references: [id], onDelete: Restrict)
+  operations            AIOperation[]
+  approvals             AIApproval[]
 
   @@unique([itemId, generationVersion])
+  @@index([researchPacketId])
   @@map("ai_generation_runs")
 }
 
@@ -2055,6 +2087,8 @@ enum AIOperationKind {
   research
   /// Reads configured public feeds for topic candidates: read-only.
   discovery
+  /// One billable text-generation request. Never retried blindly: see providerPhase.
+  generate
 }
 
 enum AIOperationState {
@@ -2063,34 +2097,79 @@ enum AIOperationState {
   succeeded
   failed
   cancelled
+  /// A request may have reached the provider but its result cannot be established:
+  /// held for an operator, never re-sent automatically (plan §E, F21).
+  outcome_unknown
+}
+
+enum AICostState {
+  none
+  reserved
+  settled
+  released
+  /// Charged but not priceable from reported usage: the whole reservation stays counted.
+  uncertain
 }
 
 /// Durable unit of worker work. The database, not the queue, is the authority:
 /// a lease (owner, until, fencing token) guards every write a worker makes.
 model AIOperation {
-  id             String            @id @default(cuid())
-  operationKey   String            @unique @db.Char(64)
-  kind           AIOperationKind
+  id                 String            @id @default(cuid())
+  operationKey       String            @unique @db.Char(64)
+  kind               AIOperationKind
   /// Null only for discovery, which is not about one item.
-  itemId         String?
-  runId          String?
-  packetId       String?
-  state          AIOperationState  @default(pending)
-  attempts       Int               @default(0)
-  nextAttemptAt  DateTime          @default(now()) @db.DateTime(3)
-  lastEnqueuedAt DateTime?         @db.DateTime(3)
-  leaseOwner     String?           @db.VarChar(64)
-  leaseUntil     DateTime?         @db.DateTime(3)
-  fencingToken   Int               @default(0)
-  controlEpoch   Int
-  resultCode     String?           @db.VarChar(64)
-  createdAt      DateTime          @default(now()) @db.DateTime(3)
-  updatedAt      DateTime          @updatedAt @db.DateTime(3)
-  item           AIContentItem?    @relation(fields: [itemId], references: [id], onDelete: Restrict)
-  run            AIGenerationRun?  @relation(fields: [runId], references: [id], onDelete: Restrict)
-  packet         AIResearchPacket? @relation(fields: [packetId], references: [id], onDelete: Restrict)
+  itemId             String?
+  runId              String?
+  packetId           String?
+  state              AIOperationState  @default(pending)
+  attempts           Int               @default(0)
+  nextAttemptAt      DateTime          @default(now()) @db.DateTime(3)
+  lastEnqueuedAt     DateTime?         @db.DateTime(3)
+  leaseOwner         String?           @db.VarChar(64)
+  leaseUntil         DateTime?         @db.DateTime(3)
+  fencingToken       Int               @default(0)
+  controlEpoch       Int
+  resultCode         String?           @db.VarChar(64)
+  /// Generation only. prepared: nothing sent; sending: a request may be in flight;
+  /// sent: the provider accepted it (providerResponseId known); done: result stored.
+  scope              String?           @db.VarChar(16)
+  provider           String?           @db.VarChar(32)
+  model              String?           @db.VarChar(64)
+  providerPhase      String?           @db.VarChar(16)
+  requestHash        String?           @db.Char(64)
+  /// The exact bounded, provider-neutral request (only provider-safe public data), kept for audit and reproducibility.
+  requestPayload     Json?
+  providerResponseId String?           @unique @db.VarChar(128)
+  sentAt             DateTime?         @db.DateTime(3)
+  priceScheduleId    String?
+  estimatedMaxMicros Int?
+  reservedMicros     Int               @default(0)
+  settledMicros      Int?
+  costState          AICostState       @default(none)
+  dayBucketId        String?
+  monthBucketId      String?
+  inputTokens        Int?
+  cachedInputTokens  Int?
+  outputTokens       Int?
+  reasoningTokens    Int?
+  errorClass         String?           @db.VarChar(64)
+  requestedByAdminId String?
+  resolutionNote     String?           @db.VarChar(500)
+  createdAt          DateTime          @default(now()) @db.DateTime(3)
+  updatedAt          DateTime          @updatedAt @db.DateTime(3)
+  item               AIContentItem?    @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  priceSchedule      AIPriceSchedule?  @relation(fields: [priceScheduleId], references: [id], onDelete: Restrict)
+  dayBucket          AIBudgetBucket?   @relation("AIBudgetDay", fields: [dayBucketId], references: [id], onDelete: Restrict)
+  monthBucket        AIBudgetBucket?   @relation("AIBudgetMonth", fields: [monthBucketId], references: [id], onDelete: Restrict)
+  requestedBy        AdminUser?        @relation("AIOperationRequester", fields: [requestedByAdminId], references: [id], onDelete: SetNull)
+  run                AIGenerationRun?  @relation(fields: [runId], references: [id], onDelete: Restrict)
+  packet             AIResearchPacket? @relation(fields: [packetId], references: [id], onDelete: Restrict)
 
   @@index([packetId])
+  @@index([priceScheduleId])
+  @@index([dayBucketId])
+  @@index([monthBucketId])
+  @@index([requestedByAdminId])
   @@index([state, nextAttemptAt])
   @@index([state, leaseUntil])
   @@index([itemId])
@@ -2105,23 +2184,28 @@ enum AIApprovalKind {
 /// Immutable, attributable approval of one exact article state (AI-171/172).
 /// Invalidation is stamped, never rewritten or deleted.
 model AIApproval {
-  id                 String           @id @default(cuid())
+  id                 String            @id @default(cuid())
   itemId             String
   runId              String?
   kind               AIApprovalKind
   postId             String
   postVersion        Int
-  materialHash       String           @db.Char(64)
+  materialHash       String            @db.Char(64)
   adminId            String?
-  reason             String?          @db.VarChar(500)
-  createdAt          DateTime         @default(now()) @db.DateTime(3)
-  invalidatedAt      DateTime?        @db.DateTime(3)
-  invalidationReason String?          @db.VarChar(64)
-  item               AIContentItem    @relation(fields: [itemId], references: [id], onDelete: Restrict)
-  run                AIGenerationRun? @relation(fields: [runId], references: [id], onDelete: Restrict)
-  admin              AdminUser?       @relation("AIApprovalAdmin", fields: [adminId], references: [id], onDelete: SetNull)
+  reason             String?           @db.VarChar(500)
+  createdAt          DateTime          @default(now()) @db.DateTime(3)
+  invalidatedAt      DateTime?         @db.DateTime(3)
+  invalidationReason String?           @db.VarChar(64)
+  /// The research packet (and its content hash) the approval certified (plan §G step 7).
+  researchPacketId   String?
+  researchPacketHash String?           @db.Char(64)
+  item               AIContentItem     @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  researchPacket     AIResearchPacket? @relation(fields: [researchPacketId], references: [id], onDelete: Restrict)
+  run                AIGenerationRun?  @relation(fields: [runId], references: [id], onDelete: Restrict)
+  admin              AdminUser?        @relation("AIApprovalAdmin", fields: [adminId], references: [id], onDelete: SetNull)
 
   @@index([itemId, invalidatedAt])
+  @@index([researchPacketId])
   @@index([runId])
   @@index([adminId])
   @@map("ai_approvals")
@@ -2187,6 +2271,8 @@ model AIResearchPacket {
   /// Material values that changed since the previous verified packet (change detection).
   changes        Json?
   freshUntil     DateTime?          @db.DateTime(3)
+  /// SHA-256 of the verified material claims and their evidence, set at each evaluation.
+  contentHash    String?            @db.Char(64)
   evaluatedAt    DateTime?          @db.DateTime(3)
   createdAt      DateTime           @default(now()) @db.DateTime(3)
   updatedAt      DateTime           @updatedAt @db.DateTime(3)
@@ -2194,6 +2280,8 @@ model AIResearchPacket {
   evidence       AISourceEvidence[]
   claims         AIFactClaim[]
   operations     AIOperation[]
+  runs           AIGenerationRun[]
+  approvals      AIApproval[]
 
   @@unique([itemId, version])
   @@map("ai_research_packets")
@@ -2319,4 +2407,64 @@ model AIClaimSource {
   @@id([claimId, evidenceId])
   @@index([evidenceId])
   @@map("ai_claim_sources")
+}
+
+enum AIPriceStatus {
+  proposed
+  approved
+  retired
+}
+
+/// Versioned provider price schedule (owner budget rule). Only an administrator-approved
+/// entry can price a paid call; unknown pricing fails closed. Approved entries are never edited:
+/// a price change is a new version.
+model AIPriceSchedule {
+  id                         String        @id @default(cuid())
+  version                    String        @unique @db.VarChar(64)
+  provider                   String        @db.VarChar(32)
+  model                      String        @db.VarChar(64)
+  serviceTier                String        @default("default") @db.VarChar(16)
+  currency                   String        @db.Char(3)
+  inputMicrosPerMTok         Int
+  cachedInputMicrosPerMTok   Int
+  outputMicrosPerMTok        Int
+  longContextThresholdTokens Int
+  sourceUrl                  String        @db.VarChar(500)
+  effectiveFrom              DateTime      @db.DateTime(3)
+  status                     AIPriceStatus @default(proposed)
+  createdByAdminId           String?
+  approvedByAdminId          String?
+  approvedAt                 DateTime?     @db.DateTime(3)
+  createdAt                  DateTime      @default(now()) @db.DateTime(3)
+  createdBy                  AdminUser?    @relation("AIPriceCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  approvedBy                 AdminUser?    @relation("AIPriceApprover", fields: [approvedByAdminId], references: [id], onDelete: SetNull)
+  operations                 AIOperation[]
+
+  @@index([provider, model, status])
+  @@index([createdByAdminId])
+  @@index([approvedByAdminId])
+  @@map("ai_price_schedules")
+}
+
+enum AIBudgetScope {
+  day
+  month
+}
+
+/// Spend per business day and month in the configured timezone (plan §I). Every paid call
+/// reserves its maximum here, under a row lock, before it is made.
+model AIBudgetBucket {
+  id              String        @id @default(cuid())
+  scope           AIBudgetScope
+  period          String        @db.VarChar(10)
+  currency        String        @db.Char(3)
+  reservedMicros  Int           @default(0)
+  settledMicros   Int           @default(0)
+  version         Int           @default(1)
+  updatedAt       DateTime      @updatedAt @db.DateTime(3)
+  dayOperations   AIOperation[] @relation("AIBudgetDay")
+  monthOperations AIOperation[] @relation("AIBudgetMonth")
+
+  @@unique([scope, period, currency])
+  @@map("ai_budget_buckets")
 }
