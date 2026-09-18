@@ -114,6 +114,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@adelaide-sphere/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@ant-design/icons':
         specifier: 5.6.1
         version: 5.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -132,9 +135,6 @@ importers:
       '@icons-pack/react-simple-icons':
         specifier: ^13.15.1
         version: 13.15.1(react@19.2.8)
-      '@adelaide-sphere/domain':
-        specifier: workspace:*
-        version: link:../../packages/domain
       '@refinedev/antd':
         specifier: 6.0.3
         version: 6.0.3(@refinedev/core@5.0.12(@tanstack/react-query@5.102.8(react@19.2.8))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(antd@5.29.3(luxon@3.7.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(dayjs@1.11.23)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
@@ -187,12 +187,12 @@ importers:
         specifier: 7.18.3
         version: 7.18.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     devDependencies:
-      '@eslint/js':
-        specifier: 10.0.1
-        version: 10.0.1(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))
       '@adelaide-sphere/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@eslint/js':
+        specifier: 10.0.1
+        version: 10.0.1(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))
       '@testing-library/dom':
         specifier: 10.4.1
         version: 10.4.1
@@ -250,15 +250,6 @@ importers:
 
   apps/api:
     dependencies:
-      '@aws-sdk/client-s3':
-        specifier: 3.1127.0
-        version: 3.1127.0
-      '@aws-sdk/s3-request-presigner':
-        specifier: 3.1127.0
-        version: 3.1127.0
-      '@casl/ability':
-        specifier: 7.0.1
-        version: 7.0.1
       '@adelaide-sphere/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -268,6 +259,15 @@ importers:
       '@adelaide-sphere/mail':
         specifier: workspace:*
         version: link:../../packages/mail
+      '@aws-sdk/client-s3':
+        specifier: 3.1127.0
+        version: 3.1127.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: 3.1127.0
+        version: 3.1127.0
+      '@casl/ability':
+        specifier: 7.0.1
+        version: 7.0.1
       '@nestjs/common':
         specifier: ^12.0.1
         version: 12.0.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0)
@@ -377,9 +377,6 @@ importers:
 
   apps/web:
     dependencies:
-      '@icons-pack/react-simple-icons':
-        specifier: ^13.15.1
-        version: 13.15.1(react@19.2.8)
       '@adelaide-sphere/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -389,6 +386,9 @@ importers:
       '@adelaide-sphere/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@icons-pack/react-simple-icons':
+        specifier: ^13.15.1
+        version: 13.15.1(react@19.2.8)
       lucide-react:
         specifier: 1.41.0
         version: 1.41.0(react@19.2.8)
@@ -447,9 +447,6 @@ importers:
 
   apps/worker:
     dependencies:
-      '@aws-sdk/client-s3':
-        specifier: 3.1127.0
-        version: 3.1127.0
       '@adelaide-sphere/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -459,6 +456,9 @@ importers:
       '@adelaide-sphere/mail':
         specifier: workspace:*
         version: link:../../packages/mail
+      '@aws-sdk/client-s3':
+        specifier: 3.1127.0
+        version: 3.1127.0
       '@nestjs/common':
         specifier: ^12.0.1
         version: 12.0.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@10.2.2)
@@ -544,16 +544,28 @@ importers:
 
   packages/database:
     dependencies:
+      '@adelaide-sphere/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@prisma/adapter-mariadb':
         specifier: 7.10.0
         version: 7.10.0
       '@prisma/client':
         specifier: 7.10.0
         version: 7.10.0(prisma@7.10.0(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(magicast@0.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3))(typescript@6.0.3)
+      marked:
+        specifier: 18.0.11
+        version: 18.0.11
+      sanitize-html:
+        specifier: 2.17.7
+        version: 2.17.7
     devDependencies:
       '@types/node':
         specifier: ^24.13.3
         version: 24.13.3
+      '@types/sanitize-html':
+        specifier: 2.16.1
+        version: 2.16.1
       prisma:
         specifier: 7.10.0
         version: 7.10.0(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(magicast@0.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)

@@ -97,3 +97,32 @@ Maps SRS sections/requirements to implementation status, modules and evidence. U
 | Sign-in and link screens — AUTH 001–003, NFR 006 (12 September 2026) | done | `apps/admin/src/layouts/AuthScreen.tsx` + `auth-screen.css`, `auth/sign-in-failure.ts`, `auth/sign-in-notice.ts`, `components/NewPasswordForm.tsx`, `pages/{LoginPage,ResetPasswordPage,AcceptSetupPage}.tsx`, `app/AppProviders.tsx` (Refine's login toast suppressed) | `LoginPage.test.tsx` (6), `sign-in-failure.test.ts` (4), `NewPassword.test.tsx` (5), `LoginTotp.test.tsx` (the challenge never reaches the screen), `auth-provider.test.ts` | Refine's own login toast had printed the two-step challenge token; removed |
 | Admin themes — UX 001, NFR 006 (12 September 2026) | done | `apps/admin/src/config/theme.ts` (light/dark palettes, CSS variables, Ant theme), `theme/theme-mode.ts`, `components/ThemeToggle.tsx`, `styles/global.css` | `theme.test.ts` (AA contrast for both palettes), `ThemeToggle.test.tsx`, `admin-ui.spec.ts` (axe over every page family in dark; toggle survives a reload) | Light is the default; the choice is per browser |
 | Transactional email presentation — ENQ 005, MAIL 001 (12 September 2026) | done | `packages/domain/src/email-layout.ts` (`renderEmail`, `escapeHtml`), `packages/domain/src/enquiry-mail.ts`, `apps/api/src/auth/mailer/auth-mail.ts`, HTML part through `packages/mail/src/{transport,resend-transport}.ts` and the API/worker mailers | `email-layout.spec.ts` (6: parts agree, escaping, http(s)-only links, solid colour under every gradient, visitor message escaped with line breaks), `auth-mail.spec.ts` (3: real link lifetime, one invitation builder), `transport.spec.ts` (HTML beside text, size bound), `enquiry-delivery.spec.ts` | Plain text is always sent; HTML is the alternative. Rendering checked in a browser at 720 and 390 px, light and dark |
+
+## AI Automation Phase 1A delivery — 18 September 2026
+
+Only the owner-approved Phase 1A subset is implemented: existing settings registry configuration (execution inactive), manual topic lifecycle and priority, bounded admin/API screens, exact normalized active-title deduplication, actor-scoped request replay, version guards, permissions and transactional audit. The settings store now uses atomic compare-and-set. Evidence: 44 API unit, 10 new real MySQL integration, 11 existing settings integration, 12 existing blog integration and 30 admin tests passed. Details, exact files and rollout status: [Phase 1A completion report](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1a-completion.md).
+
+This does **not** mark research, semantic deduplication, generation, Post integration, images, scheduling, spending enforcement or social requirements complete. Those remain planned. Migration was applied only to the isolated test database. Phase 1B is not authorized.
+
+## AI Automation Phase 1B delivery — 18 September 2026
+
+Workstream 1B only, verified locally against the isolated test database: canonical AI item → Post mapping (unique, set once, created atomically), generation runs, leased and fenced durable operations with database-only recovery, immutable approvals bound to the article's material hash, the automation control epoch, and one AI publication policy in the shared backend seam used by both the admin publish/schedule commands and the scheduled publisher. Human edits are sticky and turn late worker results into proposals. Evidence: new T2/T3/T5/T6 integration spec 18/18, full integration 344/344 (API) + 5/5 (database), all workspace unit suites passed. Mutation checks showed each publication guard and the lease assertion is necessary. Details: [Phase 1B completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1b-completion.md).
+
+Not migrated on any retained database, not deployed, not enabled. Research, novelty, evidence, generation, approval commands, images, cadence, budgets and social remain planned. 1C needs the owner's pilot editorial-strategy/source-policy approval.
+
+## AI Automation Phase 1C delivery — 18 September 2026
+
+Workstream 1C only, under the owner's pilot policy, verified locally against the isolated test database:
+
+- the SSRF-safe public retrieval boundary;
+- evidence and deterministic typed claims with claim-source links;
+- freshness and change detection, with the owner's 24 h / 7 d / 30 d ceilings;
+- conflict to Needs Fact Review, with evidence-backed editor resolution;
+- local novelty with fingerprints, the inventory epoch and serialised admission, and rejected history;
+- niche-filtered feed discovery;
+- bounded published-only context;
+- the review permission, and the admin research, Fact Review and source-registry screens.
+
+Evidence: new 1C spec 20/20; full integration 364/364 plus 5/5; all unit suites; mutation checks on the admission lock and the SSRF check. A live free public retrieval succeeded on an official council page. Details: [Phase 1C completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1c-completion.md).
+
+Not migrated on any retained database, not deployed; research runs only while automation is enabled. No paid call, generation, image, cadence or social functionality. 1D is blocked on the owner's provider, credential, pricing, budget and byline decisions.

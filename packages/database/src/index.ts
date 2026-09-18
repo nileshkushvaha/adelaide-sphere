@@ -19,7 +19,8 @@ export type {
 export { parseMysqlUrl, hasVerifiedTls, MYSQL_SSL_MODES, VERIFIED_SSL_MODES } from './url.js';
 export type { MysqlConnectionSettings, MysqlSslMode } from './url.js';
 export { sslOptionFor } from './client.js';
-export { Prisma, AdminUserStatus, AdminTokenPurpose, BusinessStatus, AddressVisibility, HoursMode, HoursExceptionKind, BusinessLinkKind, ReviewStatus, AbuseReportReason, AbuseReportStatus, AbuseReportOutcome, EnquiryKind, EnquiryHandlingStatus, EnquiryDeliveryStatus, OutboxStatus, PostStatus, MediaStatus, MediaVariantKind, RedirectKind, PostBodyFormat, AuthorLinkKind, StaticPageStatus, EmailDeliveryStatus, WebsiteContentStatus, ServiceAlertSeverity, ScheduledRunTrigger, ScheduledRunOutcome } from './generated/prisma/client.js';
+export { databaseCode, retryTransaction } from './retry.js';
+export { Prisma, AdminUserStatus, AdminTokenPurpose, BusinessStatus, AddressVisibility, HoursMode, HoursExceptionKind, BusinessLinkKind, ReviewStatus, AbuseReportReason, AbuseReportStatus, AbuseReportOutcome, EnquiryKind, EnquiryHandlingStatus, EnquiryDeliveryStatus, OutboxStatus, PostStatus, MediaStatus, MediaVariantKind, RedirectKind, PostBodyFormat, AuthorLinkKind, StaticPageStatus, EmailDeliveryStatus, WebsiteContentStatus, ServiceAlertSeverity, ScheduledRunTrigger, ScheduledRunOutcome, AITopicStatus, AIRunStatus, AIFactCheckStatus, AIOperationKind, AIOperationState, AIApprovalKind, AINoveltyStatus, AISourceTier, AIPacketStatus, AIFetchStatus, AIClaimKind, AIClaimStatus, AIClaimOrigin } from './generated/prisma/client.js';
 export type {
   AdminLoginChallenge,
   AdminRecoveryCode,

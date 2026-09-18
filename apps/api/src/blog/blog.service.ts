@@ -13,6 +13,8 @@ import type { ChangeSlugDto } from '../seo/dto/redirect.dto.js';
 import { POST_TRANSITIONS, deriveExcerpt, postPublicationBlockers, scheduleBlockers, type PostAction } from './post-rules.js';
 import { renderSanitisedBody, sanitiseHtmlFragment, toPlainText } from './sanitise.js';
 import { syncContentMedia } from '../media/content-media.js';
+import { bumpInventoryEpoch } from '@adelaide-sphere/database/automation';
+import { aiPublicationDecision, closeAiHumanEdit, lockLinkedAiItem, openAiHumanEdit, recordPostRevision, syncAiItemWithPost } from '@adelaide-sphere/database/editorial';
 import { validateAuthorLinks, validateExpertise, validatePublicEmail, type NormalisedAuthorLink } from './author-rules.js';
 import { validatePublicUrl } from '../directory/business-rules.js';
 import { MediaService } from '../media/media.service.js';
@@ -458,22 +460,7 @@ export class BlogService {
 
   /** Snapshots the article as it stands before a change, and keeps the newest MAX_POST_REVISIONS. */
   private async recordRevision(tx: Prisma.TransactionClient, current: PostRow, reason: string | null, actorAdminId: string): Promise<void> {
-    await tx.contentRevision.create({
-      data: {
-        resourceType: 'post',
-        resourceId: current.id,
-        version: current.version,
-        sanitizedSnapshot: current.sanitizedBody,
-        bodySource: current.bodyMarkdown,
-        bodyFormat: current.bodyFormat,
-        excerpt: current.excerpt,
-        title: current.title,
-        reason,
-        actorAdminId,
-      },
-    });
-    const surplus = await tx.contentRevision.findMany({ where: { resourceType: 'post', resourceId: current.id }, orderBy: { version: 'desc' }, skip: MAX_POST_REVISIONS, select: { id: true } });
-    if (surplus.length > 0) await tx.contentRevision.deleteMany({ where: { id: { in: surplus.map((row) => row.id) } } });
+    await recordPostRevision(tx, current, reason, actorAdminId);
   }
 
   async revisionDetail(id: string, revisionId: string): Promise<PostRevisionDetailDto> {
@@ -512,6 +499,8 @@ export class BlogService {
     const published = current.status === 'published';
 
     const row = await db.$transaction(async (tx) => {
+      // An AI-linked article records the human change (AI-210); ordinary articles are unaffected.
+      const aiEdit = await openAiHumanEdit(tx, id);
       // The version guard runs first, so a concurrent change is a 409 rather than a duplicate revision.
       const updated = await tx.post.updateMany({
         where: { id, version: expectedVersion },
@@ -520,6 +509,8 @@ export class BlogService {
       if (updated.count !== 1) throw stale();
       await this.recordRevision(tx, current, `Before restoring version ${revision.version}`, actor.id);
       await syncContentMedia(tx, 'post', id, sanitizedBody);
+      if (aiEdit) await closeAiHumanEdit(tx, aiEdit, id, { actorAdminId: actor.id, requestId: ctx.requestId });
+      await bumpInventoryEpoch(tx);
       await tx.postAutosave.deleteMany({ where: { postId: id, adminId: actor.id } });
       if (published) {
         await this.outbox.write(tx, { type: 'post.updated', resourceType: 'post', resourceId: id, resourceVersion: current.version + 1, correlationId: ctx.requestId, payload: { postId: id, slug: current.slug } });
@@ -593,6 +584,8 @@ export class BlogService {
     // text (shown to them in the editor, never hidden), rather than a blocker.
     const excerpt = input.excerpt?.trim() ? input.excerpt : deriveExcerpt(toPlainText(sanitizedBody));
     const row = await db.$transaction(async (tx) => {
+      // A new article changes the inventory AI topics are compared with (AI plan §E step 6).
+      await bumpInventoryEpoch(tx);
       const created = await tx.post.create({
         data: {
           title: input.title,
@@ -669,6 +662,7 @@ export class BlogService {
     if (input.guestPost !== undefined) data.guestPost = input.guestPost;
 
     const row = await db.$transaction(async (tx) => {
+      const aiEdit = await openAiHumanEdit(tx, id);
       const updated = await tx.post.updateMany({ where: { id, version: input.expectedVersion }, data });
       if (updated.count !== 1) throw stale();
       if (typeof data.sanitizedBody === 'string') await syncContentMedia(tx, 'post', id, data.sanitizedBody);
@@ -682,8 +676,10 @@ export class BlogService {
       const bodyChanged = input.bodyMarkdown !== undefined && (input.bodyMarkdown !== current.bodyMarkdown || (input.bodyFormat ?? current.bodyFormat) !== current.bodyFormat);
       const titleChanged = input.title !== undefined && input.title !== current.title;
       if (current.firstPublishedAt || bodyChanged || titleChanged) await this.recordRevision(tx, current, input.revisionReason ?? null, actor.id);
+      if (bodyChanged || titleChanged || (input.slug !== undefined && input.slug !== current.slug)) await bumpInventoryEpoch(tx);
       // An explicit save supersedes this writer's autosaved copy.
       await tx.postAutosave.deleteMany({ where: { postId: id, adminId: actor.id } });
+      if (aiEdit) await closeAiHumanEdit(tx, aiEdit, id, { actorAdminId: actor.id, requestId: ctx.requestId });
       if (current.firstPublishedAt) {
         await this.outbox.write(tx, { type: 'post.updated', resourceType: 'post', resourceId: id, resourceVersion: current.version + 1, correlationId: ctx.requestId, payload: { postId: id, slug: current.slug } });
       }
@@ -710,8 +706,11 @@ export class BlogService {
     if (slug === current.slug) throw validation('slug', 'That is already the slug of this article');
     if (await db.post.findUnique({ where: { slug } })) throw slugTaken();
     const row = await db.$transaction(async (tx) => {
+      const aiEdit = await openAiHumanEdit(tx, id);
       const updated = await tx.post.updateMany({ where: { id, version: input.expectedVersion }, data: { slug, version: { increment: 1 } } });
       if (updated.count !== 1) throw stale();
+      if (aiEdit) await closeAiHumanEdit(tx, aiEdit, id, { actorAdminId: actor.id, requestId: ctx.requestId });
+      await bumpInventoryEpoch(tx);
       // Only a published article has an indexed URL worth preserving.
       if (current.firstPublishedAt) {
         await this.redirects.recordSlugChange(tx, { sourcePath: `/blog/${current.slug}`, targetPath: `/blog/${slug}`, resourceType: 'post', resourceId: id, actorAdminId: actor.id, reason: input.reason ?? null });
@@ -780,8 +779,17 @@ export class BlogService {
     }
 
     const row = await db.$transaction(async (tx) => {
+      // The AI eligibility policy the scheduled publisher also applies, checked
+      // under the article's lock in the committing transaction (AI-054, AI-094).
+      const ai = action === 'publish' || action === 'schedule'
+        ? await aiPublicationDecision(tx, { postId: id, action, path: 'manual' })
+        : await lockLinkedAiItem(tx, id).then((item) => (item ? { linked: true as const, item, eligible: true, reasons: [] } : { linked: false as const }));
+      if (ai.linked && !ai.eligible) {
+        throw new HttpException({ code: 'PUBLICATION_BLOCKED', message: 'The article does not meet the publication requirements', fields: { publication: ai.reasons } }, HttpStatus.CONFLICT);
+      }
       const updated = await tx.post.updateMany({ where: { id, version: input.expectedVersion }, data });
       if (updated.count !== 1) throw stale();
+      if (ai.linked) await syncAiItemWithPost(tx, ai.item, { postId: id, action, fromPostStatus: current.status, path: 'manual' }, { actorAdminId: actor.id, requestId: ctx.requestId });
       if (action === 'publish' || action === 'unpublish' || action === 'archive') {
         await this.outbox.write(tx, {
           type: action === 'publish' ? 'post.published' : 'post.removed',

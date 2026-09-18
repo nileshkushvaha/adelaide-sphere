@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AiContentModule } from './ai-content/ai-content.module.js';
 import { CacheModule } from './cache/cache.module.js';
 import { CaptchaModule } from './common/captcha/captcha.module.js';
 import { AppConfigModule } from './config/app-config.module.js';
@@ -28,7 +29,7 @@ import { SchedulesModule } from './schedules/schedules.module.js';
 import { TaxonomyModule } from './taxonomy/taxonomy.module.js';
 
 @Module({
-  imports: [AppConfigModule, CacheModule, CaptchaModule, DatabaseModule, RedisModule, AuditModule, AuthorizationModule, IdentityModule, AuthModule, AdminsModule, TaxonomyModule, DirectoryModule, ReviewsModule,
+  imports: [AiContentModule, AppConfigModule, CacheModule, CaptchaModule, DatabaseModule, RedisModule, AuditModule, AuthorizationModule, IdentityModule, AuthModule, AdminsModule, TaxonomyModule, DirectoryModule, ReviewsModule,
     EnquiriesModule,
     BlogModule,
     MediaModule,

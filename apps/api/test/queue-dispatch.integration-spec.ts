@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import { Queue, Worker } from 'bullmq';
 import {
+  AI_OPERATION_JOB,
   CACHE_INVALIDATE_JOB,
   ENQUIRY_EMAIL_JOB,
   JOB_NAMES,
@@ -69,6 +70,7 @@ describe('Queue dispatch against real BullMQ (integration)', () => {
       { id: queueJobId('audit', MEDIA_PROCESS_JOB, 'm1'), name: MEDIA_PROCESS_JOB, data: { mediaId: 'm1' } },
       { id: queueJobId('audit', CACHE_INVALIDATE_JOB, 'c1'), name: CACHE_INVALIDATE_JOB, data: { tags: 'businesses' } },
       { id: queueJobId('audit', SCHEDULED_TASK_JOB, 's1'), name: SCHEDULED_TASK_JOB, data: { taskCode: 'activity.retention', trigger: 'manual' } },
+      { id: queueJobId('audit', AI_OPERATION_JOB, 'o1'), name: AI_OPERATION_JOB, data: { eventId: 'evt1', operationId: 'o1' } },
     ];
     for (const job of dispatched) await port.enqueue(job);
 

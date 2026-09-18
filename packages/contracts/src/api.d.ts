@@ -4,6 +4,246 @@
  */
 
 export interface paths {
+    "/api/v1/admin/ai-content/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AiContentController_overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/topics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AiContentController_list"];
+        put?: never;
+        post: operations["AiContentController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/topics/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AiContentController_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/topics/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["AiContentController_reorder"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/topics/{id}/priority": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["AiContentController_priority"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/topics/{id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AiContentController_action"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/topics/{id}/research": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AiResearchController_research"];
+        put?: never;
+        post: operations["AiResearchController_researchAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/topics/{id}/novelty": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AiResearchController_novelty"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/topics/{id}/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["AiResearchController_sources"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/claims/{id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AiResearchController_resolve"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/packets/{id}/claims": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AiResearchController_addClaim"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/discovery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AiResearchController_discover"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/discovery/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AiResearchController_discovery"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AiResearchController_listSources"];
+        put?: never;
+        post: operations["AiResearchController_createSource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/sources/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["AiResearchController_updateSource"];
+        trace?: never;
+    };
     "/api/v1/admin/system/cache": {
         parameters: {
             query?: never;
@@ -2434,6 +2674,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/settings/ai-content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["SettingsGroupsController_aiContent"];
+        put: operations["SettingsGroupsController_updateAiContent"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/settings/security": {
         parameters: {
             query?: never;
@@ -3557,6 +3813,123 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Object: Record<string, never>;
+        TopicDto: {
+            id: string;
+            title: string;
+            brief?: Record<string, never> | null;
+            priority: number;
+            /** @enum {string} */
+            source: "manual" | "discovery";
+            /** @enum {string} */
+            status: "queued" | "paused" | "researching" | "generating" | "needs_fact_review" | "ready_for_review" | "approved" | "scheduled" | "published" | "failed" | "cancelled" | "rejected";
+            reason?: Record<string, never> | null;
+            createdByAdminId?: Record<string, never> | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            version: number;
+            /** @description The one canonical article for this item, once a draft exists. */
+            postId?: Record<string, never> | null;
+            /** @description First human change to the linked article; automation never applies over it. */
+            humanModifiedAt?: Record<string, never> | null;
+            /** @enum {string|null} */
+            failureStage?: "research" | "generation" | "image" | "application" | "publication" | null;
+            failureCode?: Record<string, never> | null;
+            /** @description Why the topic was selected: manual entry or the public signal discovery found. */
+            selectionReason?: Record<string, never> | null;
+            /** @enum {string} */
+            noveltyStatus: "unchecked" | "clear" | "review" | "duplicate";
+            noveltyCheckedAt?: Record<string, never> | null;
+            /** @description Up to 10 local inventory matches: kind, id, title, status, score, reason, verdict. */
+            noveltyDetail?: Record<string, never> | null;
+            /** @description Up to 10 https source pages with an optional tier. */
+            researchUrls?: Record<string, never> | null;
+            topicApprovedAt?: Record<string, never> | null;
+            topicApprovedByAdminId?: Record<string, never> | null;
+            followUpOfPostId?: Record<string, never> | null;
+            followUpReason?: Record<string, never> | null;
+        };
+        CreateTopicDto: {
+            title: string;
+            brief?: string;
+            /** @default 0 */
+            priority: Record<string, never>;
+        };
+        ReorderEntryDto: {
+            expectedVersion: number;
+            priority: number;
+            id: string;
+        };
+        ReorderTopicsDto: {
+            items: components["schemas"]["ReorderEntryDto"][];
+        };
+        TopicPriorityDto: {
+            expectedVersion: number;
+            priority: number;
+        };
+        TopicActionDto: {
+            expectedVersion: number;
+            /** @enum {string} */
+            action: "pause" | "resume" | "cancel" | "reject";
+            reason?: string;
+        };
+        ResearchUrlDto: {
+            /** @description A public https page; retrieval re-validates it at connection time. */
+            url: string;
+            /**
+             * @description Editor classification; otherwise the registry decides, else unclassified.
+             * @enum {string|null}
+             */
+            tier?: "official_government" | "official_business" | "institutional" | "publication" | null;
+        };
+        TopicSourcesDto: {
+            expectedVersion: number;
+            sources: components["schemas"]["ResearchUrlDto"][];
+        };
+        ResearchActionDto: {
+            expectedVersion: number;
+            /** @enum {string} */
+            action: "approve" | "refresh";
+            /** @description Approve a topic that overlaps existing content only as a follow-up of this article. */
+            followUpOfPostId?: string;
+            followUpReason?: string;
+        };
+        ResolveClaimDto: {
+            expectedVersion: number;
+            /** @enum {string} */
+            action: "accept" | "exclude" | "reopen";
+            note?: string;
+        };
+        AddClaimDto: {
+            evidenceId: string;
+            /** @enum {string} */
+            kind: "business_identity" | "address" | "phone" | "website" | "opening_hours" | "price" | "availability" | "event_datetime" | "event_location" | "geography" | "background";
+            subject: string;
+            value: string;
+            /** @description Copied from the retrieved source text; must state the value. */
+            excerpt: string;
+            material: boolean;
+            /** @description For an event: when it ends. */
+            validUntil?: string;
+        };
+        ResearchSourceInputDto: {
+            host: string;
+            label: string;
+            /** @enum {string} */
+            tier: "official_government" | "official_business" | "institutional" | "publication";
+            feedUrl?: Record<string, never> | null;
+            active?: boolean;
+        };
+        UpdateResearchSourceDto: {
+            expectedVersion: number;
+            label?: string;
+            /** @enum {string} */
+            tier?: "official_government" | "official_business" | "institutional" | "publication";
+            feedUrl?: Record<string, never> | null;
+            active?: boolean;
+        };
         CacheStatusDto: {
             /** @description Whether Redis is reachable, and what it means for the site if it is not. */
             redis: Record<string, never>;
@@ -3579,7 +3952,6 @@ export interface components {
             cleared?: number;
             accepted: boolean;
         };
-        Object: Record<string, never>;
         CreateRoleDto: {
             /**
              * @description Stable key: lower-case letters, digits and underscores
@@ -6020,7 +6392,7 @@ export interface components {
         };
         SettingGroupDto: {
             /** @enum {string} */
-            key: "security" | "email" | "operations" | "website";
+            key: "security" | "email" | "operations" | "website" | "ai_content";
             label: string;
             description: string;
             /** @description Server module that owns reads, writes and invariants for this group. */
@@ -6421,10 +6793,6 @@ export interface components {
             displayOrder?: number;
             /** @description Version last read; a concurrent change is refused with 409. */
             expectedVersion: number;
-        };
-        ReorderEntryDto: {
-            id: string;
-            displayOrder: number;
         };
         ReorderFaqsDto: {
             order: components["schemas"]["ReorderEntryDto"][];
@@ -6844,6 +7212,396 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    AiContentController_overview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiContentController_list: {
+        parameters: {
+            query?: {
+                page?: components["schemas"]["Object"];
+                pageSize?: components["schemas"]["Object"];
+                order?: "asc" | "desc";
+                status?: "queued" | "paused" | "researching" | "generating" | "needs_fact_review" | "ready_for_review" | "approved" | "scheduled" | "published" | "failed" | "cancelled" | "rejected";
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicDto"][];
+                };
+            };
+        };
+    };
+    AiContentController_create: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTopicDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicDto"];
+                };
+            };
+        };
+    };
+    AiContentController_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicDto"];
+                };
+            };
+        };
+    };
+    AiContentController_reorder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReorderTopicsDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicDto"][];
+                };
+            };
+        };
+    };
+    AiContentController_priority: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TopicPriorityDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicDto"];
+                };
+            };
+        };
+    };
+    AiContentController_action: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TopicActionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TopicDto"];
+                };
+            };
+        };
+    };
+    AiResearchController_research: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiResearchController_researchAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResearchActionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiResearchController_novelty: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiResearchController_sources: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TopicSourcesDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiResearchController_resolve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolveClaimDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiResearchController_addClaim: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddClaimDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiResearchController_discover: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiResearchController_discovery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiResearchController_listSources: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiResearchController_createSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResearchSourceInputDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiResearchController_updateSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateResearchSourceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     CacheAdminController_status: {
         parameters: {
             query?: never;
@@ -11025,6 +11783,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SettingGroupDto"][];
+                };
+            };
+        };
+    };
+    SettingsGroupsController_aiContent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingGroupValuesDto"];
+                };
+            };
+        };
+    };
+    SettingsGroupsController_updateAiContent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSettingGroupDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingGroupValuesDto"];
                 };
             };
         };

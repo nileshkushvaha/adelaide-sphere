@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { OutboxEvent, Prisma } from '@adelaide-sphere/database';
-import { MAX_DISPATCH_ATTEMPTS, backoffMs } from '@adelaide-sphere/domain';
+import { AI_OPERATION_EVENT, MAX_DISPATCH_ATTEMPTS, backoffMs } from '@adelaide-sphere/domain';
 import { DatabaseService } from '../database/database.service.js';
 
 /** Event names used by the outbox (SRS EVT 001). Payloads carry identifiers only. */
@@ -11,6 +11,8 @@ export const EVENT_TYPES = {
   postRemoved: 'post.removed',
   mediaUploaded: 'media.uploaded',
   cacheInvalidate: 'cache.invalidate',
+  /** A durable AI operation is ready for the worker; written by the database package's automation seam. */
+  aiOperationReady: AI_OPERATION_EVENT,
 } as const;
 export type EventType = (typeof EVENT_TYPES)[keyof typeof EVENT_TYPES];
 

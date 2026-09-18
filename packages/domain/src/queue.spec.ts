@@ -66,7 +66,7 @@ describe('assertQueueJobId', () => {
   });
 
   it('covers every job name the system dispatches', () => {
-    expect([...JOB_NAMES]).toEqual(['enquiry.email', 'media.process', 'cache.invalidate', 'scheduled.task']);
+    expect([...JOB_NAMES]).toEqual(['enquiry.email', 'media.process', 'cache.invalidate', 'ai.operation', 'scheduled.task']);
     for (const name of JOB_NAMES) expect(jobIdProblem(queueJobId(name, 'x'))).toBeNull();
   });
 });

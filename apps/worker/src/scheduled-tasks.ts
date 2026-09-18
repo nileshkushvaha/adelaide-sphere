@@ -1,5 +1,7 @@
 import type { Queue } from 'bullmq';
 import type { DatabaseClient } from '@adelaide-sphere/database';
+import { recoverOperations } from '@adelaide-sphere/database/automation';
+import { DUE_SCHEDULED_POST_SELECT, publishDueScheduledPost } from '@adelaide-sphere/database/editorial';
 import {
   CACHE_TAGS,
   MEDIA_SETTING_REFERENCES,
@@ -7,7 +9,6 @@ import {
   SCHEDULED_RUN_RETENTION_DAYS,
   UNUSED_READY_MAX_AGE_DAYS,
   pagePublicationBlockers,
-  postPublicationBlockers,
   scheduledTask,
   scheduledTaskLockKey,
   unusedMediaRelations,
@@ -87,49 +88,18 @@ export const TASK_IMPLEMENTATIONS: Record<string, (ctx: TaskContext) => Promise<
   'content.publish-scheduled': async ({ db, now }) => {
     const due = await db.post.findMany({
       where: { status: 'scheduled', scheduledAt: { lte: now } },
-      select: { id: true, slug: true, version: true, title: true, excerpt: true, sanitizedBody: true, firstPublishedAt: true, author: { select: { active: true } }, category: { select: { active: true } } },
+      select: DUE_SCHEDULED_POST_SELECT,
       orderBy: { scheduledAt: 'asc' },
       take: 200,
     });
     let published = 0;
     let returned = 0;
+    // The per-article transaction, with the AI eligibility policy the admin
+    // publish command also applies, is the shared editorial seam's.
     for (const post of due) {
-      const blockers = postPublicationBlockers({
-        title: post.title,
-        slug: post.slug,
-        excerpt: post.excerpt,
-        plainBody: plainTextOf(post.sanitizedBody),
-        authorActive: post.author.active,
-        categoryActive: post.category.active,
-      });
-      await db.$transaction(async (tx) => {
-        if (blockers.length > 0) {
-          const updated = await tx.post.updateMany({
-            where: { id: post.id, status: 'scheduled', version: post.version },
-            data: { status: 'draft', scheduledAt: null, publishFailure: blockers.join(' ').slice(0, 500), version: { increment: 1 } },
-          });
-          if (updated.count === 0) return;
-          await tx.auditLog.create({ data: { action: 'blog.post.schedule_blocked', targetType: 'post', targetId: post.id, metadata: { blockers } } });
-          returned += 1;
-          return;
-        }
-        const updated = await tx.post.updateMany({
-          where: { id: post.id, status: 'scheduled', version: post.version },
-          data: { status: 'published', publishedAt: now, firstPublishedAt: post.firstPublishedAt ?? now, scheduledAt: null, publishFailure: null, version: { increment: 1 } },
-        });
-        // Another replica, or an editor's change, got there first.
-        if (updated.count === 0) return;
-        await tx.outboxEvent.create({
-          data: {
-            type: 'cache.invalidate',
-            resourceType: 'post',
-            resourceId: post.id,
-            payload: { tags: [CACHE_TAGS.posts, CACHE_TAGS.post(post.slug), CACHE_TAGS.sitemap, CACHE_TAGS.taxonomy].join(',') },
-          },
-        });
-        await tx.auditLog.create({ data: { action: 'blog.post.publish', targetType: 'post', targetId: post.id, metadata: { from: 'scheduled', to: 'published', scheduled: true } } });
-        published += 1;
-      });
+      const outcome = await publishDueScheduledPost(db, post, now);
+      if (outcome === 'published') published += 1;
+      if (outcome === 'returned') returned += 1;
     }
 
     // Information pages scheduled from the page editor (change log 1.17), under
@@ -282,6 +252,17 @@ export const TASK_IMPLEMENTATIONS: Record<string, (ctx: TaskContext) => Promise<
   'schedule.run-retention': async ({ db, now }) => {
     const { count } = await db.scheduledTaskRun.deleteMany({ where: { startedAt: { lt: daysAgo(now, SCHEDULED_RUN_RETENTION_DAYS) } } });
     return `Removed ${count} run record${count === 1 ? '' : 's'}`;
+  },
+
+  /**
+   * Durable AI work recovery (AI plan §E, AI-264, F19/F51): from the
+   * operations table alone, so it holds when a queue job was lost or trimmed.
+   * With AI automation switched off there are no operations and this is a no-op.
+   */
+  'ai-content.recover-operations': async ({ db }) => {
+    const { reclaimed, redelivered, exhausted } = await recoverOperations(db);
+    if (reclaimed + redelivered + exhausted === 0) return 'Nothing to recover';
+    return `Re-queued ${redelivered}, reclaimed ${reclaimed} expired lease${reclaimed === 1 ? '' : 's'}, stopped ${exhausted} out of attempts`;
   },
 };
 

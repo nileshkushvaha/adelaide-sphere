@@ -1,11 +1,16 @@
 import { ConflictException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import type { Prisma } from '@adelaide-sphere/database';
+import { advanceControlEpoch } from '@adelaide-sphere/database/automation';
 import { AuditService, type AuditWriteClient } from '../audit/audit.service.js';
 import { CacheService } from '../cache/cache.service.js';
 import { DatabaseService } from '../database/database.service.js';
 import type { RequestContext } from '../auth/auth.service.js';
 import type { AdminPrincipal } from '../identity/identity.service.js';
+import { databaseCode, retryTransaction } from '../common/database-retry.js';
 import { groupDefaults, settingGroup, validateGroupPayload, type SettingGroupDeclaration, type SettingGroupKey } from './registry.js';
+
+/** AI settings pinned per run as editorial context; changing them does not fence in-flight work. */
+const AI_PINNED_CONTEXT_KEYS = new Set(['location', 'editorialStrategy']);
 
 export interface SettingDocument<T = unknown> {
   data: T;
@@ -88,10 +93,17 @@ export class SettingsStoreService {
       throw new ConflictException({ code: 'STALE_VERSION', message: 'These settings were changed by someone else. Reload and try again.' });
     }
 
-    const row = await db.$transaction(async (tx) => {
-      const saved = current
-        ? await tx.setting.update({ where: { group_key: { group, key } }, data: { data: input.data, version: { increment: 1 }, updatedByAdminId: actor.id } })
-        : await tx.setting.create({ data: { group, key, data: input.data, version: 1, updatedByAdminId: actor.id } });
+    const row = await retryTransaction(() => db.$transaction(async (tx) => {
+      // updateMany produces the conditional UPDATE itself, rather than relying
+      // on a unique-record pre-read by the ORM. Exactly one writer may win.
+      let saved;
+      if (current) {
+        const result = await tx.setting.updateMany({ where: { group, key, version: input.expectedVersion }, data: { data: input.data, version: { increment: 1 }, updatedByAdminId: actor.id } });
+        if (result.count !== 1) throw new ConflictException({ code: 'STALE_VERSION', message: 'These settings were changed by someone else. Reload and try again.' });
+        saved = await tx.setting.findUniqueOrThrow({ where: { group_key: { group, key } } });
+      } else {
+        saved = await tx.setting.create({ data: { group, key, data: input.data, version: 1, updatedByAdminId: actor.id } });
+      }
 
       // Committed with the change, so a settings edit that cannot be recorded is
       // rolled back rather than applied silently (SET 003).
@@ -109,7 +121,30 @@ export class SettingsStoreService {
       if (input.tags.length > 0) {
         await this.cache.recordInvalidation(tx, { resourceType: 'setting', resourceId: `${group}.${key}`, correlationId: ctx.requestId, tags: [...input.tags] });
       }
+      if (group === 'ai_content' && key === 'defaults') {
+        const before = current?.data as Record<string, unknown> | undefined;
+        // Live restrictive controls win over in-flight work (AI plan §I, F37/F38):
+        // any change other than the pinned editorial context advances the control
+        // epoch in this transaction, so a worker that started earlier cannot apply.
+        const after = input.data as Record<string, unknown>;
+        const safetyChanged = Object.keys({ ...before, ...after }).some(
+          (field) => !AI_PINNED_CONTEXT_KEYS.has(field) && JSON.stringify(before?.[field]) !== JSON.stringify(after[field]),
+        );
+        if (safetyChanged) await advanceControlEpoch(tx);
+        if ((before?.enabled ?? false) !== input.data.enabled) {
+          await this.audit.recordWith(tx as unknown as AuditWriteClient, {
+            action: input.data.enabled ? 'settings.ai_content.enabled' : 'settings.ai_content.disabled',
+            actorAdminId: actor.id, targetType: 'setting', targetId: 'ai_content.defaults',
+            requestId: ctx.requestId, metadata: { enabled: Boolean(input.data.enabled), executionActive: false },
+          });
+        }
+      }
       return saved;
+    })).catch((error: unknown) => {
+      if (databaseCode(error) === 'P2002' || databaseCode(error) === 'P2025') {
+        throw new ConflictException({ code: 'STALE_VERSION', message: 'These settings were changed by someone else. Reload and try again.' });
+      }
+      throw error;
     });
 
     if (input.tags.length > 0) await this.cache.bumpNamespace();
@@ -181,8 +216,8 @@ export class SettingsStoreService {
         action: `settings.${group.key}.update`,
         metadata: {
           changed: changed.join(', '),
-          ...this.summarise(group, current.values, changed, 'before'),
-          ...this.summarise(group, value, changed, 'after'),
+          ...this.summarise(group, current.values, group.key === 'ai_content' ? changed.filter((key) => !['location', 'editorialStrategy'].includes(key)) : changed, 'before'),
+          ...this.summarise(group, value, group.key === 'ai_content' ? changed.filter((key) => !['location', 'editorialStrategy'].includes(key)) : changed, 'after'),
         },
       },
       tags: this.invalidatedTags(group, changed),

@@ -41,6 +41,20 @@ export class SettingsGroupsController {
     return { data: groups };
   }
 
+  @RequirePermissions('ai_content.configure')
+  @Get('ai-content')
+  @Header('Cache-Control', 'no-store')
+  @ApiOkResponse({ type: SettingGroupValuesDto })
+  async aiContent() { return { data: await this.store.read('ai_content') }; }
+
+  @RequirePermissions('ai_content.configure')
+  @Put('ai-content')
+  @Header('Cache-Control', 'no-store')
+  @ApiOkResponse({ type: SettingGroupValuesDto })
+  async updateAiContent(@Body() body: UpdateSettingGroupDto, @CurrentAdmin() admin: AdminPrincipal, @Req() req: AuthenticatedRequest) {
+    return { data: await this.store.update('ai_content', body.values, body.expectedVersion, admin, ctxOf(req)) };
+  }
+
   @RequirePermissions('security.settings.view')
   @Get('security')
   @Header('Cache-Control', 'no-store')

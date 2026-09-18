@@ -4,13 +4,15 @@ export const QUEUE_NAME = 'adelaide-sphere';
 export const ENQUIRY_EMAIL_JOB = 'enquiry.email';
 export const MEDIA_PROCESS_JOB = 'media.process';
 export const CACHE_INVALIDATE_JOB = 'cache.invalidate';
+/** One durable AI operation (row in ai_operations); the database, not the job, is the authority. */
+export const AI_OPERATION_JOB = 'ai.operation';
 
 /**
  * Every job name this system dispatches. The worker switches on these and the
  * API produces them, so a name that is not here is a deployment mismatch rather
  * than work.
  */
-export const JOB_NAMES = [ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB, CACHE_INVALIDATE_JOB, 'scheduled.task'] as const;
+export const JOB_NAMES = [ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB, CACHE_INVALIDATE_JOB, AI_OPERATION_JOB, 'scheduled.task'] as const;
 export type JobName = (typeof JOB_NAMES)[number];
 
 /**

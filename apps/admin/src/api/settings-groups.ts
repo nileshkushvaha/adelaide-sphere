@@ -22,7 +22,7 @@ export interface SettingDeclaration {
 }
 
 export interface SettingGroupMetadata {
-  key: 'security' | 'email' | 'operations' | 'website';
+  key: 'security' | 'email' | 'operations' | 'website' | 'ai_content';
   label: string;
   description: string;
   owner: string;
@@ -49,10 +49,10 @@ export const settingsGroupsApi = {
   registry(client: HttpClient = httpClient) {
     return client.request<{ data: SettingGroupMetadata[] }>('/admin/settings/registry').then((r) => r.data.data);
   },
-  values(group: 'security' | 'email' | 'operations', client: HttpClient = httpClient) {
+  values(group: 'security' | 'email' | 'operations' | 'ai-content', client: HttpClient = httpClient) {
     return client.request<{ data: SettingGroupValues }>(`/admin/settings/${group}`).then((r) => r.data.data);
   },
-  update(group: 'security' | 'email' | 'operations', expectedVersion: number, values: Record<string, unknown>, client: HttpClient = httpClient) {
+  update(group: 'security' | 'email' | 'operations' | 'ai-content', expectedVersion: number, values: Record<string, unknown>, client: HttpClient = httpClient) {
     return client.request<{ data: SettingGroupValues }>(`/admin/settings/${group}`, { method: 'PUT', body: { expectedVersion, values } }).then((r) => r.data.data);
   },
 };

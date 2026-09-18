@@ -9,6 +9,14 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./ai-content": {
+      "types": "./dist/ai-content.d.ts",
+      "default": "./dist/ai-content.js"
+    },
+    "./ai-research": {
+      "types": "./dist/ai-research.d.ts",
+      "default": "./dist/ai-research.js"
+    },
     "./alerts": {
       "types": "./dist/alerts.d.ts",
       "default": "./dist/alerts.js"

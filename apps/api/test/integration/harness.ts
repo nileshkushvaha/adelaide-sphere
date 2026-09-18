@@ -6,6 +6,17 @@ import { resolveTestDatabaseUrl } from './test-database-url.js';
 
 /** Tables owned by the application (never `_prisma_migrations`). Extend as the schema grows. */
 export const APPLICATION_TABLES = [
+  // ai_automation_controls is deliberately kept: its one row is seeded by the
+  // migration and the code reads it as deployment state, never test data.
+  'ai_claim_sources',
+  'ai_fact_claims',
+  'ai_source_evidence',
+  'ai_research_sources',
+  'ai_approvals',
+  'ai_operations',
+  'ai_generation_runs',
+  'ai_research_packets',
+  'ai_content_items',
   'system_probes',
   'scheduled_task_runs',
   'scheduled_task_states',

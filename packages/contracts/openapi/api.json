@@ -1,6 +1,591 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/v1/admin/ai-content/overview": {
+      "get": {
+        "operationId": "AiContentController_overview",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/topics": {
+      "get": {
+        "operationId": "AiContentController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "asc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "queued",
+                "paused",
+                "researching",
+                "generating",
+                "needs_fact_review",
+                "ready_for_review",
+                "approved",
+                "scheduled",
+                "published",
+                "failed",
+                "cancelled",
+                "rejected"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TopicDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      },
+      "post": {
+        "operationId": "AiContentController_create",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTopicDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/topics/{id}": {
+      "get": {
+        "operationId": "AiContentController_detail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/topics/reorder": {
+      "put": {
+        "operationId": "AiContentController_reorder",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderTopicsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TopicDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/topics/{id}/priority": {
+      "put": {
+        "operationId": "AiContentController_priority",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TopicPriorityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/topics/{id}/actions": {
+      "post": {
+        "operationId": "AiContentController_action",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TopicActionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopicDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/topics/{id}/research": {
+      "get": {
+        "operationId": "AiResearchController_research",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      },
+      "post": {
+        "operationId": "AiResearchController_researchAction",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResearchActionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/topics/{id}/novelty": {
+      "post": {
+        "operationId": "AiResearchController_novelty",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/topics/{id}/sources": {
+      "put": {
+        "operationId": "AiResearchController_sources",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TopicSourcesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/claims/{id}/resolve": {
+      "post": {
+        "operationId": "AiResearchController_resolve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveClaimDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/packets/{id}/claims": {
+      "post": {
+        "operationId": "AiResearchController_addClaim",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddClaimDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/discovery": {
+      "post": {
+        "operationId": "AiResearchController_discover",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/discovery/{id}": {
+      "get": {
+        "operationId": "AiResearchController_discovery",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/sources": {
+      "get": {
+        "operationId": "AiResearchController_listSources",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      },
+      "post": {
+        "operationId": "AiResearchController_createSource",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResearchSourceInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/sources/{id}": {
+      "patch": {
+        "operationId": "AiResearchController_updateSource",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateResearchSourceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
     "/api/v1/admin/system/cache": {
       "get": {
         "operationId": "CacheAdminController_status",
@@ -7145,6 +7730,56 @@
         ]
       }
     },
+    "/api/v1/admin/settings/ai-content": {
+      "get": {
+        "operationId": "SettingsGroupsController_aiContent",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingGroupValuesDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-settings"
+        ]
+      },
+      "put": {
+        "operationId": "SettingsGroupsController_updateAiContent",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettingGroupDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SettingGroupValuesDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "admin-settings"
+        ]
+      }
+    },
     "/api/v1/admin/settings/security": {
       "get": {
         "operationId": "SettingsGroupsController_security",
@@ -10556,6 +11191,472 @@
       }
     },
     "schemas": {
+      "Object": {
+        "type": "object",
+        "properties": {}
+      },
+      "TopicDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "brief": {
+            "type": "object",
+            "nullable": true
+          },
+          "priority": {
+            "type": "number"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "discovery"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "paused",
+              "researching",
+              "generating",
+              "needs_fact_review",
+              "ready_for_review",
+              "approved",
+              "scheduled",
+              "published",
+              "failed",
+              "cancelled",
+              "rejected"
+            ]
+          },
+          "reason": {
+            "type": "object",
+            "nullable": true
+          },
+          "createdByAdminId": {
+            "type": "object",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "postId": {
+            "type": "object",
+            "nullable": true,
+            "description": "The one canonical article for this item, once a draft exists."
+          },
+          "humanModifiedAt": {
+            "type": "object",
+            "nullable": true,
+            "description": "First human change to the linked article; automation never applies over it."
+          },
+          "failureStage": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "research",
+              "generation",
+              "image",
+              "application",
+              "publication"
+            ]
+          },
+          "failureCode": {
+            "type": "object",
+            "nullable": true
+          },
+          "selectionReason": {
+            "type": "object",
+            "nullable": true,
+            "description": "Why the topic was selected: manual entry or the public signal discovery found."
+          },
+          "noveltyStatus": {
+            "type": "string",
+            "enum": [
+              "unchecked",
+              "clear",
+              "review",
+              "duplicate"
+            ]
+          },
+          "noveltyCheckedAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "noveltyDetail": {
+            "type": "object",
+            "nullable": true,
+            "description": "Up to 10 local inventory matches: kind, id, title, status, score, reason, verdict."
+          },
+          "researchUrls": {
+            "type": "object",
+            "nullable": true,
+            "description": "Up to 10 https source pages with an optional tier."
+          },
+          "topicApprovedAt": {
+            "type": "object",
+            "nullable": true
+          },
+          "topicApprovedByAdminId": {
+            "type": "object",
+            "nullable": true
+          },
+          "followUpOfPostId": {
+            "type": "object",
+            "nullable": true
+          },
+          "followUpReason": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "priority",
+          "source",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "version",
+          "noveltyStatus"
+        ]
+      },
+      "CreateTopicDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 180
+          },
+          "brief": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "priority": {
+            "type": "object",
+            "minimum": 0,
+            "maximum": 1000,
+            "default": 0
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "ReorderEntryDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "priority": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "priority",
+          "id"
+        ]
+      },
+      "ReorderTopicsDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "minItems": 1,
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReorderEntryDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "TopicPriorityDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "priority": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "priority"
+        ]
+      },
+      "TopicActionDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "pause",
+              "resume",
+              "cancel",
+              "reject"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "action"
+        ]
+      },
+      "ResearchUrlDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "A public https page; retrieval re-validates it at connection time."
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "official_government",
+              "official_business",
+              "institutional",
+              "publication"
+            ],
+            "nullable": true,
+            "description": "Editor classification; otherwise the registry decides, else unclassified."
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "TopicSourcesDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "sources": {
+            "maxItems": 10,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResearchUrlDto"
+            }
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "sources"
+        ]
+      },
+      "ResearchActionDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "refresh"
+            ]
+          },
+          "followUpOfPostId": {
+            "type": "string",
+            "description": "Approve a topic that overlaps existing content only as a follow-up of this article."
+          },
+          "followUpReason": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "action"
+        ]
+      },
+      "ResolveClaimDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "accept",
+              "exclude",
+              "reopen"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "expectedVersion",
+          "action"
+        ]
+      },
+      "AddClaimDto": {
+        "type": "object",
+        "properties": {
+          "evidenceId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "business_identity",
+              "address",
+              "phone",
+              "website",
+              "opening_hours",
+              "price",
+              "availability",
+              "event_datetime",
+              "event_location",
+              "geography",
+              "background"
+            ]
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "value": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "excerpt": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Copied from the retrieved source text; must state the value."
+          },
+          "material": {
+            "type": "boolean"
+          },
+          "validUntil": {
+            "type": "string",
+            "description": "For an event: when it ends."
+          }
+        },
+        "required": [
+          "evidenceId",
+          "kind",
+          "subject",
+          "value",
+          "excerpt",
+          "material"
+        ]
+      },
+      "ResearchSourceInputDto": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "maxLength": 253
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "official_government",
+              "official_business",
+              "institutional",
+              "publication"
+            ]
+          },
+          "feedUrl": {
+            "type": "object",
+            "maxLength": 500,
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "host",
+          "label",
+          "tier"
+        ]
+      },
+      "UpdateResearchSourceDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "official_government",
+              "official_business",
+              "institutional",
+              "publication"
+            ]
+          },
+          "feedUrl": {
+            "type": "object",
+            "maxLength": 500,
+            "nullable": true
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "expectedVersion"
+        ]
+      },
       "CacheStatusDto": {
         "type": "object",
         "properties": {
@@ -10620,10 +11721,6 @@
         "required": [
           "accepted"
         ]
-      },
-      "Object": {
-        "type": "object",
-        "properties": {}
       },
       "CreateRoleDto": {
         "type": "object",
@@ -19524,7 +20621,8 @@
               "security",
               "email",
               "operations",
-              "website"
+              "website",
+              "ai_content"
             ]
           },
           "label": {
@@ -20839,21 +21937,6 @@
           "question",
           "answer",
           "expectedVersion"
-        ]
-      },
-      "ReorderEntryDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "displayOrder": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "id",
-          "displayOrder"
         ]
       },
       "ReorderFaqsDto": {

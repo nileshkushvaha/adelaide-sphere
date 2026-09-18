@@ -30,6 +30,7 @@ export {
   POST_STATES,
   POST_TRANSITIONS,
   deriveExcerpt,
+  isValidPostSlug,
   postPublicationBlockers,
   postPublicationChecklist,
   scheduleBlockers,
@@ -55,7 +56,7 @@ export {
   type AlertTone,
 } from './alerts.js';
 export { buildEnquiryMail, safeReplyTo, sanitiseHeaderValue, type EnquiryMailInput, type OutboundEnquiryMail } from './enquiry-mail.js';
-export { assertQueueJobId, jobIdProblem, queueJobId, JOB_NAMES, MAX_JOB_ID_LENGTH, type JobName, CACHE_INVALIDATE_JOB, CACHE_TAGS, MAX_CACHE_TAGS, normaliseCacheTags, ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB, MAX_DISPATCH_ATTEMPTS, QUEUE_NAME, backoffMs, defaultJobOptions, redisConnectionFromUrl, type JobRetryPolicy, type RedisConnection } from './queue.js';
+export { AI_OPERATION_JOB, assertQueueJobId, jobIdProblem, queueJobId, JOB_NAMES, MAX_JOB_ID_LENGTH, type JobName, CACHE_INVALIDATE_JOB, CACHE_TAGS, MAX_CACHE_TAGS, normaliseCacheTags, ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB, MAX_DISPATCH_ATTEMPTS, QUEUE_NAME, backoffMs, defaultJobOptions, redisConnectionFromUrl, type JobRetryPolicy, type RedisConnection } from './queue.js';
 export { ALLOWED_DOCUMENT_MIME, ALLOWED_IMAGE_MIME, ALLOWED_UPLOAD_MIME, MAX_DOCUMENT_BYTES, MAX_MEGAPIXELS, MAX_PIXELS, MAX_UPLOAD_BYTES, MIN_DIMENSION, VARIANT_KINDS, VARIANT_MIME, VARIANT_SIZES, documentRejectionReason, extensionForMime, imageRejectionReason, isAllowedImageMime, maxBytesFor, mediaKindForMime, objectKeyFor, pdfPageCount, readableFileSize, safeDownloadName, variantDimensions, type AllowedDocumentMime, type AllowedImageMime, type DocumentFacts, type ImageFacts, type MediaKind, type VariantKind } from './media.js';
 export {
   SCHEDULED_TASKS,
@@ -113,3 +114,48 @@ export {
   pagePublicationBlockers,
   pageTextBlockers,
 } from './page-sections.js';
+export {
+  AI_FAILURE_STAGES,
+  AI_ITEM_STATUSES,
+  AI_ITEM_TRANSITIONS,
+  AI_OPERATION_EVENT,
+  aiItemPreProcessing,
+  aiItemReservesTitle,
+  canTransitionAiItem,
+  type AiFailureStage,
+  type AiItemStatus,
+} from './ai-content.js';
+export {
+  NOVELTY_THRESHOLDS,
+  classifyNovelty,
+  locationStopwords,
+  matchesNiche,
+  normalizeTopicText,
+  parseTermList,
+  tokenSimilarity,
+  topicFingerprint,
+  type NoveltyCandidate,
+  type NoveltyMatch,
+  type NoveltyStatus,
+  type TopicFingerprint,
+} from './ai-novelty.js';
+export {
+  CLAIM_KINDS,
+  PILOT_FRESHNESS,
+  REGISTRY_TIERS,
+  SOURCE_TIERS,
+  claimVolatility,
+  evaluateClaims,
+  freshnessWindowMs,
+  isPrimaryTier,
+  normalizeClaimValue,
+  type ClaimInput,
+  type ClaimKind,
+  type ClaimSourceInput,
+  type ClaimStatus,
+  type ClaimVerdict,
+  type FreshnessPolicy,
+  type PacketStatus,
+  type SourceTier,
+  type Volatility,
+} from './ai-research.js';

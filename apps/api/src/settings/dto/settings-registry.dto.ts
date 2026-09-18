@@ -29,7 +29,7 @@ export class SettingDeclarationDto {
 
 /** One owned settings group (SRS 1.2 SET 001). */
 export class SettingGroupDto {
-  @ApiProperty({ enum: ['security', 'email', 'operations', 'website'] }) key!: string;
+  @ApiProperty({ enum: ['security', 'email', 'operations', 'website', 'ai_content'] }) key!: string;
   @ApiProperty() label!: string;
   @ApiProperty() description!: string;
   @ApiProperty({ description: 'Server module that owns reads, writes and invariants for this group.' }) owner!: string;

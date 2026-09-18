@@ -50,6 +50,10 @@ export type PermissionModule = (typeof PERMISSION_MODULES)[number];
 export const STANDARD_ACTIONS = ['View', 'Create', 'Update', 'Publish', 'Delete'] as const;
 
 export const PERMISSIONS = {
+  'ai_content.view': { label: 'View AI Content', description: 'View the manual topic queue, overview and topic details', module: 'Editorial', menuItem: 'AI Content', action: 'View' },
+  'ai_content.manage_topics': { label: 'Manage AI topics', description: 'Create, prioritize, pause, resume, cancel and reject manual topics; no generation', module: 'Editorial', menuItem: 'AI Content', action: 'Manage topics' },
+  'ai_content.review': { label: 'Review AI research', description: 'Approve topics for free public research, refresh evidence, add evidence-backed claims, resolve fact review and run topic discovery; no generation', module: 'Editorial', menuItem: 'AI Content', action: 'Review research' },
+  'ai_content.configure': { label: 'Configure AI Content', description: 'View and change AI configuration and the research source registry; article generation is not available', module: 'Editorial', menuItem: 'AI settings', action: 'Configure' },
   // ---- Business -------------------------------------------------------------
   'listings.read': { label: 'View businesses', description: 'Open the business listings, their hours and galleries', module: 'Business', menuItem: 'Businesses', action: 'View' },
   'listings.create': { label: 'Add businesses', description: 'Create new business listings', module: 'Business', menuItem: 'Businesses', action: 'Create', migratesFrom: ['listings.write'] },

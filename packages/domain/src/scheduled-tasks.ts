@@ -128,6 +128,23 @@ export const SCHEDULED_TASKS: ScheduledTaskDefinition[] = [
     safeToOverlap: true,
   },
   {
+    code: 'ai-content.recover-operations',
+    label: 'Recover AI content operations',
+    description: 'Re-queues AI content work whose queue delivery was lost and returns work whose worker lease expired, from the database alone. It never repeats a finished operation or an external request.',
+    scheduleLabel: 'Every 5 minutes',
+    cron: '*/5 * * * *',
+    timezone: 'Australia/Adelaide',
+    missedRunPolicy: 'skip-to-next',
+    timeoutMs: 60_000,
+    retries: 1,
+    manualRunAllowed: true,
+    highImpact: false,
+    // Without it, AI work whose delivery was lost would wait forever.
+    requiredForCorrectness: true,
+    // Every change it makes is conditional on the row it read, so two runs cannot double an effect.
+    safeToOverlap: true,
+  },
+  {
     code: 'schedule.run-retention',
     label: 'Trim scheduled-run history',
     description: 'Removes execution history older than 30 days, which is the retention this history is kept for.',

@@ -129,3 +129,15 @@ code from another workspace package (`@adelaide-sphere/contracts` supplies
 types only). It is plain TypeScript, imported as a
 subpath so nothing else from `domain` reaches the bundle. The admin's tests and
 build need it built first (`pnpm domain:build`, which `pnpm check` runs).
+
+## AI Content Phase 1A
+
+The existing admin/API now supports disabled automation configuration and a manual topic queue with versioned actions, request replay protection, active-title deduplication and transactional audit. No provider, article generation or scheduler execution is included. The additive `20260918120000_ai_content_topics` migration and existing RBAC synchronization are required on rollout; neither has been run against retained environments in this implementation session. See the [Phase 1A completion report](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1a-completion.md) for exact routes, permissions, checks and rollback instructions.
+
+## AI Content Phase 1B
+
+The article seam shared by the API and the worker lives in `@adelaide-sphere/database/editorial` (sanitiser, media references, revisions, material hash, the AI publication policy used by both the publish/schedule commands and the scheduled publisher). Durable AI work (control epoch, leased and fenced operations, recovery, applying a generation run to its one canonical article) lives in `@adelaide-sphere/database/automation`. Both subpaths are backend-only. The additive migration `20260918150000_ai_content_editorial_foundation` has been applied only to the isolated test database. See the [Phase 1B completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1b-completion.md).
+
+## AI Content Phase 1C
+
+Free public research (SSRF-safe retrieval in the worker, evidence, typed claims, freshness), Needs Fact Review, local novelty admission with the inventory epoch, feed discovery and the research source registry. Shared rules are in `@adelaide-sphere/domain` (`ai-novelty`, `ai-research`); the database seam is in `@adelaide-sphere/database/automation`. Migration `20260918170000_ai_content_research` has been applied only to the isolated test database. See the [Phase 1C completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1c-completion.md).

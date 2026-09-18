@@ -1,5 +1,5 @@
 import { Injectable, Logger, type OnApplicationBootstrap, type OnModuleDestroy } from '@nestjs/common';
-import { CACHE_INVALIDATE_JOB, ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB } from '@adelaide-sphere/domain';
+import { AI_OPERATION_JOB, CACHE_INVALIDATE_JOB, ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB } from '@adelaide-sphere/domain';
 import { EVENT_TYPES, OutboxService } from './outbox.service.js';
 import { QueuePort } from './queue.port.js';
 
@@ -10,6 +10,7 @@ const JOB_FOR_EVENT: Record<string, string | undefined> = {
   [EVENT_TYPES.enquiryAccepted]: ENQUIRY_EMAIL_JOB,
   [EVENT_TYPES.mediaUploaded]: MEDIA_PROCESS_JOB,
   [EVENT_TYPES.cacheInvalidate]: CACHE_INVALIDATE_JOB,
+  [EVENT_TYPES.aiOperationReady]: AI_OPERATION_JOB,
 };
 const BATCH_SIZE = 25;
 

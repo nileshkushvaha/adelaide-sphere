@@ -10,6 +10,10 @@
  * not know, so the two cannot drift silently.
  */
 export const PERMISSION = {
+  aiContentView: 'ai_content.view',
+  aiContentManageTopics: 'ai_content.manage_topics',
+  aiContentReview: 'ai_content.review',
+  aiContentConfigure: 'ai_content.configure',
   // Business
   listingsRead: 'listings.read',
   listingsCreate: 'listings.create',
@@ -177,6 +181,10 @@ export const ACTIVITY_VIEW_CODES: PermissionCode[] = [
  * marked `anyOf`, when one is enough.
  */
 export const ROUTE_PERMISSIONS: { path: string; permissions: PermissionCode[]; anyOf?: boolean }[] = [
+  { path: '/ai-content', permissions: [PERMISSION.aiContentView] },
+  { path: '/ai-content/topics', permissions: [PERMISSION.aiContentView] },
+  { path: '/ai-content/topics/:id', permissions: [PERMISSION.aiContentView] },
+  { path: '/ai-content/settings', permissions: [PERMISSION.aiContentConfigure] },
   // Business. An editor route opens with View; the screen itself goes read-only without Update.
   { path: '/businesses', permissions: [PERMISSION.listingsRead] },
   { path: '/businesses/new', permissions: [PERMISSION.listingsCreate] },

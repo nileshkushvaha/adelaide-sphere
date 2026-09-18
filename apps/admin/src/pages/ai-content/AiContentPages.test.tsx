@@ -1,0 +1,399 @@
+import { screen, waitFor, within } from "@testing-library/react";
+import {
+  AiFactReviewPage,
+  AiOverviewPage,
+  AiTopicDetailPage,
+  AiTopicQueuePage,
+} from "./AiContentPages";
+import { ResearchSourcesPage } from "./ResearchSourcesPage";
+import { AiSettingsPage } from "./AiSettingsPage";
+import { AdminShell } from "@/layouts/AdminShell";
+import {
+  providerWithPermissions,
+  renderWithProviders,
+  user,
+} from "@/test/render";
+import { ApiError } from "@/api/errors";
+import { aiContentApi } from "@/api/ai-content";
+import type * as AiContentModule from "@/api/ai-content";
+import { settingsGroupsApi } from "@/api/settings-groups";
+
+vi.mock("@/api/ai-content", async (importOriginal) => ({
+  ...(await importOriginal<typeof AiContentModule>()),
+  aiContentApi: {
+    list: vi.fn(),
+    create: vi.fn(),
+    detail: vi.fn(),
+    priority: vi.fn(),
+    action: vi.fn(),
+    overview: vi.fn(),
+    research: vi.fn(),
+    checkNovelty: vi.fn(),
+    setSources: vi.fn(),
+    researchAction: vi.fn(),
+    resolveClaim: vi.fn(),
+    addClaim: vi.fn(),
+    discover: vi.fn(),
+    discovery: vi.fn(),
+    sources: vi.fn(),
+    createSource: vi.fn(),
+    updateSource: vi.fn(),
+  },
+}));
+vi.mock("@/api/settings-groups", () => ({
+  settingsGroupsApi: { registry: vi.fn(), values: vi.fn(), update: vi.fn() },
+}));
+const permissions = [
+  "ai_content.view",
+  "ai_content.manage_topics",
+  "ai_content.configure",
+  "ai_content.review",
+];
+const topic = {
+  id: "cmabcdefghijklmnopqrstuv",
+  title: "Adelaide cafe guide",
+  brief: null,
+  priority: 0,
+  source: "manual" as const,
+  status: "queued" as const,
+  reason: null,
+  version: 1,
+  createdByAdminId: "a1",
+  createdAt: "2026-09-18T00:00:00.000Z",
+  updatedAt: "2026-09-18T00:00:00.000Z",
+  postId: null,
+  humanModifiedAt: null,
+  failureStage: null,
+  failureCode: null,
+  selectionReason: "Manual topic",
+  noveltyStatus: "clear" as const,
+  noveltyCheckedAt: null,
+  noveltyDetail: [],
+  researchUrls: [],
+  topicApprovedAt: null,
+  topicApprovedByAdminId: null,
+  followUpOfPostId: null,
+  followUpReason: null,
+};
+const options = { authProvider: providerWithPermissions(permissions) };
+beforeEach(() => {
+  vi.resetAllMocks();
+  vi.mocked(aiContentApi.research).mockResolvedValue({ packets: [], packet: null });
+  vi.mocked(aiContentApi.list).mockResolvedValue({
+    data: [topic],
+    meta: { total: 1, page: 1, pageSize: 20 },
+  });
+  vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, version: 2 });
+  vi.mocked(aiContentApi.action).mockResolvedValue({ ...topic, version: 2 });
+  vi.mocked(aiContentApi.priority).mockResolvedValue({ ...topic, version: 2 });
+  vi.mocked(aiContentApi.create).mockResolvedValue(topic);
+  vi.mocked(aiContentApi.overview).mockResolvedValue({
+    enabled: false,
+    executionActive: false,
+    generationAvailable: false,
+    counts: {
+      queued: 1,
+      paused: 0,
+      researching: 0,
+      generating: 0,
+      needs_fact_review: 0,
+      ready_for_review: 0,
+      approved: 0,
+      scheduled: 0,
+      published: 0,
+      failed: 0,
+      cancelled: 0,
+      rejected: 0,
+    },
+  });
+});
+it("shows disabled defaults and real queue counts without generation or cost statistics", async () => {
+  renderWithProviders(<AiOverviewPage />, options);
+  expect(await screen.findByText("Disabled")).toBeInTheDocument();
+  expect(screen.getByText("Inactive")).toBeInTheDocument();
+  expect(screen.getByText(/No provider is paid/)).toBeInTheDocument();
+  expect(screen.getByText("Not available")).toBeInTheDocument();
+  expect(screen.queryByText(/tokens used/i)).not.toBeInTheDocument();
+});
+it("creates a manual topic and retains the same request key/input on an ambiguous response retry", async () => {
+  const ue = user();
+  vi.mocked(aiContentApi.create).mockRejectedValueOnce(
+    new ApiError({
+      kind: "network",
+      status: null,
+      code: null,
+      userMessage: "Response was lost",
+    }),
+  );
+  renderWithProviders(<AiTopicQueuePage />, options);
+  await ue.type(
+    await screen.findByLabelText("Title / topic"),
+    "A new city guide",
+  );
+  await ue.click(screen.getByRole("button", { name: "Create topic" }));
+  expect(await screen.findByText("Response was lost")).toBeInTheDocument();
+  expect(screen.getByLabelText("Title / topic")).toHaveValue(
+    "A new city guide",
+  );
+  await ue.click(screen.getByRole("button", { name: "Create topic" }));
+  await waitFor(() => expect(aiContentApi.create).toHaveBeenCalledTimes(2));
+  const calls = vi.mocked(aiContentApi.create).mock.calls;
+  expect(calls[0]![1]).toBe(calls[1]![1]);
+  expect(calls[0]![0]).toMatchObject({
+    title: "A new city guide",
+    priority: 0,
+  });
+});
+it("reprioritizes with expected version and keeps new input through a conflict", async () => {
+  const ue = user();
+  vi.mocked(aiContentApi.priority).mockRejectedValueOnce(
+    new ApiError({
+      kind: "conflict",
+      status: 409,
+      code: "STALE_VERSION",
+      userMessage: "Topic changed",
+    }),
+  );
+  renderWithProviders(<AiTopicQueuePage />, options);
+  await ue.click(await screen.findByRole("button", { name: "Reprioritize" }));
+  const dialog = await screen.findByRole("dialog");
+  await ue.clear(within(dialog).getByLabelText("New priority"));
+  await ue.type(within(dialog).getByLabelText("New priority"), "20");
+  await ue.click(
+    within(dialog).getByRole("button", { name: "Confirm change" }),
+  );
+  expect(await screen.findByText("Topic changed")).toBeInTheDocument();
+  expect(within(dialog).getByLabelText("New priority")).toHaveValue("20");
+  await ue.click(
+    within(dialog).getByRole("button", {
+      name: "Load latest version (keep input)",
+    }),
+  );
+  await waitFor(() =>
+    expect(
+      within(dialog).getByRole("button", { name: "Confirm change" }),
+    ).toBeEnabled(),
+  );
+  await ue.click(
+    within(dialog).getByRole("button", { name: "Confirm change" }),
+  );
+  await waitFor(() =>
+    expect(aiContentApi.priority).toHaveBeenLastCalledWith(
+      expect.objectContaining({ version: 2 }),
+      20,
+    ),
+  );
+});
+it("pauses only through an explicit confirmed action", async () => {
+  const ue = user();
+  renderWithProviders(<AiTopicQueuePage />, options);
+  await ue.click(await screen.findByRole("button", { name: "Pause" }));
+  await ue.click(
+    within(await screen.findByRole("dialog")).getByRole("button", {
+      name: "Confirm change",
+    }),
+  );
+  await waitFor(() =>
+    expect(aiContentApi.action).toHaveBeenCalledWith(topic, "pause", undefined),
+  );
+  expect(await screen.findByText("Topic updated.")).toBeInTheDocument();
+});
+it("requires a reason and confirmation to cancel", async () => {
+  const ue = user();
+  renderWithProviders(<AiTopicQueuePage />, options);
+  await ue.click(await screen.findByRole("button", { name: "Cancel" }));
+  const dialog = await screen.findByRole("dialog");
+  await ue.click(
+    within(dialog).getByRole("button", { name: "Confirm change" }),
+  );
+  await screen.findByText(/Please enter Reason/i);
+  expect(aiContentApi.action).not.toHaveBeenCalled();
+  await ue.type(within(dialog).getByLabelText("Reason"), "Not needed");
+  await ue.click(
+    within(dialog).getByRole("button", { name: "Confirm change" }),
+  );
+  await waitFor(() =>
+    expect(aiContentApi.action).toHaveBeenLastCalledWith(
+      topic,
+      "cancel",
+      "Not needed",
+    ),
+  );
+});
+it("requires the declared navigation permissions", async () => {
+  renderWithProviders(
+    <AdminShell>
+      <p>content</p>
+    </AdminShell>,
+    { authProvider: providerWithPermissions(["ai_content.view"]) },
+  );
+  expect(
+    await screen.findByRole("link", { name: "AI Content" }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Topic Queue" })).toBeInTheDocument();
+  expect(
+    screen.queryByRole("link", { name: "AI Settings" }),
+  ).not.toBeInTheDocument();
+});
+it("does not offer topic mutations without manage permission", async () => {
+  renderWithProviders(<AiTopicQueuePage />, {
+    authProvider: providerWithPermissions(["ai_content.view"]),
+  });
+  await screen.findByRole("link", { name: topic.title });
+  expect(
+    screen.queryByRole("button", { name: "Create topic" }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: "Pause" }),
+  ).not.toBeInTheDocument();
+});
+it("saves owned settings with the loaded version and retains unsaved changes after a conflict", async () => {
+  const ue = user();
+  vi.mocked(settingsGroupsApi.registry).mockResolvedValue([
+    {
+      key: "ai_content",
+      label: "AI Content",
+      description: "",
+      owner: "AiContentModule",
+      viewPermission: "ai_content.configure",
+      updatePermission: "ai_content.configure",
+      note: null,
+      settings: [
+        {
+          key: "enabled",
+          label: "Configured enabled",
+          description: "Execution remains inactive",
+          type: "boolean",
+          default: false,
+          bounds: {},
+          visibility: "private",
+          effect: "runtime",
+          viewPermission: "ai_content.configure",
+          updatePermission: "ai_content.configure",
+          invalidates: [],
+          unit: null,
+          limitNote: null,
+          consequence: null,
+        },
+      ],
+    },
+  ]);
+  vi.mocked(settingsGroupsApi.values).mockResolvedValue({
+    group: "ai_content",
+    values: { enabled: false },
+    version: 4,
+    updatedAt: topic.createdAt,
+    updatedByAdminId: null,
+  });
+  vi.mocked(settingsGroupsApi.update).mockRejectedValue(
+    new ApiError({
+      kind: "conflict",
+      status: 409,
+      code: "STALE_VERSION",
+      userMessage: "Settings changed",
+    }),
+  );
+  renderWithProviders(<AiSettingsPage />, options);
+  const toggle = await screen.findByRole("switch");
+  expect(toggle).not.toBeChecked();
+  await ue.click(toggle);
+  await ue.click(screen.getByRole("button", { name: "Save AI settings" }));
+  expect(await screen.findByText("Settings changed")).toBeInTheDocument();
+  expect(toggle).toBeChecked();
+  expect(settingsGroupsApi.update).toHaveBeenCalledWith("ai-content", 4, {
+    enabled: true,
+  });
+});
+it("shows a linked article, sticky human-edit protection and a failure stage on topic detail", async () => {
+  vi.mocked(aiContentApi.detail).mockResolvedValue({
+    ...topic,
+    status: "failed",
+    postId: "cmpostabcdefghijklmnopqr",
+    humanModifiedAt: "2026-09-18T01:00:00.000Z",
+    failureStage: "application",
+    failureCode: "slug_conflict",
+    version: 5,
+  });
+  renderWithProviders(<AiTopicDetailPage />, {
+    ...options,
+    initialEntries: [`/admin/ai-content/topics/${topic.id}`],
+    routePath: "/ai-content/topics/:id",
+  });
+  expect(await screen.findByText("Failed")).toBeInTheDocument();
+  expect(
+    screen.getByRole("link", { name: "Open the article" }),
+  ).toHaveAttribute("href", "/admin/posts/cmpostabcdefghijklmnopqr");
+  expect(
+    screen.getByText(/Automation will not change this article/),
+  ).toBeInTheDocument();
+  expect(screen.getByText("application: slug_conflict")).toBeInTheDocument();
+});
+
+const packet = {
+  id: "cmpacketabcdefghijklmnop",
+  version: 1,
+  status: "needs_fact_review" as const,
+  reasons: ["1 material claim need fact review"],
+  changes: null,
+  freshUntil: null,
+  evaluatedAt: "2026-09-18T01:00:00.000Z",
+  createdAt: "2026-09-18T00:59:00.000Z",
+  context: [],
+  evidence: [
+    { id: "cmevidenceabcdefghijklmn", url: "https://cafe.example.org/", finalUrl: null, host: "cafe.example.org", tier: "official_business" as const, fetchStatus: "ok", httpStatus: 200, contentHash: "a".repeat(64), title: "Example Cafe", sourceDate: null, fetchedAt: "2026-09-18T00:59:30.000Z", textPreview: "Open weekdays", textLength: 13 },
+  ],
+  claims: [
+    { id: "cmclaimabcdefghijklmnopq", kind: "opening_hours", subject: "Example Cafe", value: "Mo-Fr 07:00-15:00", material: true, origin: "extracted" as const, status: "conflicting" as const, reason: "Credible sources disagree", validUntil: null, freshUntil: null, excluded: false, accepted: false, resolutionNote: null, version: 3, sources: [{ evidenceId: "cmevidenceabcdefghijklmn", excerpt: "openingHours: Mo-Fr 07:00-15:00", location: "json-ld" }] },
+  ],
+};
+it("shows evidence and claims for fact review and sends an evidence-backed decision with the claim version", async () => {
+  const ue = user();
+  vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, status: "needs_fact_review", noveltyStatus: "clear", researchUrls: [{ url: "https://cafe.example.org/" }], version: 4 });
+  vi.mocked(aiContentApi.research).mockResolvedValue({ packets: [{ id: packet.id, version: 1, status: packet.status, createdAt: packet.createdAt }], packet });
+  vi.mocked(aiContentApi.resolveClaim).mockResolvedValue({ status: "verified" });
+  renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  expect(await screen.findByText("Mo-Fr 07:00-15:00")).toBeInTheDocument();
+  expect(screen.getByText("conflicting")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Example Cafe" })).toHaveAttribute("rel", "noopener noreferrer nofollow");
+  await ue.click(screen.getByRole("button", { name: "Accept" }));
+  const dialog = await screen.findByRole("dialog");
+  await ue.type(within(dialog).getByRole("textbox", { name: "Reason" }), "The venue site is primary");
+  await ue.click(within(dialog).getByRole("button", { name: "Accept" }));
+  await waitFor(() => expect(aiContentApi.resolveClaim).toHaveBeenCalledWith(expect.objectContaining({ id: packet.claims[0]!.id, version: 3 }), "accept", "The venue site is primary"));
+});
+it("shows the server's novelty refusal when approving research, keeping the topic as it was", async () => {
+  const ue = user();
+  vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, researchUrls: [{ url: "https://cafe.example.org/" }], version: 2 });
+  vi.mocked(aiContentApi.researchAction).mockRejectedValue(
+    new ApiError({ kind: "conflict", status: 409, code: "NOVELTY_DUPLICATE", userMessage: "This topic duplicates existing content or another topic.", fields: { novelty: ["Best coffee in Norwood (post published: same topic)"] } }),
+  );
+  renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  await ue.click(await screen.findByRole("button", { name: "Approve topic for research" }));
+  expect(await screen.findByText("This topic duplicates existing content or another topic.")).toBeInTheDocument();
+  expect(screen.getByText("Best coffee in Norwood (post published: same topic)")).toBeInTheDocument();
+  expect(aiContentApi.researchAction).toHaveBeenCalledWith(expect.objectContaining({ version: 2 }), "approve", undefined);
+});
+it("hides research actions from an administrator without review permission", async () => {
+  vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, researchUrls: [{ url: "https://cafe.example.org/" }] });
+  renderWithProviders(<AiTopicDetailPage />, { authProvider: providerWithPermissions(["ai_content.view"]), initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  expect(await screen.findByText("Research and fact review")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Approve topic for research" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Save sources" })).not.toBeInTheDocument();
+});
+it("opens the fact review queue filtered to topics that need a decision", async () => {
+  renderWithProviders(<AiFactReviewPage />, options);
+  await waitFor(() => expect(aiContentApi.list).toHaveBeenCalledWith(expect.objectContaining({ status: "needs_fact_review" }), expect.anything()));
+  expect(screen.getByRole("heading", { name: "Fact review" })).toBeInTheDocument();
+});
+it("adds a research source and shows the server's validation on the field", async () => {
+  const ue = user();
+  vi.mocked(aiContentApi.sources).mockResolvedValue([]);
+  vi.mocked(aiContentApi.createSource).mockRejectedValue(new ApiError({ kind: "validation", status: 400, code: "VALIDATION_ERROR", userMessage: "Some fields are invalid", fields: { host: ["Enter a public host name such as example.org"] } }));
+  renderWithProviders(<ResearchSourcesPage />, options);
+  await ue.type(await screen.findByLabelText("Host"), "localhost");
+  await ue.type(screen.getByLabelText("Name"), "Local");
+  await ue.click(screen.getByLabelText("Kind of source"));
+  await ue.click(await screen.findByText("Official: business, venue or organiser"));
+  await ue.click(screen.getByRole("button", { name: "Add source" }));
+  expect(await screen.findByText("Enter a public host name such as example.org")).toBeInTheDocument();
+});

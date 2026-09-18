@@ -53,3 +53,11 @@ Message construction and validation (header injection, address shape, subject an
 ## Scheduled article publication
 
 `content.publish-scheduled` (every minute) is the **only** scheduled publisher since 14 Sep 2026 (SRS 1.10 BLOG 002); the API no longer runs a timer. For each due article it checks the publication requirements again (`@adelaide-sphere/domain/posts`). A qualifying article is published under its version guard, with `firstPublishedAt`, an audit entry (`blog.post.publish`, system actor) and a `cache.invalidate` event. One that no longer qualifies — for example its author was deactivated after scheduling — returns to draft with `posts.publishFailure` set and a `blog.post.schedule_blocked` audit entry; the editor, the article list and the dashboard show the reason. Without a running worker, scheduled articles wait, and the dashboard's "Scheduled articles past their time" says so.
+
+## AI Content Phase 1B
+
+The article seam shared by the API and the worker lives in `@adelaide-sphere/database/editorial` (sanitiser, media references, revisions, material hash, the AI publication policy used by both the publish/schedule commands and the scheduled publisher). Durable AI work (control epoch, leased and fenced operations, recovery, applying a generation run to its one canonical article) lives in `@adelaide-sphere/database/automation`. Both subpaths are backend-only. The additive migration `20260918150000_ai_content_editorial_foundation` has been applied only to the isolated test database. See the [Phase 1B completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1b-completion.md).
+
+## AI Content Phase 1C
+
+Free public research (SSRF-safe retrieval in the worker, evidence, typed claims, freshness), Needs Fact Review, local novelty admission with the inventory epoch, feed discovery and the research source registry. Shared rules are in `@adelaide-sphere/domain` (`ai-novelty`, `ai-research`); the database seam is in `@adelaide-sphere/database/automation`. Migration `20260918170000_ai_content_research` has been applied only to the isolated test database. See the [Phase 1C completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1c-completion.md).

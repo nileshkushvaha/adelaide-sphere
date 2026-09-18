@@ -2552,3 +2552,30 @@ Fixes for three findings from the production-readiness audit of the same day.
 - **Kept:** the script's APP_VERSION stamp still writes as the owner of `shared/worker.env`, so it keeps working if ownership ever moves.
 - **Verified:** `python3 scripts/test-deploy-vps.py` (5 modes; the success mode now also asserts both `www-data` read checks); `bash -n`. shellcheck is not installed on this machine. Not run against the VPS. No test suites were run.
 - **Not addressed, noticed on the way:** §4.3 installs Node system-wide under `/opt/node`, while the script builds with NVM from `/home/deploy/.nvm` and the units start `/usr/local/bin/node`. Those can be different binaries. §10.3 and §11B source `api.env` in a shell, which leaves `DATABASE_URL` unset (the `&` defect above). §17 still mentions "Siri Education services".
+
+## AI Content Phase 1A — 18 September 2026
+
+Implemented the expressly approved foundation only: disabled-by-default settings in the existing store; manual topic queue/detail/priority/pause/resume/cancel/reject in the existing admin; three server-enforced permissions; transactional safe audit; bounded API endpoints; durable actor-scoped request idempotency and exact normalized active-title protection. Added one topic table, no generation/control/provider tables. Atomic settings compare-and-set fixes the confirmed concurrent-save race with the smallest shared-store change.
+
+Validation: 44 focused API unit tests, 10 new real MySQL integration tests, 11 existing settings and 12 existing blog integration tests, and 30 admin tests passed. Type checks, lint, database generation/migration policy, contract generation, API/admin builds and admin bundle budget passed. Desktop and 320px browser interactions passed with intercepted API fixtures; backend races were tested separately against real MySQL. Full repository release gate and live authenticated UAT were not run.
+
+The isolated test harness applied the AI migration and the pre-existing pending domain migration to `adelaide_sphere_test` only. No retained-environment migration, RBAC sync, dependency/env change, deployment or provider call. No AI Post, scheduler or social integration. Existing unrelated changes preserved. Exact manifest, settings/routes, limitations and deployment/rollback: [Phase 1A completion report](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1a-completion.md). **Stopped at Phase 1A; wait for approval before Phase 1B.**
+
+## AI Content Phase 1B — 18 September 2026
+
+- **Scope:** plan §O workstream 1B only. Additive migration `20260918150000_ai_content_editorial_foundation` (lifecycle enum, `postId`/human-edit/failure columns, `ai_automation_controls`, `ai_generation_runs`, `ai_operations`, `ai_approvals`). Backend-only seam `@adelaide-sphere/database/editorial` (sanitiser and media sync moved there, revisions, material hash, AI publication policy, scheduled publication) and `/automation` (control epoch, leases/fencing, recovery, apply). Worker `ai.operation` job and the `ai-content.recover-operations` task. Scheduled publishing now writes `post.published` like the admin command.
+- **Checks:** new integration spec 18/18; `pnpm test:integration` 344/344 + 5/5; `pnpm test` all passed; typecheck, lint, builds (web not rebuilt: no web changes, `next dev` running), budget, contracts, migration policy.
+- **Environment:** migration applied to `adelaide_sphere_test` only. `adelaide_sphere_dev` is behind by `20260917190000_domain_com_au_to_com`, 1A and 1B, so the running dev API's blog edit/publish routes fail until `pnpm db:migrate:deploy` is authorized. Nothing deployed or enabled.
+- **Next:** 1C blocked on the owner's pilot editorial-strategy and source-policy approval. Record: [Phase 1B completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1b-completion.md).
+
+## AI Content Phase 1C — 18 September 2026
+
+- **Scope:** plan §O workstream 1C under the owner's pilot policy. Additive migration `20260918170000_ai_content_research`: research sources, packets, evidence, claims and claim sources; topic novelty and approval fields; inventory epoch; research and discovery operation kinds.
+  - Worker: `safe-fetch.ts` (SSRF-safe, pinned, bounded, robots.txt), `extract.ts` (schema.org claims and feeds) and the research/discovery runners.
+  - API: research, claim, discovery and registry routes behind the new `ai_content.review` permission (the registry uses `ai_content.configure`).
+  - Admin: research and fact-review panels, the Fact Review queue, Research Sources and "Find topic ideas".
+- **Checks:** 1C spec 20/20; `pnpm test:integration` 364/364 + 5/5; `pnpm test` all passed; e2e 20/20; typecheck, lint, builds, budget, contracts, migration policy.
+- **Found and fixed during verification:** Node 24's pinned-lookup `all` form, a stalled compressed read, DB/app clock skew on first due time, and novelty thresholds tightened.
+- **Environment:** migration applied to `adelaide_sphere_test` only. `adelaide_sphere_dev` is now 4 migrations behind (domain `.com`, 1A, 1B, 1C). Retained, dev and production migrations remain unauthorised. Nothing deployed.
+- **Next:** 1D is blocked on owner decisions (provider, credentials, model/pricing, budgets, byline/disclosure, 1C acceptance). Record: [Phase 1C completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1c-completion.md).
+

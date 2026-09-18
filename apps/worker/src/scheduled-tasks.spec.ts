@@ -135,6 +135,8 @@ describe('task implementations', () => {
       },
       outboxEvent: { create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => { outbox.push(data); return data; }) },
       auditLog: { create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => { audit.push(data); return data; }), deleteMany: vi.fn() },
+      // An ordinary article: no AI item is linked, so the shared AI policy leaves it alone.
+      aIContentItem: { findUnique: vi.fn(async () => null) },
     });
     return { db, outbox, audit, updates };
   }
@@ -149,6 +151,8 @@ describe('task implementations', () => {
     });
     expect(outbox[0]).toMatchObject({ type: 'cache.invalidate', resourceType: 'post', resourceId: 'p1' });
     expect(String((outbox[0] as { payload: { tags: string } }).payload.tags)).toContain('post:a-guide');
+    // The same publication event the admin publish command records (AI plan §K).
+    expect(outbox[1]).toMatchObject({ type: 'post.published', resourceType: 'post', resourceId: 'p1', resourceVersion: 5, payload: { postId: 'p1', slug: 'a-guide', action: 'publish' } });
     expect(audit[0]).toMatchObject({ action: 'blog.post.publish', targetType: 'post', targetId: 'p1' });
   });
 

@@ -70,9 +70,10 @@ function build(row: Row | null) {
 
   const table = {
     findUnique: vi.fn(async () => stored),
-    update: vi.fn(async ({ data }: { data: { data: unknown; version: { increment: number } } }) => {
+    findUniqueOrThrow: vi.fn(async () => stored),
+    updateMany: vi.fn(async ({ data }: { data: { data: unknown; version: { increment: number } } }) => {
       stored = { key: 'fixture', data: data.data, version: (stored?.version ?? 0) + data.version.increment, updatedByAdminId: 'admin-1', updatedAt: new Date('2026-09-07T10:00:00Z') };
-      return stored;
+      return { count: 1 };
     }),
     create: vi.fn(async ({ data }: { data: { data: unknown; version: number } }) => {
       stored = { key: 'fixture', data: data.data, version: data.version, updatedByAdminId: 'admin-1', updatedAt: new Date('2026-09-07T10:00:00Z') };
@@ -128,7 +129,7 @@ describe('SettingsStoreService (SRS 1.2 SET 003)', () => {
       response: { code: 'VALIDATION_ERROR', fields: { retentionDays: ['Must be 30 or less'] } },
     });
     expect(table.create).not.toHaveBeenCalled();
-    expect(table.update).not.toHaveBeenCalled();
+    expect(table.updateMany).not.toHaveBeenCalled();
   });
 
   it('rejects an unknown key rather than ignoring it', async () => {
@@ -139,7 +140,7 @@ describe('SettingsStoreService (SRS 1.2 SET 003)', () => {
   it('refuses a concurrent change with 409 STALE_VERSION and writes nothing', async () => {
     const { store, table } = build({ key: 'fixture', data: { retentionDays: 7 }, version: 4, updatedByAdminId: null, updatedAt: new Date() });
     await expect(store.update('operations', { retentionDays: 9 }, 3, actor, ctx)).rejects.toBeInstanceOf(ConflictException);
-    expect(table.update).not.toHaveBeenCalled();
+    expect(table.updateMany).not.toHaveBeenCalled();
   });
 
   it('validates before it version-checks, so a stale form still reports its field errors', async () => {
@@ -173,7 +174,7 @@ describe('SettingsStoreService (SRS 1.2 SET 003)', () => {
     const { store, table, auditWrites, invalidations, bumps } = build(stored);
     const record = await store.update('operations', { retentionDays: 7, label: 'default' }, 5, actor, ctx);
     expect(record.version).toBe(5);
-    expect(table.update).not.toHaveBeenCalled();
+    expect(table.updateMany).not.toHaveBeenCalled();
     expect(table.create).not.toHaveBeenCalled();
     expect(auditWrites).toEqual([]);
     expect(invalidations).toEqual([]);
@@ -185,7 +186,7 @@ describe('SettingsStoreService (SRS 1.2 SET 003)', () => {
     const first = await store.update('operations', { retentionDays: 14 }, 0, actor, ctx);
     const second = await store.update('operations', { retentionDays: 14 }, first.version, actor, ctx);
     expect(second.version).toBe(first.version);
-    expect(table.update).not.toHaveBeenCalled();
+    expect(table.updateMany).not.toHaveBeenCalled();
   });
 
   it('invalidates only what the changed settings declare', async () => {

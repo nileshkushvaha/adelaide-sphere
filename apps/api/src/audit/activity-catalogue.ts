@@ -46,6 +46,7 @@ export interface ActivityDomain {
 }
 
 export const ACTIVITY_DOMAINS = {
+  ai_content: { category: 'content', label: 'AI topic administration' },
   auth: { category: 'authentication', label: 'Sign-in and account security' },
   admin: { category: 'access_control', label: 'Administrator accounts' },
   authz: { category: 'access_control', label: 'Roles and permissions' },

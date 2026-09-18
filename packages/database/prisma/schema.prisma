@@ -75,45 +75,52 @@ model AdminUser {
   createdAt                  DateTime        @default(now()) @db.DateTime(3)
   updatedAt                  DateTime        @updatedAt @db.DateTime(3)
 
-  roles              AdminRole[]
-  directPermissions  AdminPermission[]     @relation("AdminDirectPermission")
-  grantedRoles       AdminRole[]           @relation("AdminRoleAssignedBy")
-  grantedPermissions AdminPermission[]     @relation("AdminPermissionAssignedBy")
-  grantedRolePerms   RolePermission[]      @relation("RolePermissionAssignedBy")
-  sessions           AdminSession[]
-  resetTokens        PasswordResetToken[]
-  passwordHistory    AdminPasswordHistory[]
-  recoveryCodes      AdminRecoveryCode[]
-  loginChallenges    AdminLoginChallenge[]
-  auditEntries       AuditLog[]            @relation("AuditActor")
-  settings           Setting[]             @relation("SettingUpdatedBy")
-  faqsCreated        Faq[]                 @relation("FaqCreatedBy")
-  faqsUpdated        Faq[]                 @relation("FaqUpdatedBy")
-  alertsCreated      ServiceAlert[]        @relation("ServiceAlertCreatedBy")
-  alertsUpdated      ServiceAlert[]        @relation("ServiceAlertUpdatedBy")
-  testimonialsCreated  Testimonial[]       @relation("TestimonialCreatedBy")
-  testimonialsUpdated  Testimonial[]       @relation("TestimonialUpdatedBy")
-  partnersAuthorised   PartnerOrganisation[] @relation("PartnerAuthorisedBy")
-  partnersCreated      PartnerOrganisation[] @relation("PartnerCreatedBy")
-  partnersUpdated      PartnerOrganisation[] @relation("PartnerUpdatedBy")
-  moderatedReviews   Review[]              @relation("ReviewModerator")
-  contentRevisions   ContentRevision[]     @relation("ContentRevisionActor")
-  handledEnquiries   Enquiry[]             @relation("EnquiryHandler")
-  uploadedMedia      MediaAsset[]          @relation("MediaUploader")
-  moderatedComments  Comment[]             @relation("CommentModerator")
-  staffComments Comment[] @relation("CommentStaffAuthor")
-  moderatedReports   AbuseReport[]         @relation("AbuseReportModerator")
-  redirects          Redirect[]            @relation("RedirectAuthor")
-  staticPages        StaticPage[]          @relation("StaticPageEditor")
-  featuredPlacements FeaturedPlacement[]   @relation("FeaturedPlacementAuthor")
-  scheduledTaskRuns  ScheduledTaskRun[]
-  scheduledTaskStates ScheduledTaskState[] @relation("ScheduledTaskStateUpdatedBy")
-  menusCreated       Menu[]                @relation("MenuCreatedBy")
-  menusUpdated       Menu[]                @relation("MenuUpdatedBy")
-  menuLocationsUpdated MenuLocation[]      @relation("MenuLocationUpdatedBy")
-  postAutosaves      PostAutosave[]
-  pageAutosaves      PageAutosave[]
-  defaultAuthor      Author?               @relation("AdminDefaultAuthor", fields: [defaultAuthorId], references: [id], onDelete: SetNull)
+  aiTopics             AIContentItem[]        @relation("AITopicCreator")
+  aiTopicsHumanEdited  AIContentItem[]        @relation("AITopicHumanEditor")
+  aiApprovals          AIApproval[]           @relation("AIApprovalAdmin")
+  aiTopicsApproved     AIContentItem[]        @relation("AITopicApprover")
+  aiResearchSources    AIResearchSource[]     @relation("AIResearchSourceCreator")
+  aiClaimsResolved     AIFactClaim[]          @relation("AIClaimResolver")
+  aiClaimsCreated      AIFactClaim[]          @relation("AIClaimCreator")
+  roles                AdminRole[]
+  directPermissions    AdminPermission[]      @relation("AdminDirectPermission")
+  grantedRoles         AdminRole[]            @relation("AdminRoleAssignedBy")
+  grantedPermissions   AdminPermission[]      @relation("AdminPermissionAssignedBy")
+  grantedRolePerms     RolePermission[]       @relation("RolePermissionAssignedBy")
+  sessions             AdminSession[]
+  resetTokens          PasswordResetToken[]
+  passwordHistory      AdminPasswordHistory[]
+  recoveryCodes        AdminRecoveryCode[]
+  loginChallenges      AdminLoginChallenge[]
+  auditEntries         AuditLog[]             @relation("AuditActor")
+  settings             Setting[]              @relation("SettingUpdatedBy")
+  faqsCreated          Faq[]                  @relation("FaqCreatedBy")
+  faqsUpdated          Faq[]                  @relation("FaqUpdatedBy")
+  alertsCreated        ServiceAlert[]         @relation("ServiceAlertCreatedBy")
+  alertsUpdated        ServiceAlert[]         @relation("ServiceAlertUpdatedBy")
+  testimonialsCreated  Testimonial[]          @relation("TestimonialCreatedBy")
+  testimonialsUpdated  Testimonial[]          @relation("TestimonialUpdatedBy")
+  partnersAuthorised   PartnerOrganisation[]  @relation("PartnerAuthorisedBy")
+  partnersCreated      PartnerOrganisation[]  @relation("PartnerCreatedBy")
+  partnersUpdated      PartnerOrganisation[]  @relation("PartnerUpdatedBy")
+  moderatedReviews     Review[]               @relation("ReviewModerator")
+  contentRevisions     ContentRevision[]      @relation("ContentRevisionActor")
+  handledEnquiries     Enquiry[]              @relation("EnquiryHandler")
+  uploadedMedia        MediaAsset[]           @relation("MediaUploader")
+  moderatedComments    Comment[]              @relation("CommentModerator")
+  staffComments        Comment[]              @relation("CommentStaffAuthor")
+  moderatedReports     AbuseReport[]          @relation("AbuseReportModerator")
+  redirects            Redirect[]             @relation("RedirectAuthor")
+  staticPages          StaticPage[]           @relation("StaticPageEditor")
+  featuredPlacements   FeaturedPlacement[]    @relation("FeaturedPlacementAuthor")
+  scheduledTaskRuns    ScheduledTaskRun[]
+  scheduledTaskStates  ScheduledTaskState[]   @relation("ScheduledTaskStateUpdatedBy")
+  menusCreated         Menu[]                 @relation("MenuCreatedBy")
+  menusUpdated         Menu[]                 @relation("MenuUpdatedBy")
+  menuLocationsUpdated MenuLocation[]         @relation("MenuLocationUpdatedBy")
+  postAutosaves        PostAutosave[]
+  pageAutosaves        PageAutosave[]
+  defaultAuthor        Author?                @relation("AdminDefaultAuthor", fields: [defaultAuthorId], references: [id], onDelete: SetNull)
 
   @@index([status])
   @@index([defaultAuthorId])
@@ -324,13 +331,13 @@ model AuditLog {
 
 /// Business category; two levels only (a child's parent must be a root).
 model Category {
-  id          String   @id @default(cuid())
-  name        String   @db.VarChar(80)
+  id             String   @id @default(cuid())
+  name           String   @db.VarChar(80)
   /// Lowercase-hyphen slug; unique even when inactive (SRS DAT 004).
-  slug        String   @unique @db.VarChar(100)
-  description String?  @db.VarChar(500)
-  parentId    String?
-  sortOrder   Int      @default(0)
+  slug           String   @unique @db.VarChar(100)
+  description    String?  @db.VarChar(500)
+  parentId       String?
+  sortOrder      Int      @default(0)
   /// Shown on the home-page tile and the category landing page.
   imageMediaId   String?
   /// Search appearance for the landing page; each falls back to the name or description.
@@ -338,10 +345,10 @@ model Category {
   seoDescription String?  @db.VarChar(300)
   seoKeywords    String?  @db.VarChar(255)
   ogImageMediaId String?
-  active      Boolean  @default(true)
-  version     Int      @default(1)
-  createdAt   DateTime @default(now()) @db.DateTime(3)
-  updatedAt   DateTime @updatedAt @db.DateTime(3)
+  active         Boolean  @default(true)
+  version        Int      @default(1)
+  createdAt      DateTime @default(now()) @db.DateTime(3)
+  updatedAt      DateTime @updatedAt @db.DateTime(3)
 
   parent     Category?          @relation("CategoryParent", fields: [parentId], references: [id], onDelete: Restrict)
   children   Category[]         @relation("CategoryParent")
@@ -666,7 +673,6 @@ model Setting {
   @@id([group, key])
   @@map("settings")
 }
-
 
 enum ReviewStatus {
   pending
@@ -1002,10 +1008,10 @@ model Author {
   createdAt      DateTime @default(now()) @db.DateTime(3)
   updatedAt      DateTime @updatedAt @db.DateTime(3)
 
-  image MediaAsset?  @relation("AuthorImage", fields: [imageMediaId], references: [id], onDelete: Restrict)
-  posts Post[]
-  links AuthorLink[]
-  defaultForAdmins AdminUser[] @relation("AdminDefaultAuthor")
+  image            MediaAsset?  @relation("AuthorImage", fields: [imageMediaId], references: [id], onDelete: Restrict)
+  posts            Post[]
+  links            AuthorLink[]
+  defaultForAdmins AdminUser[]  @relation("AdminDefaultAuthor")
 
   @@index([active])
   @@map("authors")
@@ -1149,21 +1155,23 @@ model Post {
   createdAt        DateTime       @default(now()) @db.DateTime(3)
   updatedAt        DateTime       @updatedAt @db.DateTime(3)
 
-  author   Author       @relation(fields: [authorId], references: [id], onDelete: Restrict)
-  cover    MediaAsset?  @relation("PostCover", fields: [coverMediaId], references: [id], onDelete: Restrict)
-  ogImage  MediaAsset?  @relation("PostShareImage", fields: [ogImageMediaId], references: [id], onDelete: Restrict)
-  category BlogCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  tags      PostTag[]
-  comments  Comment[]
-  menuItems MenuItem[]
-  autosaves PostAutosave[]
+  author      Author          @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  cover       MediaAsset?     @relation("PostCover", fields: [coverMediaId], references: [id], onDelete: Restrict)
+  ogImage     MediaAsset?     @relation("PostShareImage", fields: [ogImageMediaId], references: [id], onDelete: Restrict)
+  category    BlogCategory    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  tags        PostTag[]
+  comments    Comment[]
+  menuItems   MenuItem[]
+  autosaves   PostAutosave[]
+  aiItem      AIContentItem?
+  aiFollowUps AIContentItem[] @relation("AITopicFollowUp")
 
   @@index([status, publishedAt])
   @@index([status, scheduledAt])
   @@index([categoryId, status, publishedAt])
-  @@fulltext([title, excerpt, searchText], map: "posts_search_idx")
   @@index([featuredAt])
   @@index([authorId, status])
+  @@fulltext([title, excerpt, searchText], map: "posts_search_idx")
   @@map("posts")
 }
 
@@ -1206,23 +1214,23 @@ model PostTag {
 
 /// Restricted edit history for versioned content (SRS §14 ContentRevision).
 model ContentRevision {
-  id                String   @id @default(cuid())
-  resourceType      String   @db.VarChar(32)
-  resourceId        String   @db.VarChar(64)
+  id                String          @id @default(cuid())
+  resourceType      String          @db.VarChar(32)
+  resourceId        String          @db.VarChar(64)
   version           Int
   /// The sanitised body as it stood before this change.
-  sanitizedSnapshot String   @db.MediumText
+  sanitizedSnapshot String          @db.MediumText
   /// The editable source and its format, so a restored version is editable as
   /// it was written; null for revisions recorded before 1.10 (restored from HTML).
-  bodySource        String?  @db.MediumText
+  bodySource        String?         @db.MediumText
   bodyFormat        PostBodyFormat?
-  excerpt           String?  @db.VarChar(500)
-  title             String?  @db.VarChar(200)
+  excerpt           String?         @db.VarChar(500)
+  title             String?         @db.VarChar(200)
   /// A page's sections as they stood (change log 1.17); null for articles and older revisions.
   sectionsSnapshot  Json?
-  reason            String?  @db.VarChar(500)
+  reason            String?         @db.VarChar(500)
   actorAdminId      String?
-  createdAt         DateTime @default(now()) @db.DateTime(3)
+  createdAt         DateTime        @default(now()) @db.DateTime(3)
 
   actor AdminUser? @relation("ContentRevisionActor", fields: [actorAdminId], references: [id], onDelete: SetNull)
 
@@ -1260,12 +1268,12 @@ model Comment {
   createdAt             DateTime     @default(now()) @db.DateTime(3)
   updatedAt             DateTime     @updatedAt @db.DateTime(3)
 
-  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
-  moderator AdminUser?    @relation("CommentModerator", fields: [moderatorAdminId], references: [id], onDelete: SetNull)
-  reports   AbuseReport[]
-  parent      Comment?   @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies     Comment[]  @relation("CommentReplies")
-  staffAuthor AdminUser? @relation("CommentStaffAuthor", fields: [authorAdminId], references: [id], onDelete: SetNull)
+  post        Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  moderator   AdminUser?    @relation("CommentModerator", fields: [moderatorAdminId], references: [id], onDelete: SetNull)
+  reports     AbuseReport[]
+  parent      Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Comment[]     @relation("CommentReplies")
+  staffAuthor AdminUser?    @relation("CommentStaffAuthor", fields: [authorAdminId], references: [id], onDelete: SetNull)
 
   @@index([postId, status, createdAt])
   @@index([parentId, status, createdAt])
@@ -1320,26 +1328,26 @@ model MediaAsset {
   createdAt         DateTime    @default(now()) @db.DateTime(3)
   updatedAt         DateTime    @updatedAt @db.DateTime(3)
 
-  uploadedBy AdminUser?      @relation("MediaUploader", fields: [uploadedByAdminId], references: [id], onDelete: SetNull)
-  variants   MediaVariant[]
-  businesses BusinessMedia[]
-  coverOf    Post[]          @relation("PostCover")
-  shareImageOf Post[]        @relation("PostShareImage")
-  pageShareImageOf StaticPage[] @relation("StaticPageShareImage")
-  categoryImageOf  Category[]   @relation("CategoryImage")
-  categoryShareImageOf Category[] @relation("CategoryShareImage")
-  areaImageOf      LocalArea[]  @relation("LocalAreaImage")
-  areaShareImageOf LocalArea[]  @relation("LocalAreaShareImage")
-  businessShareImageOf Business[] @relation("BusinessShareImage")
-  blogCategoryShareImageOf BlogCategory[] @relation("BlogCategoryShareImage")
-  blogTagShareImageOf      BlogTag[]      @relation("BlogTagShareImage")
-  testimonials Testimonial[]  @relation("TestimonialMedia")
-  partners   PartnerOrganisation[] @relation("PartnerMedia")
-  authorOf   Author[]        @relation("AuthorImage")
+  uploadedBy               AdminUser?              @relation("MediaUploader", fields: [uploadedByAdminId], references: [id], onDelete: SetNull)
+  variants                 MediaVariant[]
+  businesses               BusinessMedia[]
+  coverOf                  Post[]                  @relation("PostCover")
+  shareImageOf             Post[]                  @relation("PostShareImage")
+  pageShareImageOf         StaticPage[]            @relation("StaticPageShareImage")
+  categoryImageOf          Category[]              @relation("CategoryImage")
+  categoryShareImageOf     Category[]              @relation("CategoryShareImage")
+  areaImageOf              LocalArea[]             @relation("LocalAreaImage")
+  areaShareImageOf         LocalArea[]             @relation("LocalAreaShareImage")
+  businessShareImageOf     Business[]              @relation("BusinessShareImage")
+  blogCategoryShareImageOf BlogCategory[]          @relation("BlogCategoryShareImage")
+  blogTagShareImageOf      BlogTag[]               @relation("BlogTagShareImage")
+  testimonials             Testimonial[]           @relation("TestimonialMedia")
+  partners                 PartnerOrganisation[]   @relation("PartnerMedia")
+  authorOf                 Author[]                @relation("AuthorImage")
   /// Images shown inside rich content (article and page bodies, bios, answers, landing text).
-  bodyReferences ContentMediaReference[] @relation("ContentBodyMedia")
+  bodyReferences           ContentMediaReference[] @relation("ContentBodyMedia")
   /// Menu items that link this document (change log 1.16).
-  menuItemDocuments MenuItem[] @relation("MenuItemDocument")
+  menuItemDocuments        MenuItem[]              @relation("MenuItemDocument")
 
   @@index([status, createdAt])
   @@index([kind, status, createdAt])
@@ -1528,32 +1536,32 @@ model ServiceAlert {
 /// the administrator who recorded that the quote may be used, and publication is
 /// refused without it.
 model Testimonial {
-  id                String               @id @default(cuid())
+  id               String               @id @default(cuid())
   /// How the person is credited publicly.
-  displayName       String               @db.VarChar(120)
+  displayName      String               @db.VarChar(120)
   /// Their role or relationship to the business, e.g. "Owner, Little Collins Cafe".
-  relationship      String?              @db.VarChar(160)
+  relationship     String?              @db.VarChar(160)
   /// Plain text, sanitised and bounded; no markup is accepted.
-  quote             String               @db.VarChar(1000)
+  quote            String               @db.VarChar(1000)
   /// 1–5 as the person gave it; null when they gave none, so the page shows no stars rather than a default.
-  rating            Int?                 @db.TinyInt
+  rating           Int?                 @db.TinyInt
   /// Optional link to the listing the person is associated with.
-  businessId        String?
+  businessId       String?
   /// Optional portrait; an approved asset from the media pipeline (MED 001-004).
-  mediaId           String?
-  displayOrder      Int                  @default(0)
-  status            WebsiteContentStatus @default(draft)
-  publishedAt       DateTime?            @db.DateTime(3)
-  version           Int                  @default(1)
-  createdByAdminId  String?
-  updatedByAdminId  String?
-  createdAt         DateTime             @default(now()) @db.DateTime(3)
-  updatedAt         DateTime             @updatedAt @db.DateTime(3)
+  mediaId          String?
+  displayOrder     Int                  @default(0)
+  status           WebsiteContentStatus @default(draft)
+  publishedAt      DateTime?            @db.DateTime(3)
+  version          Int                  @default(1)
+  createdByAdminId String?
+  updatedByAdminId String?
+  createdAt        DateTime             @default(now()) @db.DateTime(3)
+  updatedAt        DateTime             @updatedAt @db.DateTime(3)
 
-  business   Business?   @relation(fields: [businessId], references: [id], onDelete: SetNull)
-  media      MediaAsset? @relation("TestimonialMedia", fields: [mediaId], references: [id], onDelete: SetNull)
-  createdBy  AdminUser?  @relation("TestimonialCreatedBy", fields: [createdByAdminId], references: [id], onDelete: SetNull)
-  updatedBy  AdminUser?  @relation("TestimonialUpdatedBy", fields: [updatedByAdminId], references: [id], onDelete: SetNull)
+  business  Business?   @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  media     MediaAsset? @relation("TestimonialMedia", fields: [mediaId], references: [id], onDelete: SetNull)
+  createdBy AdminUser?  @relation("TestimonialCreatedBy", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  updatedBy AdminUser?  @relation("TestimonialUpdatedBy", fields: [updatedByAdminId], references: [id], onDelete: SetNull)
 
   @@index([status, displayOrder])
   @@index([businessId])
@@ -1794,8 +1802,8 @@ model StaticPage {
   createdAt        DateTime         @default(now()) @db.DateTime(3)
   updatedAt        DateTime         @updatedAt @db.DateTime(3)
 
-  updatedBy AdminUser?  @relation("StaticPageEditor", fields: [updatedByAdminId], references: [id], onDelete: SetNull)
-  ogImage   MediaAsset? @relation("StaticPageShareImage", fields: [ogImageMediaId], references: [id], onDelete: Restrict)
+  updatedBy AdminUser?     @relation("StaticPageEditor", fields: [updatedByAdminId], references: [id], onDelete: SetNull)
+  ogImage   MediaAsset?    @relation("StaticPageShareImage", fields: [ogImageMediaId], references: [id], onDelete: Restrict)
   menuItems MenuItem[]
   autosaves PageAutosave[]
 
@@ -1863,21 +1871,21 @@ enum ScheduledRunOutcome {
 /// Outcomes and durations only: nothing here records task output, and a task
 /// that touched personal data records how many rows it changed, never which.
 model ScheduledTaskRun {
-  id            String              @id @default(cuid())
+  id           String              @id @default(cuid())
   /// Registry code (packages/domain scheduled-tasks). Not a foreign key: the
   /// registry lives in code, and history outlives a task being retired.
-  taskCode      String              @db.VarChar(64)
-  trigger       ScheduledRunTrigger
-  outcome       ScheduledRunOutcome @default(running)
-  startedAt     DateTime            @default(now()) @db.DateTime(3)
-  finishedAt    DateTime?           @db.DateTime(3)
-  durationMs    Int?
+  taskCode     String              @db.VarChar(64)
+  trigger      ScheduledRunTrigger
+  outcome      ScheduledRunOutcome @default(running)
+  startedAt    DateTime            @default(now()) @db.DateTime(3)
+  finishedAt   DateTime?           @db.DateTime(3)
+  durationMs   Int?
   /// One short line: a count, or the first line of an error. Never a payload.
-  detail        String?             @db.VarChar(300)
+  detail       String?             @db.VarChar(300)
   /// Set for a manual run; null for a scheduled one.
-  actorAdminId  String?
+  actorAdminId String?
   /// Which worker replica ran it, for support on a multi-replica deployment.
-  runnerId      String?             @db.VarChar(64)
+  runnerId     String?             @db.VarChar(64)
 
   actor AdminUser? @relation(fields: [actorAdminId], references: [id], onDelete: SetNull)
 
@@ -1890,12 +1898,425 @@ model ScheduledTaskRun {
 /// exists only once someone has changed the default; a task the registry marks
 /// as required for correctness can never be disabled, whatever a row says.
 model ScheduledTaskState {
-  taskCode        String   @id @db.VarChar(64)
-  enabled         Boolean  @default(true)
+  taskCode         String   @id @db.VarChar(64)
+  enabled          Boolean  @default(true)
   updatedByAdminId String?
-  updatedAt       DateTime @updatedAt @db.DateTime(3)
+  updatedAt        DateTime @updatedAt @db.DateTime(3)
 
   updatedBy AdminUser? @relation("ScheduledTaskStateUpdatedBy", fields: [updatedByAdminId], references: [id], onDelete: SetNull)
 
   @@map("scheduled_task_states")
+}
+
+// AI Content automation (docs/planning/ai-automation-implementation-plan.md).
+// Phase 1A: manual topic administration. Phase 1B: canonical Post mapping,
+// generation runs, durable operations with DB leases, approvals and the
+// automation control epoch. The lifecycle is the SRS state table (AI-160–169);
+// transitions live in @adelaide-sphere/domain/ai-content.
+enum AITopicStatus {
+  queued
+  paused
+  researching
+  generating
+  needs_fact_review
+  ready_for_review
+  approved
+  scheduled
+  published
+  failed
+  cancelled
+  rejected
+}
+
+model AIContentItem {
+  id                     String             @id @default(cuid())
+  title                  String             @db.VarChar(180)
+  brief                  String?            @db.VarChar(2000)
+  priority               Int                @default(0)
+  source                 String             @default("manual") @db.VarChar(16)
+  status                 AITopicStatus      @default(queued)
+  reason                 String?            @db.VarChar(500)
+  createdByAdminId       String?
+  createdAt              DateTime           @default(now()) @db.DateTime(3)
+  updatedAt              DateTime           @updatedAt @db.DateTime(3)
+  version                Int                @default(1)
+  /// Durable actor-scoped create identity, retained with terminal history.
+  requestKey             String             @unique @db.Char(64)
+  payloadHash            String             @db.Char(64)
+  /// Every non-terminal (and published) item reserves the normalized title; cancelled/rejected release it.
+  activeTitleHash        String?            @unique @db.Char(64)
+  /// The one canonical article for this item (AI-206). Set once, never re-pointed; Posts are never deleted.
+  postId                 String?            @unique
+  /// Sticky: the first human change to the linked article. Never cleared; automation never applies over it (AI-210).
+  humanModifiedAt        DateTime?          @db.DateTime(3)
+  humanModifiedByAdminId String?
+  /// With status failed: which stage failed (research, generation, image, application, publication).
+  failureStage           String?            @db.VarChar(16)
+  failureCode            String?            @db.VarChar(64)
+  /// Why this topic was selected (SRS §7): manual entry, or the public signal a discovery run found.
+  selectionReason        String?            @db.VarChar(300)
+  /// SHA-256 of the topic's significant words (@adelaide-sphere/domain ai-novelty); not unique: overlap is judged, not assumed.
+  intentKey              String?            @db.Char(64)
+  /// Intent plus the occurrence (year/month) when the topic names one.
+  eventKey               String?            @db.Char(64)
+  /// The significant words themselves, for bounded local similarity checks.
+  topicTokens            String?            @db.VarChar(400)
+  noveltyStatus          AINoveltyStatus    @default(unchecked)
+  noveltyEpoch           Int?
+  noveltyCheckedAt       DateTime?          @db.DateTime(3)
+  /// Bounded list (≤10) of the inventory matches behind the novelty decision.
+  noveltyDetail          Json?
+  /// Candidate evidence pages for research (≤10 https URLs with an optional tier), from an editor or a discovery signal.
+  researchUrls           Json?
+  topicApprovedAt        DateTime?          @db.DateTime(3)
+  topicApprovedByAdminId String?
+  /// A legitimate follow-up of an existing article, with the editorial justification (plan §E step 7).
+  followUpOfPostId       String?
+  followUpReason         String?            @db.VarChar(500)
+  createdBy              AdminUser?         @relation("AITopicCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  humanModifiedBy        AdminUser?         @relation("AITopicHumanEditor", fields: [humanModifiedByAdminId], references: [id], onDelete: SetNull)
+  post                   Post?              @relation(fields: [postId], references: [id], onDelete: Restrict)
+  topicApprovedBy        AdminUser?         @relation("AITopicApprover", fields: [topicApprovedByAdminId], references: [id], onDelete: SetNull)
+  followUpOf             Post?              @relation("AITopicFollowUp", fields: [followUpOfPostId], references: [id], onDelete: Restrict)
+  packets                AIResearchPacket[]
+  runs                   AIGenerationRun[]
+  operations             AIOperation[]
+  approvals              AIApproval[]
+
+  @@index([status, priority, createdAt, id])
+  @@index([createdByAdminId])
+  @@index([humanModifiedByAdminId])
+  @@index([intentKey])
+  @@index([eventKey])
+  @@index([topicApprovedByAdminId])
+  @@index([followUpOfPostId])
+  @@map("ai_content_items")
+}
+
+/// Single deployment control row (id 'default'): the epoch advances whenever a
+/// safety-relevant AI setting changes, fencing in-flight work (plan §I, F37/F38).
+model AIAutomationControl {
+  id             String   @id @db.VarChar(16)
+  epoch          Int      @default(1)
+  /// Advances whenever the article inventory changes (an ordinary Post created or retitled/rewritten, AI admission,
+  /// cancellation or rejection); a novelty decision made against an older epoch is re-checked (plan §E).
+  inventoryEpoch Int      @default(1)
+  updatedAt      DateTime @updatedAt @db.DateTime(3)
+
+  @@map("ai_automation_controls")
+}
+
+enum AIRunStatus {
+  pending
+  applied
+  proposal
+  failed
+}
+
+enum AIFactCheckStatus {
+  pending
+  passed
+  failed
+}
+
+/// One attempt at a generation for an item (item + generationVersion unique).
+/// The artifact is the bounded proposed article; it is never a second Post.
+model AIGenerationRun {
+  id                   String            @id @default(cuid())
+  itemId               String
+  generationVersion    Int
+  status               AIRunStatus       @default(pending)
+  /// Why an unapplied artifact was kept as a proposal instead of applied.
+  proposalReason       String?           @db.VarChar(64)
+  settingsVersion      Int
+  controlEpoch         Int
+  /// Null for the first draft; otherwise the Post version/material hash the run was produced from.
+  expectedPostVersion  Int?
+  expectedMaterialHash String?           @db.Char(64)
+  artifact             Json
+  artifactHash         String            @db.Char(64)
+  /// Set only by the research verifier (Phase 1C); anything else keeps the fact gate closed.
+  factCheck            AIFactCheckStatus @default(pending)
+  appliedPostVersion   Int?
+  appliedMaterialHash  String?           @db.Char(64)
+  createdAt            DateTime          @default(now()) @db.DateTime(3)
+  updatedAt            DateTime          @updatedAt @db.DateTime(3)
+  item                 AIContentItem     @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  operations           AIOperation[]
+  approvals            AIApproval[]
+
+  @@unique([itemId, generationVersion])
+  @@map("ai_generation_runs")
+}
+
+enum AIOperationKind {
+  apply
+  /// Retrieves a packet's public evidence: read-only GETs, so a lapsed attempt can be retried.
+  research
+  /// Reads configured public feeds for topic candidates: read-only.
+  discovery
+}
+
+enum AIOperationState {
+  pending
+  running
+  succeeded
+  failed
+  cancelled
+}
+
+/// Durable unit of worker work. The database, not the queue, is the authority:
+/// a lease (owner, until, fencing token) guards every write a worker makes.
+model AIOperation {
+  id             String            @id @default(cuid())
+  operationKey   String            @unique @db.Char(64)
+  kind           AIOperationKind
+  /// Null only for discovery, which is not about one item.
+  itemId         String?
+  runId          String?
+  packetId       String?
+  state          AIOperationState  @default(pending)
+  attempts       Int               @default(0)
+  nextAttemptAt  DateTime          @default(now()) @db.DateTime(3)
+  lastEnqueuedAt DateTime?         @db.DateTime(3)
+  leaseOwner     String?           @db.VarChar(64)
+  leaseUntil     DateTime?         @db.DateTime(3)
+  fencingToken   Int               @default(0)
+  controlEpoch   Int
+  resultCode     String?           @db.VarChar(64)
+  createdAt      DateTime          @default(now()) @db.DateTime(3)
+  updatedAt      DateTime          @updatedAt @db.DateTime(3)
+  item           AIContentItem?    @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  run            AIGenerationRun?  @relation(fields: [runId], references: [id], onDelete: Restrict)
+  packet         AIResearchPacket? @relation(fields: [packetId], references: [id], onDelete: Restrict)
+
+  @@index([packetId])
+  @@index([state, nextAttemptAt])
+  @@index([state, leaseUntil])
+  @@index([itemId])
+  @@index([runId])
+  @@map("ai_operations")
+}
+
+enum AIApprovalKind {
+  content
+}
+
+/// Immutable, attributable approval of one exact article state (AI-171/172).
+/// Invalidation is stamped, never rewritten or deleted.
+model AIApproval {
+  id                 String           @id @default(cuid())
+  itemId             String
+  runId              String?
+  kind               AIApprovalKind
+  postId             String
+  postVersion        Int
+  materialHash       String           @db.Char(64)
+  adminId            String?
+  reason             String?          @db.VarChar(500)
+  createdAt          DateTime         @default(now()) @db.DateTime(3)
+  invalidatedAt      DateTime?        @db.DateTime(3)
+  invalidationReason String?          @db.VarChar(64)
+  item               AIContentItem    @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  run                AIGenerationRun? @relation(fields: [runId], references: [id], onDelete: Restrict)
+  admin              AdminUser?       @relation("AIApprovalAdmin", fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([itemId, invalidatedAt])
+  @@index([runId])
+  @@index([adminId])
+  @@map("ai_approvals")
+}
+
+enum AINoveltyStatus {
+  unchecked
+  clear
+  review
+  duplicate
+}
+
+enum AISourceTier {
+  official_government
+  official_business
+  institutional
+  publication
+  unclassified
+}
+
+/// Deployment source registry (plan §G "source registry"): which public hosts
+/// research treats as which tier, and which public feeds discovery reads.
+model AIResearchSource {
+  id               String       @id @default(cuid())
+  host             String       @unique @db.VarChar(253)
+  label            String       @db.VarChar(120)
+  tier             AISourceTier
+  /// An https RSS/Atom feed on this host, read by discovery for recent signals.
+  feedUrl          String?      @db.VarChar(500)
+  active           Boolean      @default(true)
+  version          Int          @default(1)
+  createdByAdminId String?
+  createdAt        DateTime     @default(now()) @db.DateTime(3)
+  updatedAt        DateTime     @updatedAt @db.DateTime(3)
+  createdBy        AdminUser?   @relation("AIResearchSourceCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+
+  @@index([active])
+  @@index([createdByAdminId])
+  @@map("ai_research_sources")
+}
+
+enum AIPacketStatus {
+  collecting
+  verified
+  needs_fact_review
+  failed
+}
+
+/// One research attempt for an item (item + version unique). Evidence and
+/// claims belong to it; a refresh creates the next version, never edits an older one.
+model AIResearchPacket {
+  id             String             @id @default(cuid())
+  itemId         String
+  version        Int
+  status         AIPacketStatus     @default(collecting)
+  failureCode    String?            @db.VarChar(64)
+  /// Why the packet is not verified, in words an editor can act on (bounded list).
+  reasons        Json?
+  /// Inventory epoch the topic was admitted against; a later epoch triggers a novelty re-check.
+  inventoryEpoch Int
+  /// Bounded related published articles (id, title, slug, excerpt) for later generation context. Published only.
+  context        Json?
+  /// Material values that changed since the previous verified packet (change detection).
+  changes        Json?
+  freshUntil     DateTime?          @db.DateTime(3)
+  evaluatedAt    DateTime?          @db.DateTime(3)
+  createdAt      DateTime           @default(now()) @db.DateTime(3)
+  updatedAt      DateTime           @updatedAt @db.DateTime(3)
+  item           AIContentItem      @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  evidence       AISourceEvidence[]
+  claims         AIFactClaim[]
+  operations     AIOperation[]
+
+  @@unique([itemId, version])
+  @@map("ai_research_packets")
+}
+
+enum AIFetchStatus {
+  ok
+  http_error
+  blocked
+  robots_disallowed
+  timeout
+  too_large
+  unsupported_type
+  network_error
+}
+
+/// One retrieval of one public page for a packet. Never overwritten: a changed page
+/// is new evidence in a new packet. Source text is untrusted data, stored bounded.
+model AISourceEvidence {
+  id             String           @id @default(cuid())
+  packetId       String
+  url            String           @db.VarChar(2000)
+  urlHash        String           @db.Char(64)
+  finalUrl       String?          @db.VarChar(2000)
+  host           String           @db.VarChar(253)
+  tier           AISourceTier
+  fetchStatus    AIFetchStatus
+  httpStatus     Int?
+  contentType    String?          @db.VarChar(100)
+  contentHash    String?          @db.Char(64)
+  etag           String?          @db.VarChar(200)
+  title          String?          @db.VarChar(300)
+  /// Publication or update date the source states, when it states one.
+  sourceDate     DateTime?        @db.DateTime(3)
+  /// Bounded visible text (≤20 000 characters), for excerpt validation and review.
+  text           String?          @db.Text
+  /// Bounded schema.org objects found on the page (≤50 KB), the input to claim extraction.
+  structuredData Json?
+  fetchedAt      DateTime         @db.DateTime(3)
+  createdAt      DateTime         @default(now()) @db.DateTime(3)
+  packet         AIResearchPacket @relation(fields: [packetId], references: [id], onDelete: Restrict)
+  claims         AIClaimSource[]
+
+  @@unique([packetId, urlHash])
+  @@index([urlHash, contentHash])
+  @@map("ai_source_evidence")
+}
+
+enum AIClaimKind {
+  business_identity
+  address
+  phone
+  website
+  opening_hours
+  price
+  availability
+  event_datetime
+  event_location
+  geography
+  background
+}
+
+enum AIClaimStatus {
+  verified
+  unresolved
+  conflicting
+  stale
+  excluded
+}
+
+enum AIClaimOrigin {
+  extracted
+  editor
+}
+
+/// A typed factual assertion (plan §G step 4) with its verification verdict.
+/// Unique per packet by kind + subject + normalised value; sources join separately.
+model AIFactClaim {
+  id                String           @id @default(cuid())
+  packetId          String
+  claimKey          String           @db.Char(64)
+  kind              AIClaimKind
+  subject           String           @db.VarChar(200)
+  value             String           @db.VarChar(1000)
+  material          Boolean          @default(true)
+  origin            AIClaimOrigin
+  status            AIClaimStatus    @default(unresolved)
+  reason            String?          @db.VarChar(300)
+  validUntil        DateTime?        @db.DateTime(3)
+  freshUntil        DateTime?        @db.DateTime(3)
+  /// Editor decisions: exclusion from the article, or acceptance over conflicting values.
+  excluded          Boolean          @default(false)
+  accepted          Boolean          @default(false)
+  resolutionNote    String?          @db.VarChar(500)
+  resolvedByAdminId String?
+  resolvedAt        DateTime?        @db.DateTime(3)
+  createdByAdminId  String?
+  version           Int              @default(1)
+  createdAt         DateTime         @default(now()) @db.DateTime(3)
+  updatedAt         DateTime         @updatedAt @db.DateTime(3)
+  packet            AIResearchPacket @relation(fields: [packetId], references: [id], onDelete: Restrict)
+  resolvedBy        AdminUser?       @relation("AIClaimResolver", fields: [resolvedByAdminId], references: [id], onDelete: SetNull)
+  createdBy         AdminUser?       @relation("AIClaimCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  sources           AIClaimSource[]
+
+  @@unique([packetId, claimKey])
+  @@index([packetId, status])
+  @@index([resolvedByAdminId])
+  @@index([createdByAdminId])
+  @@map("ai_fact_claims")
+}
+
+/// Which evidence supports a claim, with the supporting excerpt and where it was found.
+model AIClaimSource {
+  claimId    String
+  evidenceId String
+  excerpt    String           @db.VarChar(1000)
+  location   String?          @db.VarChar(200)
+  createdAt  DateTime         @default(now()) @db.DateTime(3)
+  claim      AIFactClaim      @relation(fields: [claimId], references: [id], onDelete: Restrict)
+  evidence   AISourceEvidence @relation(fields: [evidenceId], references: [id], onDelete: Restrict)
+
+  @@id([claimId, evidenceId])
+  @@index([evidenceId])
+  @@map("ai_claim_sources")
 }

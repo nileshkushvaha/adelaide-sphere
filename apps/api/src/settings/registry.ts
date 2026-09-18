@@ -29,9 +29,10 @@
  * Groups may legitimately declare no settings yet: the group exists so its
  * store, permissions and ownership are fixed before the first setting lands.
  */
+import { AI_CONTENT_SETTINGS } from './ai-content-settings.js';
 import type { PermissionKey } from '../identity/permissions.js';
 
-export const SETTING_GROUP_KEYS = ['security', 'email', 'operations', 'website'] as const;
+export const SETTING_GROUP_KEYS = ['security', 'email', 'operations', 'website', 'ai_content'] as const;
 export type SettingGroupKey = (typeof SETTING_GROUP_KEYS)[number];
 
 /** The website group's own key, used by `SettingsService` for its two documents. */
@@ -111,11 +112,14 @@ export interface SettingGroupDeclaration {
   viewPermission: PermissionKey;
   updatePermission: PermissionKey;
   settings: readonly SettingDeclaration[];
+  /** Optional owned cross-field/domain validation, never serialized to clients. */
+  validate?: (values: Record<string, boolean | number | string>) => Record<string, string>;
   /** Explains an intentionally empty group so "not yet" is never read as "forgotten". */
   note?: string;
 }
 
 export const SETTING_GROUPS: readonly SettingGroupDeclaration[] = [
+  AI_CONTENT_SETTINGS,
   {
     key: 'security',
     label: 'Security',
@@ -354,6 +358,7 @@ export function validateGroupPayload(
     else value[setting.key] = outcome.value as boolean | number | string;
   }
 
+  Object.assign(errors, group.validate?.(value));
   return { errors, value };
 }
 

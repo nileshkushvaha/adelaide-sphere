@@ -24,6 +24,12 @@ const EditorialTermsPage = lazy(() => import('@/pages/blog/EditorialTermsPage').
 const EditorialTermEditorPage = lazy(() => import('@/pages/blog/EditorialTermEditorPage').then((m) => ({ default: m.EditorialTermEditorPage })));
 const TermsPage = lazy(() => import('@/pages/taxonomy/TermsPage').then((m) => ({ default: m.TermsPage })));
 const TermEditorPage = lazy(() => import('@/pages/taxonomy/TermEditorPage').then((m) => ({ default: m.TermEditorPage })));
+const AiOverviewPage = lazy(() => import('@/pages/ai-content/AiContentPages').then((m) => ({ default: m.AiOverviewPage })));
+const AiTopicQueuePage = lazy(() => import('@/pages/ai-content/AiContentPages').then((m) => ({ default: m.AiTopicQueuePage })));
+const AiTopicDetailPage = lazy(() => import('@/pages/ai-content/AiContentPages').then((m) => ({ default: m.AiTopicDetailPage })));
+const AiFactReviewPage = lazy(() => import('@/pages/ai-content/AiContentPages').then((m) => ({ default: m.AiFactReviewPage })));
+const ResearchSourcesPage = lazy(() => import('@/pages/ai-content/ResearchSourcesPage').then((m) => ({ default: m.ResearchSourcesPage })));
+const AiSettingsPage = lazy(() => import('@/pages/ai-content/AiSettingsPage').then((m) => ({ default: m.AiSettingsPage })));
 const PostsPage = lazy(() => import('@/pages/blog/PostsPage').then((m) => ({ default: m.PostsPage })));
 const BusinessesPage = lazy(() => import('@/pages/businesses/BusinessesPage').then((m) => ({ default: m.BusinessesPage })));
 const AuthorsPage = lazy(() => import('@/pages/blog/AuthorsPage').then((m) => ({ default: m.AuthorsPage })));
@@ -116,6 +122,12 @@ export function AppRoutes() {
         <Route path="/areas/:id" element={<TermEditorPage config={AREAS_CONFIG} />} />
         <Route path="/media" element={<MediaLibraryPage />} />
         <Route path="/media/:id" element={<MediaDetailPage />} />
+        <Route path="/ai-content" element={<AiOverviewPage />} />
+        <Route path="/ai-content/topics" element={<AiTopicQueuePage />} />
+        <Route path="/ai-content/topics/:id" element={<AiTopicDetailPage />} />
+        <Route path="/ai-content/fact-review" element={<AiFactReviewPage />} />
+        <Route path="/ai-content/sources" element={<ResearchSourcesPage />} />
+        <Route path="/ai-content/settings" element={<AiSettingsPage />} />
         <Route path="/posts" element={<PostsPage />} />
         <Route path="/posts/new" element={<PostEditorPage />} />
         <Route path="/posts/:id" element={<PostEditorPage />} />
