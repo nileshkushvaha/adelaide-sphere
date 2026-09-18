@@ -10,22 +10,14 @@ Read `docs/operations/runbook.md` alongside this guide. It holds the rules this
 procedure implements (environments, health, backups, alerts). This guide is the
 "how, on one machine" version.
 
-> **The service account in this guide does not exist on the current server.**
-> Most steps below run commands as `adelaide-sphere` and the unit files in §12
-> set `User=adelaide-sphere`. The server that is actually deployed to has no such
-> user: everything runs as `deploy`, which owns `/srv/adelaide-sphere/shared`.
-> This was found on 17 September when a deployment stopped with
-> `sudo: unknown user adelaide-sphere` (see `docs/setup-progress.md`).
-> §15 (backups) has been corrected to say `deploy`; the rest has not. Read
-> `adelaide-sphere` as "whichever account owns `shared/`" until the two are
-> reconciled, and check with `stat -c '%U' /srv/adelaide-sphere/shared/api.env`.
-
 > **Conventions.** `adelaidesphere.com` is the production domain
 > (`PUBLIC_SITE_URL` / `SITE_ORIGIN` in the example files). Replace it, and
-> `media.adelaidesphere.com`, if yours differ. Commands prefixed with `sudo`
-> run as your administrative user; everything else runs as the `adelaide-sphere` service
-> user unless the step says otherwise. `<…>` marks a value you supply. Never
-> paste a real secret into a tracked file, a ticket or a chat.
+> `media.adelaidesphere.com`, if yours differ. Every command runs as `deploy`
+> (section 3.2). That account owns `/srv/adelaide-sphere` and is also the
+> account the three services run as; there is no separate service account
+> (section 5 explains the trade-off). Commands prefixed with `sudo` run as root
+> through `deploy`'s sudo rights. `<…>` marks a value you supply. Never paste a
+> real secret into a tracked file, a ticket or a chat.
 
 ---
 
@@ -146,7 +138,8 @@ hostnamectl set-hostname as-prod-1
 
 ### 3.2 An administrative user, key-only SSH
 
-On the server (replace `deploy` with your name if you prefer):
+On the server. Keep the name `deploy`: the deployment script, the systemd units
+and the backup units all name it.
 
 ```bash
 adduser deploy
@@ -282,18 +275,23 @@ the MySQL APT repository with the 8.4 LTS track selected.
 
 ---
 
-## 5. Service user and directory layout
+## 5. Account and directory layout
+
+`deploy` builds each release, owns everything under `/srv/adelaide-sphere`,
+and is the `User=` of the API, worker and web units (section 12). There is no
+separate service account. **The trade-off:** the running application has the
+same file access as the account that deploys it. It can write its own releases
+and read every file in `shared/`. Two settings in the unit files limit that:
+`NoNewPrivileges=true` stops the services from using `deploy`'s sudo rights, and
+`InaccessiblePaths=` hides the Docker socket from them, so membership of the
+`docker` group (below) does not give them root.
 
 ```bash
-sudo adduser --system --group --home /srv/adelaide-sphere --shell /bin/bash adelaide-sphere
+sudo usermod -aG docker deploy
 ```
 
 ```bash
-sudo usermod -aG docker adelaide-sphere
-```
-
-```bash
-sudo -u adelaide-sphere mkdir -p /srv/adelaide-sphere/{releases,shared,services,backups,logs}
+sudo mkdir -p /srv/adelaide-sphere/{releases,shared,services,backups,logs} && sudo chown -R deploy:deploy /srv/adelaide-sphere
 ```
 
 ```bash
@@ -308,11 +306,8 @@ sudo chmod 750 /srv/adelaide-sphere && sudo chmod 700 /srv/adelaide-sphere/share
 | `/srv/adelaide-sphere/services/` | Compose file and `.env` for MySQL, Redis, MinIO |
 | `/srv/adelaide-sphere/backups/` | Encrypted local backup copies before off-site upload |
 
-Become the service user for the next sections:
-
-```bash
-sudo -iu adelaide-sphere
-```
+Log out and back in as `deploy` so the new `docker` group membership applies,
+then confirm it with `docker ps`.
 
 ---
 
@@ -727,8 +722,7 @@ shred -u /srv/adelaide-sphere/shared/generated.env
 ## 9. nginx and TLS (before the first build)
 
 The worker's revalidation URL and the media endpoint both go through nginx, so
-nginx comes up before the applications. Leave the `adelaide-sphere` shell (`exit`) — these
-steps need `sudo`.
+nginx comes up before the applications. These steps need `sudo`.
 
 ### 9.1 Certificates
 
@@ -1017,11 +1011,17 @@ sudo ln -sf /etc/nginx/sites-available/adelaide-sphere /etc/nginx/sites-enabled/
 ```
 
 nginx (user `www-data`) must be able to read the admin build and the not-found
-document:
+document, and nothing else. Do **not** add `www-data` to the `deploy` group:
+that would let nginx read everything `deploy` can read as a group member,
+including its home directory. Instead, let nginx pass through the two top
+directories:
 
 ```bash
-sudo usermod -aG adelaide-sphere www-data && sudo chmod 750 /srv/adelaide-sphere /srv/adelaide-sphere/releases
+sudo chgrp www-data /srv/adelaide-sphere /srv/adelaide-sphere/releases && sudo chmod 750 /srv/adelaide-sphere /srv/adelaide-sphere/releases
 ```
+
+Each release then gives `www-data` read access to exactly those two outputs
+(section 10.6 for the first release, `scripts/deploy-vps.sh` for every later one).
 
 Do **not** test or reload yet if `/srv/adelaide-sphere/current` does not exist;
 `nginx -t` passes regardless, but the site will answer errors until section 12.
@@ -1041,11 +1041,7 @@ curl -s https://media.adelaidesphere.com/adelaide-sphere-quarantine/ | head -c 2
 
 ## 10. Build the first release
 
-Back as the service user:
-
-```bash
-sudo -iu adelaide-sphere
-```
+As `deploy`:
 
 ```bash
 SHA=$(git --git-dir=/srv/adelaide-sphere/repo.git rev-parse master) && cd /srv/adelaide-sphere/releases/$SHA
@@ -1097,6 +1093,17 @@ appears, `web.env` was not loaded; fix and rebuild.
 
 ```bash
 ln -sfn /srv/adelaide-sphere/releases/$SHA /srv/adelaide-sphere/current && echo $SHA > /srv/adelaide-sphere/current/REVISION
+```
+
+Give nginx read access to the admin build and the not-found document (the same
+steps `scripts/deploy-vps.sh` takes for every later release):
+
+```bash
+cd /srv/adelaide-sphere/releases/$SHA && chgrp www-data . apps apps/admin apps/web apps/web/.next apps/web/.next/server apps/web/.next/server/app && chmod g+rx . apps apps/admin apps/web apps/web/.next apps/web/.next/server apps/web/.next/server/app && chgrp -R www-data apps/admin/dist && find apps/admin/dist -type d -exec chmod 750 {} + && find apps/admin/dist -type f -exec chmod 640 {} + && chgrp www-data apps/web/.next/server/app/_not-found.html && chmod 640 apps/web/.next/server/app/_not-found.html
+```
+
+```bash
+sudo -u www-data test -r /srv/adelaide-sphere/current/apps/admin/dist/index.html && sudo -u www-data test -r /srv/adelaide-sphere/current/apps/web/.next/server/app/_not-found.html && echo readable
 ```
 
 ---
@@ -1172,15 +1179,15 @@ migrations of section 10.3 created the tables, so the import goes into an
 emptied database and then migration status is re-checked:
 
 ```bash
-sudo -iu adelaide-sphere bash -c 'cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" as-mysql mysql -uroot -e "DROP DATABASE adelaide_sphere; CREATE DATABASE adelaide_sphere CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL PRIVILEGES ON adelaide_sphere.* TO \`as_app\`@\`%\`;"'
+( cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" as-mysql mysql -uroot -e "DROP DATABASE adelaide_sphere; CREATE DATABASE adelaide_sphere CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL PRIVILEGES ON adelaide_sphere.* TO \`as_app\`@\`%\`;" )
 ```
 
 ```bash
-gunzip -c /tmp/as-content.sql.gz | sudo -iu adelaide-sphere bash -c 'cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec -i -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" as-mysql mysql -uroot adelaide_sphere'
+gunzip -c /tmp/as-content.sql.gz | ( cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec -i -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" as-mysql mysql -uroot adelaide_sphere )
 ```
 
 ```bash
-sudo -iu adelaide-sphere bash -c 'cd /srv/adelaide-sphere/current && set -a && . /srv/adelaide-sphere/shared/api.env && set +a && pnpm db:migrate:status'
+( cd /srv/adelaide-sphere/current && set -a && . /srv/adelaide-sphere/shared/api.env && set +a && pnpm db:migrate:status )
 ```
 
 Upload the objects:
@@ -1205,7 +1212,9 @@ switch to the `media.` host automatically.
 
 ## 12. systemd services
 
-As `deploy` (sudo). Three units, all running as `adelaide-sphere` from `current`.
+As `deploy` (sudo). Three units, all running as `deploy` from `current`. The
+`InaccessiblePaths=` line in each hides the Docker socket from the service
+(section 5); none of the three needs Docker.
 
 ```bash
 sudo tee /etc/systemd/system/adelaide-sphere-api.service >/dev/null <<'EOF'
@@ -1215,8 +1224,8 @@ After=network-online.target docker.service
 Wants=network-online.target
 
 [Service]
-User=adelaide-sphere
-Group=adelaide-sphere
+User=deploy
+Group=deploy
 WorkingDirectory=/srv/adelaide-sphere/current/apps/api
 EnvironmentFile=/srv/adelaide-sphere/shared/api.env
 # Backstop: production checks run even if an env file loses NODE_ENV.
@@ -1229,6 +1238,8 @@ KillSignal=SIGTERM
 NoNewPrivileges=true
 ProtectSystem=full
 PrivateTmp=true
+# deploy is in the docker group; the socket would be root access.
+InaccessiblePaths=-/run/docker.sock
 LimitNOFILE=65536
 
 [Install]
@@ -1244,8 +1255,8 @@ After=network-online.target docker.service adelaide-sphere-api.service
 Wants=network-online.target
 
 [Service]
-User=adelaide-sphere
-Group=adelaide-sphere
+User=deploy
+Group=deploy
 WorkingDirectory=/srv/adelaide-sphere/current/apps/worker
 EnvironmentFile=/srv/adelaide-sphere/shared/api.env
 EnvironmentFile=/srv/adelaide-sphere/shared/worker.env
@@ -1260,6 +1271,8 @@ KillSignal=SIGTERM
 NoNewPrivileges=true
 ProtectSystem=full
 PrivateTmp=true
+# deploy is in the docker group; the socket would be root access.
+InaccessiblePaths=-/run/docker.sock
 
 [Install]
 WantedBy=multi-user.target
@@ -1271,7 +1284,7 @@ It is written into `worker.env` by the deploy script (section 17); for the first
 start set it by hand:
 
 ```bash
-sudo -iu adelaide-sphere bash -c 'echo "APP_VERSION=$(cat /srv/adelaide-sphere/current/REVISION)" >> /srv/adelaide-sphere/shared/worker.env'
+echo "APP_VERSION=$(cat /srv/adelaide-sphere/current/REVISION)" >> /srv/adelaide-sphere/shared/worker.env
 ```
 
 ```bash
@@ -1282,8 +1295,8 @@ After=network-online.target adelaide-sphere-api.service
 Wants=network-online.target
 
 [Service]
-User=adelaide-sphere
-Group=adelaide-sphere
+User=deploy
+Group=deploy
 WorkingDirectory=/srv/adelaide-sphere/current/apps/web
 EnvironmentFile=/srv/adelaide-sphere/shared/web.env
 # Backstop: production checks run even if an env file loses NODE_ENV.
@@ -1295,18 +1308,20 @@ TimeoutStopSec=30
 NoNewPrivileges=true
 ProtectSystem=full
 PrivateTmp=true
+# deploy is in the docker group; the socket would be root access.
+InaccessiblePaths=-/run/docker.sock
 
 [Install]
 WantedBy=multi-user.target
 EOF
 ```
 
-Let `adelaide-sphere` restart its own services without a password (used by the deploy
-script):
-
-```bash
-echo 'adelaide-sphere ALL=(root) NOPASSWD: /usr/bin/systemctl restart adelaide-sphere-api, /usr/bin/systemctl restart adelaide-sphere-worker, /usr/bin/systemctl restart adelaide-sphere-web, /usr/bin/systemctl is-active adelaide-sphere-api adelaide-sphere-worker adelaide-sphere-web, /usr/bin/systemctl reload nginx' | sudo tee /etc/sudoers.d/adelaide-sphere-deploy && sudo chmod 440 /etc/sudoers.d/adelaide-sphere-deploy && sudo visudo -c
-```
+No sudoers rule is needed for restarts: `deploy` is in the `sudo` group
+(section 3.2), and `scripts/deploy-vps.sh` asks for its password once
+(`sudo -v`) before restarting anything. An earlier version of this guide wrote
+`/etc/sudoers.d/adelaide-sphere-deploy` for a separate service account. If that
+file exists, it names a user that does not exist and grants nothing. Remove it
+with `sudo rm /etc/sudoers.d/adelaide-sphere-deploy && sudo visudo -c`.
 
 Start in dependency order — API, then worker, then web:
 
@@ -1721,7 +1736,7 @@ needed.
 **Code only (no migration in the bad release):**
 
 ```bash
-sudo -iu adelaide-sphere bash -c 'ln -sfn "$(cat /srv/adelaide-sphere/previous-release)" /srv/adelaide-sphere/current && sed -i "/^APP_VERSION=/d" /srv/adelaide-sphere/shared/worker.env && echo "APP_VERSION=$(cat /srv/adelaide-sphere/current/REVISION)" >> /srv/adelaide-sphere/shared/worker.env && sudo /usr/bin/systemctl restart adelaide-sphere-api && sleep 5 && sudo /usr/bin/systemctl restart adelaide-sphere-worker && sudo /usr/bin/systemctl restart adelaide-sphere-web && sudo /usr/bin/systemctl reload nginx'
+ln -sfn "$(cat /srv/adelaide-sphere/previous-release)" /srv/adelaide-sphere/current && sed -i '/^APP_VERSION=/d' /srv/adelaide-sphere/shared/worker.env && echo "APP_VERSION=$(cat /srv/adelaide-sphere/current/REVISION)" >> /srv/adelaide-sphere/shared/worker.env && sudo systemctl restart adelaide-sphere-api && sleep 5 && sudo systemctl restart adelaide-sphere-worker && sudo systemctl restart adelaide-sphere-web && sudo systemctl reload nginx
 ```
 
 **The bad release included a migration:** Prisma migrations have no automatic
@@ -1738,7 +1753,7 @@ by hand.
 | Symptom | Likely cause | Check / fix |
 | --- | --- | --- |
 | `adelaide-sphere-api` restarts in a loop | Production configuration refused | `journalctl -u adelaide-sphere-api -n 30`; the message lists each bad variable |
-| `DATABASE_URL: must use verified TLS` | Query string missing or path not encoded | `?sslmode=verify-ca&sslca=%2Fsrv%2Fadelaide-sphere%2Fshared%2Fmysql-ca.pem`; the file must be readable by `adelaide-sphere` |
+| `DATABASE_URL: must use verified TLS` | Query string missing or path not encoded | `?sslmode=verify-ca&sslca=%2Fsrv%2Fadelaide-sphere%2Fshared%2Fmysql-ca.pem`; the file must be readable by `deploy` |
 | Readiness `503 Database unavailable` | MySQL down, wrong password, CA mismatch after a volume re-create | `docker compose ps`; re-copy `ca.pem` (6.5) after any new MySQL volume |
 | Uploads stay *Processing* | Worker stopped, or wrong S3 credentials | `systemctl status adelaide-sphere-worker`; Queue monitor → Workers; runbook "If uploads are stuck" |
 | Upload fails in the browser (CORS / 403 `SignatureDoesNotMatch`) | `MEDIA_S3_ENDPOINT` not the public media host, `Host` not passed unchanged, or `MINIO_API_CORS_ALLOW_ORIGIN` wrong | Section 8.2 note, section 9.3 media server, section 6.3 |

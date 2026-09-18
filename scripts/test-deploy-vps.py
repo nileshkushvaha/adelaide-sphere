@@ -31,6 +31,7 @@ elif name=='git':
  if 'rev-parse' in a: print('a'*40)
  if 'add' in a:
   p=pathlib.Path(a[-2]);(p/'apps/admin/dist').mkdir(parents=True);(p/'apps/admin/dist/index.html').write_text('ok')
+  (p/'apps/web/.next/server/app').mkdir(parents=True);(p/'apps/web/.next/server/app/_not-found.html').write_text('ok')
   (p/'apps/api/dist/cli').mkdir(parents=True);(p/'apps/api/dist/cli/bootstrap-admin.js').write_text('')
   shutil.copytree(os.environ['TEST_REPO']+'/infrastructure/backup',str(p/'infrastructure/backup'))
 elif name=='pnpm':
@@ -48,6 +49,7 @@ elif name=='age':
 elif name=='curl':
  if mode=='health-failure' and (root/'current').resolve()!=(root/'releases/old').resolve(): sys.exit(1)
 elif name=='sudo':
+ open(str(root/'sudo-calls.txt'),'a').write(' '.join(a)+chr(10))
  if 'docker' in a: print('-- mock database dump')
 elif name=='stat': print('deploy')   # GNU `stat -c`; the VPS is Linux, this harness is not
 elif name=='sed':                    # GNU `sed -i EXPR FILE`, likewise
@@ -70,6 +72,10 @@ elif name=='mv': os.replace(a[-2],a[-1])
    assert '--port=3317' in args and '--host=127.0.0.1' in args,args
    assert 'adelaide_sphere' in args,args
   if mode=='success':
+   # nginx must be able to read both release outputs it serves, checked as www-data.
+   sudo=(root/'sudo-calls.txt').read_text()
+   for f in ['apps/admin/dist/index.html','apps/web/.next/server/app/_not-found.html']:
+    assert f'-u www-data test -r ' in sudo and f in sudo,(f,sudo)
    assert list((root/'backups/before-deploy').glob('*.age')),'no backup was written'
    assert 'Backing up adelaide_sphere from 127.0.0.1:3317' in result.stdout,result.stdout
   if mode=='backup-failure':

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Run as deploy on the existing Ubuntu VPS. Optional argument: branch or commit.
+# Run as deploy on the Ubuntu VPS. Optional argument: branch or commit.
+# deploy owns /srv/adelaide-sphere and is the User= of the three services; there
+# is no separate service account (docs/operations/deployment-vps.md §5).
 set -Eeuo pipefail
 umask 027
 ROOT=/srv/adelaide-sphere
@@ -109,13 +111,20 @@ pnpm --filter worker build
   pnpm --filter web build
 )
 printf '%s\n' "$SHA" > "$DIR/REVISION"
-# Only the static admin output needs group read; shared secrets stay untouched.
-chgrp www-data "$DIR" "$DIR/apps" "$DIR/apps/admin"
-chmod g+rx "$DIR" "$DIR/apps" "$DIR/apps/admin"
+# nginx (www-data) reads exactly two things from a release: the static admin
+# build and the prerendered not-found document. It is not in the deploy group,
+# so grant those by group and nothing else; shared secrets stay untouched.
+NOT_FOUND_DIR="$DIR/apps/web/.next/server/app"
+NGINX_DIRS=("$DIR" "$DIR/apps" "$DIR/apps/admin" "$DIR/apps/web" "$DIR/apps/web/.next" "$DIR/apps/web/.next/server" "$NOT_FOUND_DIR")
+chgrp www-data "${NGINX_DIRS[@]}"
+chmod g+rx "${NGINX_DIRS[@]}"
 chgrp -R www-data "$DIR/apps/admin/dist"
 find "$DIR/apps/admin/dist" -type d -exec chmod 750 {} +
 find "$DIR/apps/admin/dist" -type f -exec chmod 640 {} +
+chgrp www-data "$NOT_FOUND_DIR/_not-found.html"
+chmod 640 "$NOT_FOUND_DIR/_not-found.html"
 sudo -u www-data test -r "$DIR/apps/admin/dist/index.html"
+sudo -u www-data test -r "$NOT_FOUND_DIR/_not-found.html"
 
 sudo -v
 # Encrypted backup immediately before the schema changes (SRS BACK 001), with
