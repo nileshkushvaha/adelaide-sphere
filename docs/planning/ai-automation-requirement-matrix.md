@@ -538,3 +538,29 @@ Evidence:
 Details: [Phase 1E completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1e-completion.md).
 
 Not migrated on any retained database (dev is 1 migration behind; its article detail route fails until migrated), not deployed, not enabled, not live-provider tested. No external paid call was made. Automatic image mode (AI-149, AI-384) remains open by owner decision. 1F has not started.
+
+## AI Automation Phase 1F delivery — 19 September 2026
+
+Workstream 1F only, under the owner's decisions:
+
+- one daily slot at 07:00 Australia/Adelaide, every day, at most 30 a month;
+- a slot only takes a topic a person approved for it and starts its free research (no generation, spend or publication);
+- a missed slot is held for review, never caught up.
+
+Implemented:
+
+- a unique slot per local date;
+- "approve for the daily slot" (same novelty admission; research deferred);
+- the `ai-content.plan-slots` registered task;
+- DST-safe local time;
+- a separate bounded AI queue and consumer;
+- the admin AI Schedule page.
+
+Evidence:
+
+- new 1F spec 6/6; full integration 399/399 plus 5/5; all unit suites; e2e 20/20;
+- six mutation checks, all caught.
+
+Details: [Phase 1F completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1f-completion.md).
+
+Not migrated on any retained database (dev is 1 migration behind), not deployed, not enabled. 1G has not started.

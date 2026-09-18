@@ -30,6 +30,7 @@ const AiTopicDetailPage = lazy(() => import('@/pages/ai-content/AiContentPages')
 const AiFactReviewPage = lazy(() => import('@/pages/ai-content/AiContentPages').then((m) => ({ default: m.AiFactReviewPage })));
 const ResearchSourcesPage = lazy(() => import('@/pages/ai-content/ResearchSourcesPage').then((m) => ({ default: m.ResearchSourcesPage })));
 const PricingPage = lazy(() => import('@/pages/ai-content/PricingPage').then((m) => ({ default: m.PricingPage })));
+const SchedulePage = lazy(() => import('@/pages/ai-content/SchedulePage').then((m) => ({ default: m.SchedulePage })));
 const AiSettingsPage = lazy(() => import('@/pages/ai-content/AiSettingsPage').then((m) => ({ default: m.AiSettingsPage })));
 const PostsPage = lazy(() => import('@/pages/blog/PostsPage').then((m) => ({ default: m.PostsPage })));
 const BusinessesPage = lazy(() => import('@/pages/businesses/BusinessesPage').then((m) => ({ default: m.BusinessesPage })));
@@ -129,6 +130,7 @@ export function AppRoutes() {
         <Route path="/ai-content/fact-review" element={<AiFactReviewPage />} />
         <Route path="/ai-content/sources" element={<ResearchSourcesPage />} />
         <Route path="/ai-content/pricing" element={<PricingPage />} />
+        <Route path="/ai-content/schedule" element={<SchedulePage />} />
         <Route path="/ai-content/settings" element={<AiSettingsPage />} />
         <Route path="/posts" element={<PostsPage />} />
         <Route path="/posts/new" element={<PostEditorPage />} />

@@ -40,8 +40,13 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
     ...(values.timezone === 'Australia/Adelaide' ? {} : { timezone: 'This deployment uses Australia/Adelaide' }),
     // Owner decision (Phase 1E): paid images only through an explicit Generate image action.
     ...(values.imageMode === 'automatic' ? { imageMode: 'Automatic image generation is not approved. Use hybrid or manual.' } : {}),
+    ...(values.slotTime === undefined || /^([01]\d|2[0-3]):[0-5]\d$/.test(String(values.slotTime)) ? {} : { slotTime: 'Use HH:MM, for example 07:00' }),
+    ...(values.slotWeekdays === undefined ||
+    (String(values.slotWeekdays).split(',').length > 0 && String(values.slotWeekdays).split(',').every((d) => ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].includes(d.trim().toLowerCase())))
+      ? {}
+      : { slotWeekdays: 'Use mon, tue, wed, thu, fri, sat, sun separated by commas' }),
   }),
-  note: 'Phase 1E: images are generated only when a person asks, within the image budget, and every AI image needs human approval. Cadence and auto-publishing stay off.',
+  note: 'Phase 1F: an optional daily slot starts free research for the next topic a person approved for it. Generation, images and publishing always need a person; auto-publishing stays off.',
   settings: [
     declaration(
       'enabled',
@@ -93,19 +98,51 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
     ),
     declaration(
       'postingEnabled',
-      'Posting configured enabled',
+      'Daily slot enabled',
       'boolean',
       false,
       {},
-      'No scheduler or publishing automation is active.',
+      'While on (and automation is on), each daily slot takes the next topic a person approved for the schedule and starts its free research. It never generates, pays or publishes.',
     ),
     declaration(
       'targetPostsPerDay',
-      'Target posts per day',
+      'Slots per day',
       'integer',
       1,
-      { min: 1, max: 24 },
-      'Future editorial target, not an active publishing schedule.',
+      { min: 1, max: 1 },
+      'One slot a day (owner decision). Publication still needs a person.',
+    ),
+    declaration(
+      'slotTime',
+      'Daily slot time (local)',
+      'string',
+      '07:00',
+      { min: 5, max: 5 },
+      'HH:MM in the site timezone, daylight saving included.',
+    ),
+    declaration(
+      'slotWeekdays',
+      'Slot weekdays',
+      'string',
+      'mon,tue,wed,thu,fri,sat,sun',
+      { min: 3, max: 27 },
+      'Comma-separated: mon, tue, wed, thu, fri, sat, sun.',
+    ),
+    declaration(
+      'maxSlotsPerMonth',
+      'Slots per month (maximum)',
+      'integer',
+      30,
+      { min: 0, max: 31 },
+      'A ceiling, not a target. Zero fills no slots.',
+    ),
+    declaration(
+      'slotGraceMinutes',
+      'Slot grace period (minutes)',
+      'integer',
+      60,
+      { min: 5, max: 360 },
+      'A slot not started within this long after its time is recorded as missed for review, never caught up.',
     ),
     declaration(
       'timezone',

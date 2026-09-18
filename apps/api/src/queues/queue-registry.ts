@@ -1,4 +1,4 @@
-import { CACHE_INVALIDATE_JOB, ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB, QUEUE_NAME } from '@adelaide-sphere/domain';
+import { AI_OPERATION_JOB, AI_QUEUE_NAME, CACHE_INVALIDATE_JOB, ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB, QUEUE_NAME } from '@adelaide-sphere/domain';
 
 /**
  * What the queue monitor is allowed to know about (SRS 1.2 QMON 001–002).
@@ -81,6 +81,22 @@ export const QUEUES: QueueDescriptor[] = [
           { field: 'tags', label: 'Tags', render: 'count' },
           { field: 'urgent', label: 'Urgent', render: 'flag' },
         ],
+      },
+    ],
+  },
+  {
+    name: AI_QUEUE_NAME,
+    label: 'AI content',
+    purpose: 'AI content operations (research, drafts, images, apply) on their own small consumer, so they never hold up the main queue.',
+    pausable: true,
+    pauseConsequence:
+      'While this queue is paused, AI research, drafts and images wait. Every operation stays recorded in the database and continues when resumed; paid requests are never repeated because of a pause.',
+    jobs: [
+      {
+        name: AI_OPERATION_JOB,
+        label: 'AI operation',
+        purpose: 'Runs one recorded AI operation; the database row decides what it does, so a repeat delivery does nothing.',
+        displayFields: [{ field: 'operationId', label: 'Operation', render: 'id' }],
       },
     ],
   },

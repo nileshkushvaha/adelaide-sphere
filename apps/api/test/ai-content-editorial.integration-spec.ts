@@ -484,7 +484,7 @@ describe('AI Content Phase 1B editorial foundation (real MySQL/API)', () => {
 
       const safetyItem = await generatingItem('Victor Harbor day trip');
       const safety = await record(safetyItem, artifact('victor-harbor-day-trip'));
-      await saveSettings({ targetPostsPerDay: 2 });
+      await saveSettings({ maxSlotsPerMonth: 20 });
       expect(await epoch()).toBe(e1 + 1);
       expect(await claimAndApply(safety.operationId)).toBe('proposal:control_changed');
       expect(await db().post.count({ where: { slug: 'victor-harbor-day-trip' } })).toBe(0);

@@ -258,16 +258,17 @@ export function ResearchCard({ topic, canReview, onChange }: { topic: AiTopic; c
   const [problem, setProblem] = useState<string[] | null>(null);
   const postMatches = (topic.noveltyDetail ?? []).filter((m) => m.kind === "post");
   const canApprove = canReview && (topic.status === "queued" || topic.status === "failed");
+  const waitingForSlot = topic.status === "queued" && Boolean(topic.awaitingSlotSince);
   const packet = state.status === "ready" ? state.data.packet : null;
   const canRefresh = canReview && (topic.status === "researching" || topic.status === "needs_fact_review") && packet?.status !== "collecting";
 
-  const run = async (action: "approve" | "refresh") => {
+  const run = async (action: "approve" | "approve_for_slot" | "refresh") => {
     setBusy(true);
     setProblem(null);
     try {
-      const followUp = action === "approve" && followUpPostId ? { followUpOfPostId: followUpPostId, followUpReason } : undefined;
+      const followUp = action !== "refresh" && followUpPostId ? { followUpOfPostId: followUpPostId, followUpReason } : undefined;
       onChange(await aiContentApi.researchAction(topic, action, followUp));
-      message.success(action === "approve" ? "Approved for research" : "Research refreshed");
+      message.success(action === "approve" ? "Approved for research" : action === "approve_for_slot" ? "Approved for the daily slot" : "Research refreshed");
     } catch (error) {
       const fields = fieldErrors(error);
       setProblem([errorMessage(error), ...(fields.novelty ?? []), ...Object.entries(fields).filter(([k]) => k !== "novelty").flatMap(([, v]) => v)]);
@@ -296,9 +297,17 @@ export function ResearchCard({ topic, canReview, onChange }: { topic: AiTopic; c
               {followUpPostId && <Input.TextArea aria-label="Why this follow-up is a different, useful article" rows={2} maxLength={500} value={followUpReason} onChange={(e) => setFollowUpReason(e.target.value)} placeholder="Why this is a different, useful article" />}
             </>
           )}
-          <Button type="primary" loading={busy} onClick={() => run("approve")}>
-            Approve topic for research
-          </Button>
+          {waitingForSlot && <Alert type="info" showIcon message="Waiting for the daily slot. Its research starts when a slot takes it." />}
+          <Space wrap>
+            <Button type="primary" loading={busy} onClick={() => run("approve")}>
+              Approve topic for research now
+            </Button>
+            {topic.status === "queued" && !waitingForSlot && (
+              <Button loading={busy} onClick={() => run("approve_for_slot")}>
+                Approve for the daily slot
+              </Button>
+            )}
+          </Space>
         </Space>
       )}
       {state.status === "loading" ? (

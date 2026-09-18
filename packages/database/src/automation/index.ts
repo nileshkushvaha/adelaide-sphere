@@ -39,6 +39,7 @@ export {
   ResearchCommandError,
   addEditorClaim,
   admitTopic,
+  startSlotResearch,
   claimKey,
   completeResearch,
   evaluatePacket,
@@ -103,3 +104,4 @@ export {
   type ImageResult,
   type ImageSettings,
 } from './images.js';
+export { SLOT_STRATEGY, planSlots, readScheduleSettings, reviewMissedSlot, scheduleStatus, type PlanResult, type ScheduleSettings } from './schedule.js';

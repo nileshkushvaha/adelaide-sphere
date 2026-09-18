@@ -165,3 +165,13 @@ Featured images: hybrid and prompt-only by default. A paid image is made only th
 - **Approval and publication:** human approval with alt text written from the actual image; a required featured image in the shared publication policy.
 
 Migration `20260919100000_ai_content_images` has been applied only to the isolated test database. See the [Phase 1E completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1e-completion.md).
+
+## AI Content Phase 1F
+
+The daily slot:
+
+- one slot at a configured local time (07:00 Australia/Adelaide) with a monthly ceiling;
+- it starts free research for the next topic a person approved for it (`approve_for_slot`), and never generates, spends or publishes;
+- missed slots are held for review, never caught up.
+
+The slot is unique per local date (registered task `ai-content.plan-slots`). AI operations run on their own queue, `adelaide-sphere-ai`, with a bounded consumer (`AI_WORKER_CONCURRENCY`, default 1). Migration `20260919140000_ai_content_schedule` has been applied only to the isolated test database. See the [Phase 1F completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1f-completion.md).

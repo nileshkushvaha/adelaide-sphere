@@ -148,6 +148,8 @@ export interface AdmissionInput {
   requestId?: string | null;
   /** Required to admit a topic whose novelty needs review: an explicit, justified follow-up of an existing article. */
   followUp?: { postId: string; reason: string } | null;
+  /** Phase 1F: approve for the daily slot. Admitted now; research starts when a slot takes it. */
+  forSlot?: boolean;
 }
 
 /**
@@ -163,6 +165,7 @@ export async function admitTopic(tx: Tx, input: AdmissionInput) {
   const item = await lockItem(tx, input.itemId);
   if (item.version !== input.expectedVersion) throw new ResearchCommandError('STALE_VERSION', 'This topic changed. Reload it before trying again.');
   if (item.status !== 'queued' && item.status !== 'failed') throw new ResearchCommandError('INVALID_TRANSITION', 'Only a queued topic, or one whose research failed, can be approved for research.');
+  if (input.forSlot && item.status !== 'queued') throw new ResearchCommandError('INVALID_TRANSITION', 'Only a queued topic can wait for the daily slot.');
   if (!settings.enabled) throw new ResearchCommandError('AUTOMATION_DISABLED', 'AI automation is switched off, so no research can start.');
   if (item.researchUrls.length === 0) throw new ResearchCommandError('NO_RESEARCH_SOURCES', 'Add at least one source page before approving research.', 400, { fields: { researchUrls: ['Add at least one https source page'] } });
   const novelty = await assessNovelty(tx, { title: item.title, itemId: item.id, includeUnadmitted: false });
@@ -178,7 +181,8 @@ export async function admitTopic(tx: Tx, input: AdmissionInput) {
   }
   const epoch = await bumpInventoryEpoch(tx);
   const now = new Date();
-  await moveItem(tx, item, 'researching', {
+  await moveItem(tx, item, input.forSlot ? 'queued' : 'researching', {
+    ...(input.forSlot ? { awaitingSlotSince: now } : { awaitingSlotSince: null }),
     topicApprovedAt: now,
     topicApprovedByAdminId: input.adminId,
     noveltyStatus: novelty.status,
@@ -192,9 +196,39 @@ export async function admitTopic(tx: Tx, input: AdmissionInput) {
     failureCode: null,
     ...(input.followUp ? { followUpOfPostId: input.followUp.postId, followUpReason: input.followUp.reason.slice(0, 500) } : {}),
   });
+  if (input.forSlot) {
+    await auditItem(tx, 'ai_content.topic.approved_for_slot', item.id, input.adminId, { novelty: novelty.status, followUp: Boolean(input.followUp), inventoryEpoch: epoch }, input.requestId);
+    return null;
+  }
   const opened = await openPacket(tx, item.id, item.title, epoch, settings);
   await auditItem(tx, 'ai_content.topic.approved', item.id, input.adminId, { novelty: novelty.status, followUp: Boolean(input.followUp), packetVersion: opened.packetVersion, inventoryEpoch: epoch }, input.requestId);
   return opened;
+}
+
+/**
+ * A daily slot starts research for a topic a person approved for it (Phase
+ * 1F). Novelty is re-checked under the inventory lock first: a human article
+ * published since the approval wins, and the topic is left for review instead.
+ * Returns why nothing started, or the opened packet.
+ */
+export async function startSlotResearch(tx: Tx, itemId: string): Promise<{ started: true; packetId: string; operationId: string } | { started: false; reason: string }> {
+  await lockInventory(tx);
+  const settings = await readResearchSettings(tx);
+  const item = await lockItem(tx, itemId);
+  const row = await tx.aIContentItem.findUniqueOrThrow({ where: { id: itemId }, select: { awaitingSlotSince: true, followUpOfPostId: true } });
+  if (item.status !== 'queued' || !row.awaitingSlotSince) return { started: false, reason: 'topic_changed' };
+  if (item.researchUrls.length === 0) return { started: false, reason: 'no_sources' };
+  const novelty = await assessNovelty(tx, { title: item.title, itemId: item.id, includeUnadmitted: false });
+  if (novelty.status === 'duplicate' || (novelty.status === 'review' && !row.followUpOfPostId)) {
+    await moveItem(tx, item, 'queued', { awaitingSlotSince: null, noveltyStatus: novelty.status, noveltyCheckedAt: new Date(), noveltyDetail: noveltyDetailJson(novelty.matches) });
+    await auditItem(tx, 'ai_content.topic.slot_novelty_changed', item.id, null, { novelty: novelty.status });
+    return { started: false, reason: 'novelty_changed' };
+  }
+  const epoch = await readInventoryEpoch(tx);
+  await moveItem(tx, item, 'researching', { awaitingSlotSince: null, failureStage: null, failureCode: null });
+  const opened = await openPacket(tx, item.id, item.title, epoch, settings);
+  await auditItem(tx, 'ai_content.research.started_by_slot', item.id, null, { packetVersion: opened.packetVersion });
+  return { started: true, packetId: opened.packetId, operationId: opened.operationId };
 }
 
 /**

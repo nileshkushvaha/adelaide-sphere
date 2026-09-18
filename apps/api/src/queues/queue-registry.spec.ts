@@ -6,9 +6,13 @@ const queue = queueDescriptor(QUEUE_NAME)!;
 
 /** Redaction is the whole security story of this screen (SRS 1.2 QMON 002). */
 describe('queue registry', () => {
-  it('registers the one queue the application actually uses, with every job it dispatches', () => {
-    expect(QUEUES).toHaveLength(1);
+  it('registers the queues the application actually uses, with every job it dispatches', () => {
+    // The main queue, and the AI queue with its own bounded consumer (AI Phase 1F).
+    expect(QUEUES.map((q) => q.name)).toEqual(['adelaide-sphere', 'adelaide-sphere-ai']);
     expect(queue.jobs.map((job) => job.name)).toEqual(['enquiry.email', 'media.process', 'cache.invalidate']);
+    expect(queueDescriptor('adelaide-sphere-ai')!.jobs.map((job) => job.name)).toEqual(['ai.operation']);
+    // Only the operation id is shown for an AI job.
+    expect(redactJobData(queueDescriptor('adelaide-sphere-ai')!, 'ai.operation', { operationId: 'op-1', prompt: 'secret' }).fields.map((f) => f.label)).toEqual(['Operation']);
     expect(queueDescriptor('anything-else')).toBeUndefined();
   });
 

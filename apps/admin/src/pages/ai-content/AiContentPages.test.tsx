@@ -7,6 +7,7 @@ import {
 } from "./AiContentPages";
 import { ResearchSourcesPage } from "./ResearchSourcesPage";
 import { PricingPage } from "./PricingPage";
+import { SchedulePage } from "./SchedulePage";
 import { AiSettingsPage } from "./AiSettingsPage";
 import { AdminShell } from "@/layouts/AdminShell";
 import {
@@ -56,6 +57,8 @@ vi.mock("@/api/ai-content", async (importOriginal) => ({
     generateImage: vi.fn(),
     approveImage: vi.fn(),
     rejectImage: vi.fn(),
+    schedule: vi.fn(),
+    reviewSlot: vi.fn(),
   },
 }));
 vi.mock("@/api/blog", () => ({
@@ -100,6 +103,7 @@ const topic = {
   followUpReason: null,
   categoryId: null,
   imageMode: null,
+  awaitingSlotSince: null,
 };
 const budget = {
   enabled: true,
@@ -434,16 +438,58 @@ it("shows the server's novelty refusal when approving research, keeping the topi
     new ApiError({ kind: "conflict", status: 409, code: "NOVELTY_DUPLICATE", userMessage: "This topic duplicates existing content or another topic.", fields: { novelty: ["Best coffee in Norwood (post published: same topic)"] } }),
   );
   renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
-  await ue.click(await screen.findByRole("button", { name: "Approve topic for research" }));
+  await ue.click(await screen.findByRole("button", { name: "Approve topic for research now" }));
   expect(await screen.findByText("This topic duplicates existing content or another topic.")).toBeInTheDocument();
   expect(screen.getByText("Best coffee in Norwood (post published: same topic)")).toBeInTheDocument();
   expect(aiContentApi.researchAction).toHaveBeenCalledWith(expect.objectContaining({ version: 2 }), "approve", undefined);
+});
+it("approves a topic for the daily slot instead of starting research now, and shows that it waits", async () => {
+  const ue = user();
+  const waiting = { ...topic, researchUrls: [{ url: "https://cafe.example.org/" }], version: 3, awaitingSlotSince: "2026-09-19T01:00:00.000Z" };
+  // The page reloads the topic after the action: from then on it is waiting for the slot.
+  vi.mocked(aiContentApi.detail).mockResolvedValueOnce({ ...topic, researchUrls: [{ url: "https://cafe.example.org/" }], version: 2 }).mockResolvedValue(waiting);
+  vi.mocked(aiContentApi.researchAction).mockResolvedValue(waiting);
+  renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  await ue.click(await screen.findByRole("button", { name: "Approve for the daily slot" }));
+  await waitFor(() => expect(aiContentApi.researchAction).toHaveBeenCalledWith(expect.objectContaining({ version: 2 }), "approve_for_slot", undefined));
+  expect(await screen.findByText(/Waiting for the daily slot/)).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Approve for the daily slot" })).not.toBeInTheDocument();
+});
+it("shows the daily slot, what waits for it, and asks for a note before marking a missed slot reviewed", async () => {
+  const ue = user();
+  const missed = { id: "cmslotabcdefghijklmnopqr", localDate: "2026-09-18", dueAt: "2026-09-17T21:30:00.000Z", state: "missed" as const, reason: "queue_empty", version: 1, item: null, resolutionNote: null, resolvedAt: null };
+  const status = {
+    active: true,
+    timeZone: "Australia/Adelaide",
+    slotTime: "07:00",
+    weekdays: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+    graceMinutes: 60,
+    maxPerMonth: 30,
+    usedThisMonth: 4,
+    next: { date: "2026-09-20", dueAt: "2026-09-19T21:30:00.000Z" },
+    missedAwaitingReview: 1,
+    waiting: [{ id: topic.id, title: "Adelaide cafe guide", priority: 5, awaitingSlotSince: "2026-09-19T01:00:00.000Z" }],
+    slots: [missed],
+  };
+  vi.mocked(aiContentApi.schedule).mockResolvedValue(status);
+  vi.mocked(aiContentApi.reviewSlot).mockResolvedValue({ ...status, missedAwaitingReview: 0, slots: [{ ...missed, state: "reviewed", version: 2, resolutionNote: "Queue was empty; added topics" }] });
+  renderWithProviders(<SchedulePage />, options);
+  expect(await screen.findByText("4 of at most 30 slots used")).toBeInTheDocument();
+  expect(screen.getByText(/Sunday,? 20 September 2026 at 7:00/)).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Adelaide cafe guide" })).toBeInTheDocument();
+  expect(screen.getByText("1 missed slot to review")).toBeInTheDocument();
+  expect(screen.getByText("queue empty")).toBeInTheDocument();
+  await ue.click(screen.getByRole("button", { name: "Mark reviewed" }));
+  const dialog = await screen.findByRole("dialog");
+  await ue.type(within(dialog).getByRole("textbox", { name: "What you checked or decided" }), "Queue was empty; added topics");
+  await ue.click(within(dialog).getByRole("button", { name: "Mark reviewed" }));
+  await waitFor(() => expect(aiContentApi.reviewSlot).toHaveBeenCalledWith(missed, "Queue was empty; added topics"));
 });
 it("hides research actions from an administrator without review permission", async () => {
   vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, researchUrls: [{ url: "https://cafe.example.org/" }] });
   renderWithProviders(<AiTopicDetailPage />, { authProvider: providerWithPermissions(["ai_content.view"]), initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
   expect(await screen.findByText("Research and fact review")).toBeInTheDocument();
-  expect(screen.queryByRole("button", { name: "Approve topic for research" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Approve topic for research now" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Save sources" })).not.toBeInTheDocument();
 });
 it("opens the fact review queue filtered to topics that need a decision", async () => {

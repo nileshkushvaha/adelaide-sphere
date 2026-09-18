@@ -187,6 +187,7 @@ export const ROUTE_PERMISSIONS: { path: string; permissions: PermissionCode[]; a
   { path: '/ai-content/topics', permissions: [PERMISSION.aiContentView] },
   { path: '/ai-content/topics/:id', permissions: [PERMISSION.aiContentView] },
   { path: '/ai-content/fact-review', permissions: [PERMISSION.aiContentView] },
+  { path: '/ai-content/schedule', permissions: [PERMISSION.aiContentView] },
   { path: '/ai-content/sources', permissions: [PERMISSION.aiContentConfigure] },
   { path: '/ai-content/pricing', permissions: [PERMISSION.aiContentConfigure] },
   { path: '/ai-content/settings', permissions: [PERMISSION.aiContentConfigure] },

@@ -19,6 +19,8 @@ export interface WorkerConfig {
   mailFromAddress: string | undefined;
   siteEnquiryRecipient: string | undefined;
   concurrency: number;
+  /** The separate AI queue's consumer (AI plan §E, 1F): small and bounded on its own. */
+  aiConcurrency: number;
   /** Metrics/health port; null leaves the worker without any HTTP surface. */
   metricsPort: number | null;
   /** Shared secret for the metrics endpoint; undefined means loopback-only. */
@@ -89,6 +91,8 @@ export function loadWorkerConfig(env: NodeJS.ProcessEnv = process.env): WorkerCo
   if (revalidateUrl !== '' && !/^https?:\/\//.test(revalidateUrl)) problems.push('  - WEB_REVALIDATE_URL: must be an absolute http(s) URL');
   const concurrency = Number(env.WORKER_CONCURRENCY ?? '2');
   if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 20) problems.push('  - WORKER_CONCURRENCY: must be an integer 1-20');
+  const aiConcurrency = Number(env.AI_WORKER_CONCURRENCY ?? '1');
+  if (!Number.isInteger(aiConcurrency) || aiConcurrency < 1 || aiConcurrency > 4) problems.push('  - AI_WORKER_CONCURRENCY: must be an integer 1-4');
   const metricsPortRaw = (env.WORKER_METRICS_PORT ?? '').trim();
   const metricsPort = metricsPortRaw === '' ? null : Number(metricsPortRaw);
   if (metricsPort !== null && (!Number.isInteger(metricsPort) || metricsPort < 1 || metricsPort > 65_535)) problems.push('  - WORKER_METRICS_PORT: must be a port number');
@@ -127,6 +131,7 @@ export function loadWorkerConfig(env: NodeJS.ProcessEnv = process.env): WorkerCo
     mailFromAddress,
     siteEnquiryRecipient: (env.SITE_ENQUIRY_RECIPIENT ?? '').trim() || undefined,
     concurrency,
+    aiConcurrency,
     metricsPort,
     metricsToken,
     metricsBind,

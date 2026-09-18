@@ -86,6 +86,7 @@ model AdminUser {
   aiPricesCreated       AIPriceSchedule[]      @relation("AIPriceCreator")
   aiImagesRequested     AIImageJob[]           @relation("AIImageRequester")
   aiImagesApproved      AIImageJob[]           @relation("AIImageApprover")
+  aiSlotsResolved       AIScheduleSlot[]       @relation("AISlotResolver")
   aiPricesApproved      AIPriceSchedule[]      @relation("AIPriceApprover")
   roles                 AdminRole[]
   directPermissions     AdminPermission[]      @relation("AdminDirectPermission")
@@ -1985,6 +1986,8 @@ model AIContentItem {
   categoryId             String?
   /// Per-article image mode; null follows the global setting (SRS §12 "global default plus per-post override").
   imageMode              AIImageMode?
+  /// Set when a person approved the topic for the daily slot (admitted, research not started yet); cleared when a slot takes it.
+  awaitingSlotSince      DateTime?          @db.DateTime(3)
   createdBy              AdminUser?         @relation("AITopicCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
   humanModifiedBy        AdminUser?         @relation("AITopicHumanEditor", fields: [humanModifiedByAdminId], references: [id], onDelete: SetNull)
   post                   Post?              @relation(fields: [postId], references: [id], onDelete: Restrict)
@@ -1995,6 +1998,7 @@ model AIContentItem {
   runs                   AIGenerationRun[]
   operations             AIOperation[]
   imageJobs              AIImageJob[]
+  slots                  AIScheduleSlot[]
   approvals              AIApproval[]
 
   @@index([status, priority, createdAt, id])
@@ -2562,4 +2566,44 @@ model AIImageJob {
   @@index([requestedByAdminId])
   @@index([approvedByAdminId])
   @@map("ai_image_jobs")
+}
+
+enum AISlotState {
+  /// The slot took an approved topic and started its free research.
+  filled
+  /// Nothing was started (reason recorded); held for a person to review. Never caught up automatically.
+  missed
+  /// A person reviewed a missed slot.
+  reviewed
+}
+
+/// One daily slot (AI SRS §15; plan §C AIScheduleSlot, §E). Unique per strategy, local date and ordinal:
+/// duplicate ticks, replicas or setting changes can never create a second slot for the same day.
+/// The configuration version is recorded but is not part of the key.
+model AIScheduleSlot {
+  id                String         @id @default(cuid())
+  strategyKey       String         @default("default") @db.VarChar(32)
+  /// Local calendar date (YYYY-MM-DD) in the configured timezone.
+  localDate         String         @db.Char(10)
+  ordinal           Int            @default(1)
+  timeZone          String         @db.VarChar(64)
+  dueAt             DateTime       @db.DateTime(3)
+  settingsVersion   Int
+  state             AISlotState
+  reason            String?        @db.VarChar(64)
+  itemId            String?
+  resolvedByAdminId String?
+  resolvedAt        DateTime?      @db.DateTime(3)
+  resolutionNote    String?        @db.VarChar(500)
+  version           Int            @default(1)
+  createdAt         DateTime       @default(now()) @db.DateTime(3)
+  updatedAt         DateTime       @updatedAt @db.DateTime(3)
+  item              AIContentItem? @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  resolvedBy        AdminUser?     @relation("AISlotResolver", fields: [resolvedByAdminId], references: [id], onDelete: SetNull)
+
+  @@unique([strategyKey, localDate, ordinal])
+  @@index([state, localDate])
+  @@index([itemId])
+  @@index([resolvedByAdminId])
+  @@map("ai_schedule_slots")
 }

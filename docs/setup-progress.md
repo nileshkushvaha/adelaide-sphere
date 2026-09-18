@@ -2665,3 +2665,22 @@ Additive migration `20260918210000_ai_content_fact_confirmation` (test DB only).
 - **Next:** 1F not started. Record: [Phase 1E completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1e-completion.md).
 
 - **Update (19 Sep 2026):** owner-authorised: `20260919100000_ai_content_images` applied to `adelaide_sphere_dev` after a dump; schema up to date. Dev API health, list, article detail and the web article return 200; normal articles keep their photographer credit and show no AI disclosure.
+
+## AI Content Phase 1F — 19 September 2026
+
+- **Scope:** plan §O workstream 1F under the owner's decisions: select and free research only; 07:00 Adelaide every day; missed means review; 1/day and 30/month; only person-approved topics.
+- **Migration:** additive `20260919140000_ai_content_schedule`: `ai_schedule_slots`, `ai_content_items.awaitingSlotSince`.
+- **Code:**
+  - Domain: `ai-schedule.ts`.
+  - Database: `automation/schedule.ts` and `startSlotResearch`.
+  - Worker: the task `ai-content.plan-slots`, and the AI queue `adelaide-sphere-ai` with its own consumer (`AI_WORKER_CONCURRENCY`, default 1).
+  - API: the `approve_for_slot` action, `GET schedule`, `POST slots/:id/review`.
+  - Admin: the AI Schedule page and the slot approval button.
+- **Checks:**
+  - 1F spec 6/6; `pnpm test:integration` 399/399 + 5/5; `pnpm test` all passed; e2e 20/20;
+  - typecheck, lint, builds, contracts, migration policy;
+  - mutation checks F1–F6 all caught.
+- **Environment:** test DB only. **Dev is 1 migration behind: the dev API's AI admin topic routes fail until it is applied**; public and blog routes are unaffected. Nothing deployed.
+- **Next:** 1G not started. Record: [Phase 1F completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1f-completion.md).
+
+- **Update (19 Sep 2026):** owner-authorised: `20260919140000_ai_content_schedule` applied to `adelaide_sphere_dev` after a dump; schema up to date. Dev API health, list, article detail and the web home return 200; the schedule route requires sign-in (401).

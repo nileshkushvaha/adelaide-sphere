@@ -64,6 +64,7 @@ const PUBLIC_SELECT = {
   followUpReason: true,
   categoryId: true,
   imageMode: true,
+  awaitingSlotSince: true,
 } as const;
 const stale = () =>
   new ConflictException({

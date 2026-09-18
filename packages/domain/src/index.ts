@@ -56,7 +56,9 @@ export {
   type AlertTone,
 } from './alerts.js';
 export { buildEnquiryMail, safeReplyTo, sanitiseHeaderValue, type EnquiryMailInput, type OutboundEnquiryMail } from './enquiry-mail.js';
-export { AI_OPERATION_JOB, assertQueueJobId, jobIdProblem, queueJobId, JOB_NAMES, MAX_JOB_ID_LENGTH, type JobName, CACHE_INVALIDATE_JOB, CACHE_TAGS, MAX_CACHE_TAGS, normaliseCacheTags, ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB, MAX_DISPATCH_ATTEMPTS, QUEUE_NAME, backoffMs, defaultJobOptions, redisConnectionFromUrl, type JobRetryPolicy, type RedisConnection } from './queue.js';
+export { AI_OPERATION_JOB, assertQueueJobId, jobIdProblem, queueJobId, JOB_NAMES, MAX_JOB_ID_LENGTH, type JobName, CACHE_INVALIDATE_JOB, CACHE_TAGS, MAX_CACHE_TAGS, normaliseCacheTags, ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB, MAX_DISPATCH_ATTEMPTS, QUEUE_NAME,
+  AI_QUEUE_NAME,
+  queueForJob, backoffMs, defaultJobOptions, redisConnectionFromUrl, type JobRetryPolicy, type RedisConnection } from './queue.js';
 export { ALLOWED_DOCUMENT_MIME, ALLOWED_IMAGE_MIME, ALLOWED_UPLOAD_MIME, MAX_DOCUMENT_BYTES, MAX_MEGAPIXELS, MAX_PIXELS, MAX_UPLOAD_BYTES, MIN_DIMENSION, VARIANT_KINDS, VARIANT_MIME, VARIANT_SIZES, documentRejectionReason, extensionForMime, imageRejectionReason, isAllowedImageMime, maxBytesFor, mediaKindForMime, objectKeyFor, pdfPageCount, readableFileSize, safeDownloadName, variantDimensions, type AllowedDocumentMime, type AllowedImageMime, type DocumentFacts, type ImageFacts, type MediaKind, type VariantKind } from './media.js';
 export {
   SCHEDULED_TASKS,
@@ -210,3 +212,4 @@ export {
   type ImagePromptProblem,
   type ImageUsage,
 } from './ai-images.js';
+export { WEEKDAYS, addDays, localDate, localWeekday, parseSlotTime, parseWeekdays, zonedTimeToUtc, type Weekday } from './ai-schedule.js';

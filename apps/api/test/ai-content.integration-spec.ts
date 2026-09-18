@@ -321,7 +321,7 @@ describe('AI Content Phase 1A (real MySQL/API)', () => {
       write(path, { expectedVersion: 0, values: { enabled: true } }, 'put'),
       write(
         path,
-        { expectedVersion: 0, values: { targetPostsPerDay: 2 } },
+        { expectedVersion: 0, values: { maxSlotsPerMonth: 20 } },
         'put',
       ),
     ]);
@@ -385,7 +385,7 @@ describe('AI Content Phase 1A (real MySQL/API)', () => {
       const path = '/api/v1/admin/settings/ai-content';
       const prior = (await agent().get(path).set('Cookie', cookie)).body.data;
       spy.mockRejectedValueOnce(new Error('test audit failure'));
-      await write(path, { expectedVersion: prior.version, values: { targetPostsPerDay: 7 } }, 'put').expect(500);
+      await write(path, { expectedVersion: prior.version, values: { maxSlotsPerMonth: 7 } }, 'put').expect(500);
       const after = (await agent().get(path).set('Cookie', cookie)).body.data;
       expect(after).toEqual(prior);
     } finally { spy.mockRestore(); }

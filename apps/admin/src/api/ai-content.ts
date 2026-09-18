@@ -47,6 +47,8 @@ export interface AiTopic {
   categoryId: string | null;
   /** Per-article image mode; null follows AI Settings. */
   imageMode: "manual" | "hybrid" | null;
+  /** Set while the topic waits for the daily slot (approved by a person, research not started). */
+  awaitingSlotSince: string | null;
 }
 export type NoveltyStatus = "unchecked" | "clear" | "review" | "duplicate";
 export interface NoveltyMatch {
@@ -231,6 +233,30 @@ export interface PriceSchedule {
   status: "proposed" | "approved" | "retired";
   approvedAt: string | null;
 }
+export interface ScheduleSlot {
+  id: string;
+  localDate: string;
+  dueAt: string;
+  state: "filled" | "missed" | "reviewed";
+  reason: string | null;
+  version: number;
+  item: { id: string; title: string; status: TopicStatus } | null;
+  resolutionNote: string | null;
+  resolvedAt: string | null;
+}
+export interface ScheduleStatus {
+  active: boolean;
+  timeZone: string;
+  slotTime: string | null;
+  weekdays: string[];
+  graceMinutes: number;
+  maxPerMonth: number;
+  usedThisMonth: number;
+  next: { date: string; dueAt: string } | null;
+  missedAwaitingReview: number;
+  waiting: { id: string; title: string; priority: number; awaitingSlotSince: string }[];
+  slots: ScheduleSlot[];
+}
 export type ImageJobStatus = "requested" | "stored" | "approved" | "rejected" | "failed" | "outcome_unknown" | "superseded";
 export interface ImageJob {
   id: string;
@@ -352,7 +378,7 @@ export const aiContentApi = {
       .then((r) => r.data.data),
   researchAction: (
     topic: AiTopic,
-    action: "approve" | "refresh",
+    action: "approve" | "approve_for_slot" | "refresh",
     followUp?: { followUpOfPostId: string; followUpReason: string },
   ) =>
     httpClient
@@ -401,6 +427,11 @@ export const aiContentApi = {
   setArticleSettings: (topic: AiTopic, input: { categoryId?: string | null; imageMode?: "manual" | "hybrid" | null }) =>
     httpClient
       .request<{ data: AiTopic }>(`/admin/ai-content/topics/${topic.id}/article`, { method: "PUT", body: { expectedVersion: topic.version, ...input } })
+      .then((r) => r.data.data),
+  schedule: () => httpClient.request<{ data: ScheduleStatus }>("/admin/ai-content/schedule").then((r) => r.data.data),
+  reviewSlot: (slot: ScheduleSlot, note: string) =>
+    httpClient
+      .request<{ data: ScheduleStatus }>(`/admin/ai-content/slots/${slot.id}/review`, { method: "POST", body: { expectedVersion: slot.version, note } })
       .then((r) => r.data.data),
   images: (id: string) => httpClient.request<{ data: TopicImages }>(`/admin/ai-content/topics/${id}/images`).then((r) => r.data.data),
   generateImage: (topic: AiTopic, key: string, prompt?: string) =>

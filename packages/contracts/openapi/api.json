@@ -910,6 +910,53 @@
         ]
       }
     },
+    "/api/v1/admin/ai-content/schedule": {
+      "get": {
+        "operationId": "AiGenerationController_schedule",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/slots/{id}/review": {
+      "post": {
+        "operationId": "AiGenerationController_reviewSlot",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewSlotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
     "/api/v1/admin/ai-content/runs/{id}/apply": {
       "post": {
         "operationId": "AiGenerationController_applyProposal",
@@ -11823,6 +11870,12 @@
             ],
             "nullable": true,
             "description": "Per-article image mode; null follows AI Settings."
+          },
+          "awaitingSlotSince": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When a person approved the topic for the daily slot; null once a slot took it."
           }
         },
         "required": [
@@ -11996,8 +12049,10 @@
             "type": "string",
             "enum": [
               "approve",
+              "approve_for_slot",
               "refresh"
-            ]
+            ],
+            "description": "approve starts research now; approve_for_slot admits the topic and lets the daily slot start its research."
           },
           "followUpOfPostId": {
             "type": "string",
@@ -12317,6 +12372,24 @@
           }
         },
         "required": [
+          "note"
+        ]
+      },
+      "ReviewSlotDto": {
+        "type": "object",
+        "properties": {
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "What was checked or decided about the missed slot."
+          }
+        },
+        "required": [
+          "expectedVersion",
           "note"
         ]
       },

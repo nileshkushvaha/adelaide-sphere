@@ -1,6 +1,12 @@
 
 /** One queue for MVP; job names distinguish the work (SRS ARC 003). */
 export const QUEUE_NAME = 'adelaide-sphere';
+/**
+ * AI operations run on their own queue with a small, separate consumer (AI plan
+ * §E, 1F): a slow provider or research call never occupies the capacity that
+ * mail, media and cache work need, and AI concurrency is bounded on its own.
+ */
+export const AI_QUEUE_NAME = 'adelaide-sphere-ai';
 export const ENQUIRY_EMAIL_JOB = 'enquiry.email';
 export const MEDIA_PROCESS_JOB = 'media.process';
 export const CACHE_INVALIDATE_JOB = 'cache.invalidate';
@@ -14,6 +20,11 @@ export const AI_OPERATION_JOB = 'ai.operation';
  */
 export const JOB_NAMES = [ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB, CACHE_INVALIDATE_JOB, AI_OPERATION_JOB, 'scheduled.task'] as const;
 export type JobName = (typeof JOB_NAMES)[number];
+
+/** The queue a job is dispatched to: AI operations to the AI queue, everything else to the main queue. */
+export function queueForJob(name: string): string {
+  return name === AI_OPERATION_JOB ? AI_QUEUE_NAME : QUEUE_NAME;
+}
 
 /**
  * BullMQ refuses a custom job id containing `:` — it is the separator in its own

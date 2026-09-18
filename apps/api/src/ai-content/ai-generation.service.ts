@@ -10,6 +10,8 @@ import {
   readImageSettings,
   rejectImage,
   requestImage,
+  reviewMissedSlot,
+  scheduleStatus,
   postFactReview,
   approvePrice,
   budgetStatus,
@@ -24,7 +26,7 @@ import { databaseCode, retryTransaction } from '../common/database-retry.js';
 import { DatabaseService } from '../database/database.service.js';
 import { ObjectStoragePort } from '../media/storage.port.js';
 import type { AdminPrincipal } from '../identity/identity.service.js';
-import type { ApplyProposalDto, ApproveContentDto, ApproveImageDto, ConfirmFactsDto, GenerateDto, GenerateImageDto, RejectImageDto, ProposePriceDto, ResolveOperationDto, TopicArticleSettingsDto } from './ai-generation.dto.js';
+import type { ApplyProposalDto, ApproveContentDto, ApproveImageDto, ReviewSlotDto, ConfirmFactsDto, GenerateDto, GenerateImageDto, RejectImageDto, ProposePriceDto, ResolveOperationDto, TopicArticleSettingsDto } from './ai-generation.dto.js';
 import { AiContentService } from './ai-content.service.js';
 
 type Violation = { field?: string; token?: string; reason?: string };
@@ -227,6 +229,18 @@ export class AiGenerationService {
   async rejectImage(jobId: string, input: RejectImageDto, actor: AdminPrincipal, ctx: RequestContext) {
     await this.run((tx) => rejectImage(tx, { jobId, note: input.note, adminId: actor.id, requestId: ctx.requestId }));
     return { rejected: true };
+  }
+
+  // ---- the daily slot (Phase 1F) --------------------------------------------
+
+  async schedule() {
+    const db = await this.database.client();
+    return db.$transaction((tx) => scheduleStatus(tx));
+  }
+
+  async reviewSlot(slotId: string, input: ReviewSlotDto, actor: AdminPrincipal, ctx: RequestContext) {
+    await this.run((tx) => reviewMissedSlot(tx, { slotId, expectedVersion: input.expectedVersion, note: input.note, adminId: actor.id, requestId: ctx.requestId }));
+    return this.schedule();
   }
 
   async approvePrice(priceId: string, actor: AdminPrincipal, ctx: RequestContext) {

@@ -3,6 +3,13 @@
 Overwrite this file at every phase gate; keep it factual and short. History lives in `docs/setup-progress.md` (and `docs/history/`), requirement status in `docs/requirements-traceability.md`.
 
 ## Phase
+- **Latest (19 Sep 2026, AI Content Phase 1F):** the daily slot.
+  - 07:00 Adelaide, every day, at most 30 a month. It starts free research for the next topic a person approved for it; no generation, spend or publication.
+  - Missed slots are held for review with no catch-up. The slot is unique per local date and DST-safe.
+  - A separate bounded AI queue and consumer; the AI Schedule page.
+  - Off by default (`postingEnabled`). Verified on `adelaide_sphere_test` only: 1F spec 6/6, integration 399/399 + 5/5, all unit suites.
+  - Dev DB migrated (owner-authorised, 19 Sep 2026, after a dump): schema up to date.
+  - Committed on branch `claude/ai-content-phase-1`. **STOP before 1G.** See [Phase 1F completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1f-completion.md).
 - **Latest (19 Sep 2026, AI Content Phase 1E):** featured images.
   - Hybrid, prompt-only by default; Generate image only on explicit request; automatic mode refused.
   - OpenAI image adapter behind a neutral seam (`gpt-image-2.5-flare` in code).

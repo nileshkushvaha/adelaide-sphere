@@ -2,6 +2,7 @@ import type { INestApplication } from '@nestjs/common';
 import { Queue, Worker } from 'bullmq';
 import {
   AI_OPERATION_JOB,
+  AI_QUEUE_NAME,
   CACHE_INVALIDATE_JOB,
   ENQUIRY_EMAIL_JOB,
   JOB_NAMES,
@@ -29,18 +30,23 @@ import { closeTestDatabase, createIntegrationApp } from './integration/harness.j
 describe('Queue dispatch against real BullMQ (integration)', () => {
   let app: INestApplication;
   let queue: Queue;
+  let aiQueue: Queue;
   let port: QueuePort;
 
   beforeAll(async () => {
     app = await createIntegrationApp();
     port = app.get(QueuePort);
     queue = new Queue(QUEUE_NAME, { connection: redisConnectionFromUrl(process.env.REDIS_URL ?? 'redis://127.0.0.1:6390/1') });
+    aiQueue = new Queue(AI_QUEUE_NAME, { connection: redisConnectionFromUrl(process.env.REDIS_URL ?? 'redis://127.0.0.1:6390/1') });
     await queue.obliterate({ force: true });
+    await aiQueue.obliterate({ force: true });
   });
 
   afterAll(async () => {
     await queue.obliterate({ force: true });
+    await aiQueue.obliterate({ force: true });
     await queue.close();
+    await aiQueue.close();
     await app.close();
     await closeTestDatabase();
   });
@@ -75,7 +81,11 @@ describe('Queue dispatch against real BullMQ (integration)', () => {
     for (const job of dispatched) await port.enqueue(job);
 
     const names = (await queue.getJobs(['waiting', 'delayed', 'active'], 0, 200, false)).map((job) => job.name);
-    for (const name of JOB_NAMES) expect(names, name).toContain(name);
+    const aiNames = (await aiQueue.getJobs(['waiting', 'delayed', 'active'], 0, 200, false)).map((job) => job.name);
+    for (const name of JOB_NAMES) expect([...names, ...aiNames], name).toContain(name);
+    // AI operations go to their own bounded queue (1F), never to the main one.
+    expect(aiNames).toEqual([AI_OPERATION_JOB]);
+    expect(names).not.toContain(AI_OPERATION_JOB);
   });
 
   it('refuses an id the queue would reject, at the call site and before the library', async () => {

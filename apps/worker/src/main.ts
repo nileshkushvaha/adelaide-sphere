@@ -7,7 +7,7 @@ import { EnquiryMailerPort } from './mailer/mailer.port.js';
 import { ResendEnquiryMailer } from './mailer/resend-mailer.js';
 import { SmtpEnquiryMailer } from './mailer/smtp-mailer.js';
 import { randomBytes } from 'node:crypto';
-import { AI_OPERATION_JOB, CACHE_INVALIDATE_JOB, ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB, QUEUE_NAME, SCHEDULED_TASK_JOB, buildEnquiryMail, redisConnectionFromUrl } from '@adelaide-sphere/domain';
+import { AI_OPERATION_JOB, AI_QUEUE_NAME, CACHE_INVALIDATE_JOB, ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB, QUEUE_NAME, SCHEDULED_TASK_JOB, buildEnquiryMail, redisConnectionFromUrl } from '@adelaide-sphere/domain';
 import { OpenAiImageProvider } from './ai-content/openai-image-provider.js';
 import type { ImageProvider } from './ai-content/image-provider.js';
 import { OpenAiTextProvider } from './ai-content/openai-provider.js';
@@ -70,6 +70,31 @@ async function main(): Promise<void> {
     { connection: redisConnectionFromUrl(config.redisUrl), concurrency: config.concurrency },
   );
 
+  // AI operations have their own queue and a small consumer (AI plan §E, 1F): a slow provider or research
+  // call never takes the capacity mail, media and cache work need. The main consumer still accepts an AI
+  // job left on the main queue by an earlier release; either way the database row decides everything.
+  const aiWorker = new Worker<AiOperationJobData>(
+    AI_QUEUE_NAME,
+    async (job: Job<AiOperationJobData>) => {
+      const started = process.hrtime.bigint();
+      try {
+        if (job.name !== AI_OPERATION_JOB) throw new Error(`Unknown AI job ${job.name}`);
+        return await runAiOperation(db, job.data, runnerId, aiDeps);
+      } finally {
+        jobDuration.observe({ job: job.name }, Number(process.hrtime.bigint() - started) / 1e9);
+      }
+    },
+    { connection: redisConnectionFromUrl(config.redisUrl), concurrency: config.aiConcurrency },
+  );
+  aiWorker.on('completed', (job, result) => {
+    jobsProcessed.inc({ job: job.name, outcome: 'completed' });
+    log('info', 'job completed', { jobId: job.id, jobName: job.name, outcome: String(result) });
+  });
+  aiWorker.on('failed', (job, error) => {
+    jobsProcessed.inc({ job: job?.name ?? 'unknown', outcome: 'failed' });
+    log('error', 'job failed', { jobId: job?.id, jobName: job?.name, attempt: job?.attemptsMade ?? 0, error: error.message });
+  });
+
   /** One job to one handler; the timing wrapper above stays out of the way. */
   async function route(job: Job<DeliveryJobData & MediaJobData & CacheInvalidationJobData & ScheduledTaskJobData>): Promise<unknown> {
     if (job.name === SCHEDULED_TASK_JOB) return schedules.run(job.data);
@@ -116,10 +141,12 @@ async function main(): Promise<void> {
   // Same 'as:' namespace the API reads under, so a heartbeat written here is
   // found there. BullMQ keeps its own prefix and is unaffected.
   const heartbeatRedis = new Redis({ ...redisConnectionFromUrl(config.redisUrl), keyPrefix: 'as:' });
-  const heartbeat = new WorkerHeartbeatPublisher(heartbeatRedis, runnerId, process.env.APP_VERSION ?? 'dev', [QUEUE_NAME], (line) => log.line(line));
+  const heartbeat = new WorkerHeartbeatPublisher(heartbeatRedis, runnerId, process.env.APP_VERSION ?? 'dev', [QUEUE_NAME, AI_QUEUE_NAME], (line) => log.line(line));
   await heartbeat.start();
-  worker.on('completed', () => heartbeat.recordCompleted());
-  worker.on('failed', () => heartbeat.recordFailed());
+  for (const consumer of [worker, aiWorker] as Worker[]) {
+    consumer.on('completed', () => heartbeat.recordCompleted());
+    consumer.on('failed', () => heartbeat.recordFailed());
+  }
 
   await schedules.start();
   workerUp.set(1);
@@ -128,14 +155,14 @@ async function main(): Promise<void> {
   registerBackupMetrics(workerRegistry, config.backupStateDir);
   const metricsServer = config.metricsPort === null ? null : startMetricsServer(config.metricsPort, config.metricsToken, (line) => log.line(line), config.metricsBind);
 
-  log('info', 'worker listening', { runnerId, jobName: QUEUE_NAME, outcome: `${mailer.describe?.() ?? mailer.transportName}, concurrency ${config.concurrency}` });
+  log('info', 'worker listening', { runnerId, jobName: `${QUEUE_NAME}, ${AI_QUEUE_NAME}`, outcome: `${mailer.describe?.() ?? mailer.transportName}, concurrency ${config.concurrency}, AI concurrency ${config.aiConcurrency}` });
 
   const shutdown = async (signal: string) => {
     log('info', `${signal} received, draining`, { runnerId });
     // Order matters: stop taking work, then let the last metrics be scraped and
     // the heartbeat be removed, so a shutdown is not read as a crash.
     workerUp.set(0);
-    await worker.close();
+    await Promise.all([worker.close(), aiWorker.close()]);
     await new Promise<void>((resolve) => (metricsServer ? metricsServer.close(() => resolve()) : resolve()));
     await heartbeat.stop();
     await heartbeatRedis.quit().catch(() => undefined);

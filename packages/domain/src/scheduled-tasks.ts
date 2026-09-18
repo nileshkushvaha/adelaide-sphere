@@ -145,6 +145,23 @@ export const SCHEDULED_TASKS: ScheduledTaskDefinition[] = [
     safeToOverlap: true,
   },
   {
+    code: 'ai-content.plan-slots',
+    label: 'Fill the daily AI content slot',
+    description: 'At the configured local time, starts free research for the next topic a person approved for the daily slot, or records the slot as missed for review. It never generates, spends, schedules or publishes, and never catches up missed days.',
+    scheduleLabel: 'Every 5 minutes (one slot a day)',
+    cron: '*/5 * * * *',
+    timezone: 'Australia/Adelaide',
+    missedRunPolicy: 'skip-to-next',
+    timeoutMs: 120_000,
+    retries: 1,
+    manualRunAllowed: true,
+    highImpact: false,
+    // With the daily slot switched off it does nothing; missing a run only delays or misses that day's slot, visibly.
+    requiredForCorrectness: false,
+    // The slot key is unique per local date, so overlapping runs cannot make a second slot.
+    safeToOverlap: true,
+  },
+  {
     code: 'schedule.run-retention',
     label: 'Trim scheduled-run history',
     description: 'Removes execution history older than 30 days, which is the retention this history is kept for.',

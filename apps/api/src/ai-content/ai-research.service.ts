@@ -145,14 +145,14 @@ export class AiResearchService {
 
   async researchAction(itemId: string, input: ResearchActionDto, actor: AdminPrincipal, ctx: RequestContext) {
     const followUp = input.followUpOfPostId ? { postId: input.followUpOfPostId, reason: input.followUpReason?.trim() ?? '' } : null;
-    if (input.action === 'approve' && followUp && followUp.reason.length < 10) invalid('followUpReason', 'Explain in a sentence why this follow-up is a different, useful article');
+    if (input.action !== 'refresh' && followUp && followUp.reason.length < 10) invalid('followUpReason', 'Explain in a sentence why this follow-up is a different, useful article');
     if (input.action === 'refresh' && followUp) invalid('followUpOfPostId', 'Only approval takes a follow-up');
     const db = await this.database.client();
     try {
       await retryTransaction(() =>
         db.$transaction((tx) =>
-          input.action === 'approve'
-            ? admitTopic(tx, { itemId, expectedVersion: input.expectedVersion, adminId: actor.id, requestId: ctx.requestId, followUp })
+          input.action !== 'refresh'
+            ? admitTopic(tx, { itemId, expectedVersion: input.expectedVersion, adminId: actor.id, requestId: ctx.requestId, followUp, forSlot: input.action === 'approve_for_slot' })
             : refreshResearch(tx, { itemId, expectedVersion: input.expectedVersion, adminId: actor.id, requestId: ctx.requestId }),
         ),
       );

@@ -388,6 +388,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/ai-content/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AiGenerationController_schedule"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/slots/{id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AiGenerationController_reviewSlot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/ai-content/runs/{id}/apply": {
         parameters: {
             query?: never;
@@ -4097,6 +4129,11 @@ export interface components {
              * @enum {string|null}
              */
             imageMode?: "manual" | "hybrid" | null;
+            /**
+             * Format: date-time
+             * @description When a person approved the topic for the daily slot; null once a slot took it.
+             */
+            awaitingSlotSince?: string | null;
         };
         CreateTopicDto: {
             title: string;
@@ -4137,8 +4174,11 @@ export interface components {
         };
         ResearchActionDto: {
             expectedVersion: number;
-            /** @enum {string} */
-            action: "approve" | "refresh";
+            /**
+             * @description approve starts research now; approve_for_slot admits the topic and lets the daily slot start its research.
+             * @enum {string}
+             */
+            action: "approve" | "approve_for_slot" | "refresh";
             /** @description Approve a topic that overlaps existing content only as a follow-up of this article. */
             followUpOfPostId?: string;
             followUpReason?: string;
@@ -4226,6 +4266,11 @@ export interface components {
             note?: string;
         };
         RejectImageDto: {
+            note: string;
+        };
+        ReviewSlotDto: {
+            expectedVersion: number;
+            /** @description What was checked or decided about the missed slot. */
             note: string;
         };
         ApplyProposalDto: {
@@ -8161,6 +8206,46 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["RejectImageDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiGenerationController_schedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiGenerationController_reviewSlot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewSlotDto"];
             };
         };
         responses: {

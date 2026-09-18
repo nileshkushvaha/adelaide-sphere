@@ -1,6 +1,6 @@
 import type { Queue } from 'bullmq';
 import type { DatabaseClient } from '@adelaide-sphere/database';
-import { recoverOperations } from '@adelaide-sphere/database/automation';
+import { planSlots, recoverOperations } from '@adelaide-sphere/database/automation';
 import { DUE_SCHEDULED_POST_SELECT, publishDueScheduledPost } from '@adelaide-sphere/database/editorial';
 import {
   CACHE_TAGS,
@@ -263,6 +263,17 @@ export const TASK_IMPLEMENTATIONS: Record<string, (ctx: TaskContext) => Promise<
     const { reclaimed, redelivered, exhausted } = await recoverOperations(db);
     if (reclaimed + redelivered + exhausted === 0) return 'Nothing to recover';
     return `Re-queued ${redelivered}, reclaimed ${reclaimed} expired lease${reclaimed === 1 ? '' : 's'}, stopped ${exhausted} out of attempts`;
+  },
+
+  /**
+   * The daily AI slot (Phase 1F; AI SRS §15): free research for the next
+   * approved topic, or a missed slot held for review. Unique per local date.
+   */
+  'ai-content.plan-slots': async ({ db }) => {
+    const { inactive, filled, missed } = await planSlots(db);
+    if (inactive) return `Daily slot inactive (${inactive.replace(/_/g, ' ')})`;
+    if (filled.length + missed.length === 0) return 'No slot due';
+    return [filled.length ? `Started research for ${filled.length} topic${filled.length === 1 ? '' : 's'}` : null, ...missed.map((m) => `Missed ${m.date}: ${m.reason.replace(/_/g, ' ')}`)].filter(Boolean).join('; ');
   },
 };
 

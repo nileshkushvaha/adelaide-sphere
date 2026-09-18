@@ -115,4 +115,5 @@ export class TopicDto {
   @ApiPropertyOptional({ nullable: true }) followUpReason!: string | null;
   @ApiPropertyOptional({ nullable: true, description: 'Existing category the generated article uses.' }) categoryId!: string | null;
   @ApiPropertyOptional({ enum: ['manual', 'hybrid'], nullable: true, description: 'Per-article image mode; null follows AI Settings.' }) imageMode!: 'manual' | 'hybrid' | null;
+  @ApiPropertyOptional({ type: String, format: 'date-time', nullable: true, description: 'When a person approved the topic for the daily slot; null once a slot took it.' }) awaitingSlotSince!: Date | null;
 }

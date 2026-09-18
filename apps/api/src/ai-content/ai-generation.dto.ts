@@ -88,3 +88,8 @@ export class ApproveImageDto {
 export class RejectImageDto {
   @ApiProperty({ maxLength: 500 }) @IsString() @MinLength(5) @MaxLength(500) note!: string;
 }
+
+export class ReviewSlotDto {
+  @ApiProperty({ minimum: 1 }) @IsInt() @Min(1) expectedVersion!: number;
+  @ApiProperty({ maxLength: 500, description: 'What was checked or decided about the missed slot.' }) @IsString() @MinLength(5) @MaxLength(500) note!: string;
+}

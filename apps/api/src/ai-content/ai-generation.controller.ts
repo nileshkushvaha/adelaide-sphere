@@ -3,7 +3,7 @@ import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { CurrentAdmin, RequirePermissions, type AuthenticatedRequest } from '../auth/decorators.js';
 import { getRequestId } from '../common/request-id.js';
 import type { AdminPrincipal } from '../identity/identity.service.js';
-import { ApplyProposalDto, ApproveContentDto, ApproveImageDto, ConfirmFactsDto, GenerateDto, GenerateImageDto, RejectImageDto, ProposePriceDto, ResolveOperationDto, ResumePaidCallsDto, TopicArticleSettingsDto, TopicVersionOnlyDto } from './ai-generation.dto.js';
+import { ApplyProposalDto, ApproveContentDto, ApproveImageDto, ReviewSlotDto, ConfirmFactsDto, GenerateDto, GenerateImageDto, RejectImageDto, ProposePriceDto, ResolveOperationDto, ResumePaidCallsDto, TopicArticleSettingsDto, TopicVersionOnlyDto } from './ai-generation.dto.js';
 import { AiGenerationService } from './ai-generation.service.js';
 
 const context = (req: AuthenticatedRequest) => ({ ip: req.ip ?? 'unknown', userAgent: req.headers['user-agent'], requestId: getRequestId(req) });
@@ -93,6 +93,21 @@ export class AiGenerationController {
   @RequirePermissions('ai_content.view', 'ai_content.review')
   async rejectImage(@Param('id') id: string, @Body() body: RejectImageDto, @CurrentAdmin() admin: AdminPrincipal, @Req() req: AuthenticatedRequest) {
     return { data: await this.service.rejectImage(id, body, admin, context(req)) };
+  }
+
+  @Header('Cache-Control', 'no-store')
+  @Get('schedule')
+  @RequirePermissions('ai_content.view')
+  async schedule() {
+    return { data: await this.service.schedule() };
+  }
+
+  @Header('Cache-Control', 'no-store')
+  @Post('slots/:id/review')
+  @HttpCode(200)
+  @RequirePermissions('ai_content.view', 'ai_content.review')
+  async reviewSlot(@Param('id') id: string, @Body() body: ReviewSlotDto, @CurrentAdmin() admin: AdminPrincipal, @Req() req: AuthenticatedRequest) {
+    return { data: await this.service.reviewSlot(id, body, admin, context(req)) };
   }
 
   @Header('Cache-Control', 'no-store')

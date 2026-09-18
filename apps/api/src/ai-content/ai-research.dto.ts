@@ -33,7 +33,9 @@ export class TopicSourcesDto {
 
 export class ResearchActionDto {
   @ApiProperty({ minimum: 1 }) @IsInt() @Min(1) expectedVersion!: number;
-  @ApiProperty({ enum: ['approve', 'refresh'] }) @IsIn(['approve', 'refresh']) action!: 'approve' | 'refresh';
+  @ApiProperty({ enum: ['approve', 'approve_for_slot', 'refresh'], description: 'approve starts research now; approve_for_slot admits the topic and lets the daily slot start its research.' })
+  @IsIn(['approve', 'approve_for_slot', 'refresh'])
+  action!: 'approve' | 'approve_for_slot' | 'refresh';
   @ApiPropertyOptional({ description: 'Approve a topic that overlaps existing content only as a follow-up of this article.' })
   @IsOptional() @IsString() @Matches(ID) followUpOfPostId?: string;
   @ApiPropertyOptional({ maxLength: 500 }) @IsOptional() @IsString() @MaxLength(500) followUpReason?: string;
