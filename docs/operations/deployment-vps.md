@@ -10,6 +10,16 @@ Read `docs/operations/runbook.md` alongside this guide. It holds the rules this
 procedure implements (environments, health, backups, alerts). This guide is the
 "how, on one machine" version.
 
+> **The service account in this guide does not exist on the current server.**
+> Most steps below run commands as `adelaide-sphere` and the unit files in §12
+> set `User=adelaide-sphere`. The server that is actually deployed to has no such
+> user: everything runs as `deploy`, which owns `/srv/adelaide-sphere/shared`.
+> This was found on 17 September when a deployment stopped with
+> `sudo: unknown user adelaide-sphere` (see `docs/setup-progress.md`).
+> §15 (backups) has been corrected to say `deploy`; the rest has not. Read
+> `adelaide-sphere` as "whichever account owns `shared/`" until the two are
+> reconciled, and check with `stat -c '%U' /srv/adelaide-sphere/shared/api.env`.
+
 > **Conventions.** `adelaidesphere.com` is the production domain
 > (`PUBLIC_SITE_URL` / `SITE_ORIGIN` in the example files). Replace it, and
 > `media.adelaidesphere.com`, if yours differ. Commands prefixed with `sudo`
@@ -1412,10 +1422,10 @@ Keep `as-backup.key` in your password manager / offline. Copy only the public
 key line (`age1…`) to the server:
 
 ```bash
-echo 'age1<public key>' | sudo -u adelaide-sphere tee /srv/adelaide-sphere/shared/backup-recipient.txt
+echo 'age1<public key>' | sudo -u deploy tee /srv/adelaide-sphere/shared/backup-recipient.txt
 ```
 
-### 15.2 Daily database backup
+### 15.2 Scheduled database backups
 
 `infrastructure/backup/backup-database.sh` expects `mysqldump` on the path. Give
 it the one inside the MySQL container through a tiny wrapper, so the client
@@ -1444,65 +1454,125 @@ sudo chmod 755 /usr/local/bin/mysqldump /usr/local/bin/mysql
 (A restore drill's backup file is streamed into the container through standard
 input, so the `-i` matters.)
 
-Cron job for `adelaide-sphere` (02:30 every day), keeping 30 days locally:
+Check which client the wrapper actually gives you before scheduling anything —
+inside the container MySQL listens on **3306**, while the port published to the
+host (and therefore the port in `DATABASE_URL`) is **3317**:
 
 ```bash
-sudo -iu adelaide-sphere bash -c 'cat > /srv/adelaide-sphere/backup-daily.sh <<"EOF"
-#!/usr/bin/env bash
-set -Eeuo pipefail
-. /srv/adelaide-sphere/shared/backup.env
-export MYSQL_PWD="$MYSQL_BACKUP_PASSWORD"
-/srv/adelaide-sphere/current/infrastructure/backup/backup-database.sh \
-  --host 127.0.0.1 --user adelaide_sphere_backup --database adelaide_sphere \
-  --out /srv/adelaide-sphere/backups \
-  --recipient "$(cat /srv/adelaide-sphere/shared/backup-recipient.txt)"
-find /srv/adelaide-sphere/backups -type f -mtime +30 -delete
-EOF
-chmod 700 /srv/adelaide-sphere/backup-daily.sh
-(crontab -l 2>/dev/null; echo "30 2 * * * /srv/adelaide-sphere/backup-daily.sh >> /srv/adelaide-sphere/logs/backup.log 2>&1") | crontab -'
+readlink -f "$(command -v mysqldump)" && head -3 "$(command -v mysqldump)"
 ```
 
-Run it once now and confirm an `.sql.gz.age` file and its `.sha256` appear:
+If `mysqldump` is the container wrapper above, add `BACKUP_DB_PORT=3306` to
+`shared/backup.env`; the backup job derives host and port from `DATABASE_URL`
+otherwise, and prints both values on every run so the journal shows which was
+used.
+
+#### Installing the schedule
+
+The schedule is **tracked in the repository**, not written by hand here:
+`infrastructure/backup/run-scheduled-backup.sh` with systemd timers beside it.
+Read `infrastructure/backup/README.md` for the tiers, the retention windows and
+the privacy note that covers the 180-day archive.
+
+Add the backup account's password and any options to `shared/backup.env`
+(mode 0600, owned by `deploy`) — see the table in that README — then install the
+units:
 
 ```bash
-sudo -iu adelaide-sphere /srv/adelaide-sphere/backup-daily.sh && sudo ls -lh /srv/adelaide-sphere/backups
+sudo cp /srv/adelaide-sphere/current/infrastructure/backup/systemd/* /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now adelaide-sphere-backup-daily.timer adelaide-sphere-backup-weekly.timer
+systemctl list-timers 'adelaide-sphere-backup*'
 ```
+
+Set `BACKUP_ALERT_EMAIL` in `shared/backup.env` at the same time. A failed run
+records itself either way, but without an address that record waits in a file
+until somebody goes looking — which is usually the day they need a backup that
+is not there. The alert uses the mail transport already configured in
+`api.env`, and `deploy` needs to be in `systemd-journal` for the log tail:
+
+```bash
+sudo usermod -aG systemd-journal deploy
+```
+
+Two tiers: `daily` at 03:30 Adelaide kept 30 days, and `weekly` on Sundays at
+04:30 kept 180 days, the weekly one being the most recent daily file hard-linked
+into a longer-retention directory rather than a second dump.
+
+Run it once now and confirm a file and its `.sha256` appear:
+
+```bash
+sudo systemctl start adelaide-sphere-backup@daily.service
+journalctl -u adelaide-sphere-backup@daily.service -n 40 --no-pager
+sudo ls -lh /srv/adelaide-sphere/backups/daily
+```
+
+So the backup-age alert can see the result, set `BACKUP_STATE_DIR=/srv/adelaide-sphere/backups/state`
+in both `shared/api.env` and `shared/worker.env`, then restart those services.
+Without it the backup still runs, but nothing reports whether it did.
 
 ### 15.3 Off-site copy (required — a backup on the same disk is not a backup)
 
 Configure an S3-compatible bucket at a **different provider**, with object lock
-or versioning, and credentials that can write but not delete. Then add to the
-`adelaide-sphere` crontab (03:15), for example with `rclone`:
+or versioning, and credentials that can write but not delete.
 
 ```bash
-sudo apt install -y rclone && sudo -iu adelaide-sphere rclone config
+sudo apt install -y rclone && sudo -iu deploy rclone config
 ```
 
-```bash
-sudo -iu adelaide-sphere bash -c '(crontab -l; echo "15 3 * * * rclone copy /srv/adelaide-sphere/backups offsite:as-backups/db --max-age 48h >> /srv/adelaide-sphere/logs/backup.log 2>&1") | crontab -'
+Then set the remote in `shared/backup.env` — no crontab entry, the backup job
+copies each file as it writes it:
+
 ```
+BACKUP_OFFSITE_REMOTE=offsite:as-backups/db
+```
+
+Left empty, no copy is attempted and the run still succeeds (the journal says so,
+and `as_backup_offsite_configured` reports 0). Set but broken, the run fails —
+a remote that silently stops copying is the worst of both.
+
+The job **never deletes off-site**: BACK 002 asks for storage production
+credentials cannot delete from, so expiry there belongs to the bucket's own
+lifecycle or object-lock policy.
 
 ### 15.4 Media and Redis
 
-- Media: `mc mirror` the `adelaide-sphere-media` bucket to the same off-site
-  provider hourly (runbook §4: lag under one hour). Versioning is already on
-  (section 6.7).
+**Media.** The database backup contains no uploaded files, only rows pointing at
+them: without this step, losing the server restores a perfect database full of
+broken images. `infrastructure/backup/mirror-media.sh` copies the media bucket
+off-site hourly (BACK 001 allows at most an hour of lag), and its timer installs
+with the others in 15.2.
 
-  Register the off-site bucket inside the MinIO container's client once (the
-  credentials are the off-site provider's write-only key):
+Register the off-site bucket inside the MinIO container's client once — the
+credentials are the off-site provider's **write-only** key:
 
-  ```bash
-  read -rs -p 'Off-site secret key: ' OFFSITE_SECRET && echo && docker exec as-minio mc alias set offsite <https://s3.offsite-provider.example> <offsite access key> "$OFFSITE_SECRET"; unset OFFSITE_SECRET
-  ```
+```bash
+read -rs -p 'Off-site secret key: ' OFFSITE_SECRET && echo && docker exec as-minio mc alias set offsite <https://s3.offsite-provider.example> <offsite access key> "$OFFSITE_SECRET"; unset OFFSITE_SECRET
+```
 
-  Then mirror hourly from the `adelaide-sphere` crontab:
+Then name the target in `shared/backup.env` and enable the timer:
 
-  ```bash
-  sudo -iu adelaide-sphere bash -c '(crontab -l; echo "5 * * * * docker exec as-minio mc mirror --overwrite local/adelaide-sphere-media offsite/as-backups-media >> /srv/adelaide-sphere/logs/backup.log 2>&1") | crontab -'
-  ```
+```
+MEDIA_MIRROR_TARGET=offsite/as-backups-media
+```
 
-  The alias lives in the container's filesystem: repeat the `alias set` step if
-  the MinIO container is ever re-created.
+```bash
+sudo systemctl enable --now adelaide-sphere-media-mirror.timer
+sudo systemctl start adelaide-sphere-media-mirror.service
+journalctl -u adelaide-sphere-media-mirror.service -n 20 --no-pager
+```
+
+Left unset, the job runs, copies nothing and says so once an hour rather than
+failing — but the files then exist only on this server. Versioning on the source
+bucket is already on (section 6.7). The mirror **never deletes at the far end**:
+an accidental or malicious deletion here must not propagate to the copy that
+exists to survive it, so the off-site bucket ages objects out with its own
+lifecycle policy.
+
+The alias lives in the container's filesystem: repeat the `alias set` step if the
+MinIO container is ever re-created, or the mirror starts failing hourly (which
+it will report).
+
 - Redis needs no separate backup: it holds sessions, cache and queue state, and
   the database outbox is the recovery source for queued work.
 
@@ -1516,10 +1586,43 @@ cd /srv/adelaide-sphere/services && set -a && . ./.env && set +a && docker exec 
 ```
 
 Copy `as-backup.key` to the server temporarily, run
-`infrastructure/backup/restore-drill.sh` as its header shows, complete the
-manual checks it prints, record the result in
-`docs/operations/restore-drills.md`, then **shred the key** and drop the
-`_restore` database.
+`infrastructure/backup/restore-drill.sh` as its header shows — adding
+`--state-dir /srv/adelaide-sphere/backups/state` so the drill records its own
+date for the overdue alert — complete the manual checks it prints, record the
+result in `docs/operations/restore-drills.md`, then **shred the key** and drop
+the `_restore` database.
+
+A drill against a **weekly** archive must replay privacy deletion records for the
+whole period back to the backup point, up to 180 days, rather than the ≤30 days a
+daily restore implies: a weekly restore can otherwise put back personal data the
+retention jobs have already purged (SRS PRIV 002).
+
+### 15.6 Retention and privacy
+
+| Tier | Runs | Retained | Produced by |
+| --- | --- | --- | --- |
+| `daily` | 03:30 Adelaide, daily | 30 days | a fresh encrypted dump |
+| `weekly` | 04:30 Adelaide, Sundays | 180 days | the newest daily file, hard-linked |
+
+BACK 001 asks for daily recovery points retained 30 days and warns against
+unapproved long-term personal-data archives. The daily tier meets that
+unchanged; the **180-day weekly tier is an approved exception**, requested by the
+project owner, and it is an addition rather than a relaxation.
+
+It holds complete encrypted dumps — enquiry contact details, private review and
+comment emails, abuse-report narratives, audit rows — at 26 recovery points. 180
+days matches the longest live window in PRIV 001, so no category is archived
+longer than its own published window **except the shorter ones, which it
+necessarily outlives**: abuse IP signals (30 days) and rejected reviews and
+comments (90 days) survive in a backup taken before their purge. That is inherent
+to keeping backups at all; the controls are what make it acceptable — encrypted
+to a key whose private half never touches the server, readable only by `deploy`,
+used for recovery only, pruned automatically, and copied off-site with a
+credential that cannot delete.
+
+The consequence is the wider deletion replay described in 15.5.
+
+`infrastructure/backup/README.md` carries the same note beside the code.
 
 ---
 

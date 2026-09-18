@@ -184,8 +184,11 @@ values during the failure and false again after recovery.
 | Redis unavailable | C3 | D5: `as_dependency_up{redis}` → 0 in 11.1 s, readiness 503 in 1.1 s | Validated |
 | MySQL unavailable | C2 | D6: `as_dependency_up{database}` → 0 in 7.6 s, readiness 503 in 0.9 s | Validated |
 | Object storage unavailable | C9 (below) | Not drilled: MinIO was left running. The gauge is fed by the same collector as the other dependencies | **Staging task** |
-| Backup failure | C10 (below) | `infrastructure/backup/backup-database.sh` exit status; no metric yet — the script is run by the host's scheduler, not the worker | **Staging task** |
-| Overdue restore drill | I4 (below) | `docs/operations/restore-drills.md` records the last drill by hand | **Staging task** |
+| Backup failure | C10, C10b (below) | `as_backup_last_run_success{tier}` / `as_backup_last_success_timestamp_seconds{tier}`, written by `run-scheduled-backup.sh` and published by the worker | Emitting; **not yet drilled on the VPS** |
+| Backup not reaching off-site | C10c (below) | `as_backup_offsite_last_success_timestamp_seconds{tier}`, gated on `as_backup_offsite_configured` | Emitting; needs a remote (D07) |
+| Backups filling the disk | C11 (below) | `as_backup_disk_free_bytes{tier}`, sampled once per backup run | Emitting; sampled, not continuous |
+| Media not reaching off-site | C12 (below) | `as_media_mirror_last_success_timestamp_seconds`, gated on `as_media_mirror_configured` | Emitting; needs a target (D07) |
+| Overdue restore drill | I4 (below) | `as_restore_drill_last_success_timestamp_seconds`, written by `restore-drill.sh --state-dir` | Emitting; one drill on record |
 | API readiness failure | C1 | D5/D6: readiness 503 in under 1.5 s in both | Validated |
 
 ### C9 — Object storage unavailable
@@ -197,18 +200,72 @@ is already published is affected.
 *Not yet emitting:* the collector reads database and Redis today. Adding the
 storage probe is a staging task, recorded in the launch-readiness report.
 
-### C10 — Backup did not succeed
-`time() - as_backup_last_success_timestamp_seconds > 26h`
+### C10 — Daily backup did not succeed
+`time() - as_backup_last_success_timestamp_seconds{tier="daily"} > 26h`
 *Why 26h:* one daily backup may be missed for a slow run; two may not.
-*Action:* run `infrastructure/backup/backup-database.sh` by hand and read its
-output. *Not yet emitting:* the backup runs outside both application processes;
-publishing its result needs either a push gateway or a small exporter, which is a
-staging decision.
+**The `{tier="daily"}` selector is not optional.** There are two tiers, and the
+weekly series is older than 26 hours on six days out of seven: without the
+selector this rule pages every day and is switched off within a week.
+*Action:* `systemctl status adelaide-sphere-backup@daily` and
+`journalctl -u adelaide-sphere-backup@daily -n 50`. Nothing else takes this
+backup, so the gap is real until it is fixed. `as_backup_last_run_success{tier="daily"} == 0`
+distinguishes "ran and failed" from "never ran at all"; a sharp fall in
+`as_backup_size_bytes{tier="daily"}` means a dump that completed but was
+truncated. The same age is on `GET /api/v1/admin/operations/status` as
+`backup_age`, for an operator without Prometheus.
+
+### C10b — Weekly archive did not succeed
+`time() - as_backup_last_success_timestamp_seconds{tier="weekly"} > 8d`
+*Why 8d:* the archive runs on Sundays, so anything past eight days has missed a
+whole cycle.
+*Action:* as C10, against `adelaide-sphere-backup@weekly`. The weekly tier
+promotes the most recent daily file, so a weekly failure is usually a daily
+failure first: check C10 before looking any further. It also refuses to promote a
+daily older than 48 hours, which is a deliberate refusal to make the archive look
+fresh when it is not.
+
+### C10c — Backups are not reaching off-site storage
+`as_backup_offsite_configured == 1 and time() - as_backup_offsite_last_success_timestamp_seconds{tier="daily"} > 26h`
+*Why gated:* a host with no remote configured is not failing at it, so the rule
+must not fire there — but that host is also not meeting BACK 002, which is a
+launch item rather than an alert.
+*Action:* check the rclone remote and its credentials. The backup job never
+deletes off-site; expiry there is the remote's own lifecycle policy.
+
+### C11 — The backup filesystem is filling up
+`as_backup_disk_free_bytes < 5e9` (5 GB), or a downward trend over a week
+*Why it matters more than a failed backup:* MySQL on a full filesystem stops
+accepting writes, so the site goes down with it. The backup job refuses to start
+when free space is below `BACKUP_MIN_FREE_MB` (default 1 GB) or below three times
+the last backup's size, which stops a backup being the thing that fills the disk
+— but it cannot stop anything else filling it.
+*Caveat:* this is sampled once per backup run, so it is up to a day stale and
+says nothing between runs. Treat it as a trend, not a live reading.
+*Action:* `df -h /srv/adelaide-sphere`. Retention keeps up to 30 daily, 26 weekly
+and 20 pre-deploy files; the weekly tier shares inodes with the daily one for its
+first 30 days, so it costs far less than the file count suggests. If the database
+has simply grown, raise the disk rather than shortening retention.
+
+### C12 — Uploaded media is not reaching off-site storage
+`as_media_mirror_configured == 1 and time() - as_media_mirror_last_success_timestamp_seconds > 3h`
+*Why 3h:* the mirror runs hourly and BACK 001 allows at most an hour of lag, so
+three missed runs is a real gap.
+*Why it is separate from C10:* **the database backup contains no uploaded
+files**, only rows pointing at them. A perfect database restore with no media is
+a site full of broken images, and nothing in C10 would have warned about it.
+*Action:* `journalctl -u adelaide-sphere-media-mirror -n 30`. The most common
+cause is the `mc` alias: it lives inside the MinIO container's filesystem, so
+re-creating that container loses it and the mirror fails every hour until
+`mc alias set offsite …` is run again.
 
 ### I4 — Restore drill overdue
 `time() - as_restore_drill_last_success_timestamp_seconds > 90d`
-*Action:* run `infrastructure/backup/restore-drill.sh` against a scratch database
-and record the result. *Not yet emitting:* as C10.
+*Why 90d:* BACK 002 requires a drill before launch and quarterly thereafter.
+*Action:* run `infrastructure/backup/restore-drill.sh --state-dir
+/srv/adelaide-sphere/backups/state` against a scratch `_restore` database and
+record the result in `docs/operations/restore-drills.md`. A drill that restores a
+**weekly** archive must replay privacy deletion records for the whole period back
+to the backup point — up to 180 days (SRS PRIV 002); the script prints this.
 
 ---
 

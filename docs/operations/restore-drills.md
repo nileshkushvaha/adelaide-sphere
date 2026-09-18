@@ -4,9 +4,9 @@ One row per drill. A drill is only complete when every manual step in
 `infrastructure/backup/restore-drill.sh` has been carried out and any defect it
 found has an owner and a target date.
 
-| Date | Backup point | Restored by | RTO (restore time) | RPO (data gap) | Schema/content checks | Media checksums | Privacy deletions replayed | Outbound mail disabled | Defects raised |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 2026-09-07 | 2026-09-07T00:55Z (development data) | Implementation team | 1 s | ~0 (backup taken minutes before) | 45 tables, 0 collation mismatches, counts verified (3 businesses, 1 article, 3 media assets, 2 administrators, 0 pending outbox events) | not applicable — the development bucket holds three fixtures, checked by hand | none existed at the backup point | yes: no worker was started in the isolated database | none |
+| Date | Tier restored | Backup point | Restored by | RTO (restore time) | RPO (data gap) | Schema/content checks | Media checksums | Privacy deletions replayed | Outbound mail disabled | Defects raised |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 2026-09-07 | n/a (pre-dated the tiers) | 2026-09-07T00:55Z (development data) | Implementation team | 1 s | ~0 (backup taken minutes before) | 45 tables, 0 collation mismatches, counts verified (3 businesses, 1 article, 3 media assets, 2 administrators, 0 pending outbox events) | not applicable — the development bucket holds three fixtures, checked by hand | none existed at the backup point | yes: no worker was started in the isolated database | none |
 
 ## Notes on the 2026-09-07 drill
 
@@ -21,6 +21,13 @@ found has an owner and a target date.
   application account has no `RELOAD`/`BINLOG ADMIN` privilege. A production
   backup **must** record the binlog position, or the one-hour RPO in BACK 001
   cannot be met. The production backup account needs those privileges.
+- **Deletion replay depends on the tier.** A drill against the `weekly` archive
+  restores a backup up to 180 days old, so the privacy deletion replay must cover
+  that whole period, not the ≤30 days a `daily` restore implies. Restoring a
+  weekly archive without the wider replay puts back personal data the retention
+  jobs have already purged, which is a privacy incident rather than a defect
+  (SRS PRIV 002). `restore-drill.sh` prints this in its closing notes, and
+  `--state-dir` makes the drill record its own date for alert I4.
 - **Still required before launch**: the same drill against a production-shaped
   environment, including media checksum verification, privacy-deletion replay
   and a cache/queue rebuild, with the measured RPO and RTO recorded above.

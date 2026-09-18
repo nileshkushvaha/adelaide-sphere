@@ -97,6 +97,32 @@ Gauges are read on scrape by `apps/api/src/observability/metrics.collector.ts`,
 behind a five-second cache so that two scrapers cannot turn observability into
 load on MySQL and Redis.
 
+### Backups
+
+Published by the worker from the state files `run-scheduled-backup.sh` writes
+(`apps/worker/src/backup-status.ts`). The backup is a systemd oneshot with no
+metrics surface of its own, and this host has no push gateway and no
+node_exporter, so the worker reads the files at scrape time instead.
+
+| Metric | Type | Labels | Reads as |
+| --- | --- | --- | --- |
+| `as_backup_last_success_timestamp_seconds` | gauge | `tier` | C10 / C10b — freshness |
+| `as_backup_last_run_timestamp_seconds` | gauge | `tier` | ran-and-failed vs never-ran |
+| `as_backup_last_run_success` | gauge | `tier` | 1 or 0 for the last attempt |
+| `as_backup_size_bytes` | gauge | `tier` | a truncated dump that still passed the size floor |
+| `as_backup_offsite_last_success_timestamp_seconds` | gauge | `tier` | C10c — BACK 002 freshness |
+| `as_backup_offsite_configured` | gauge | — | gates C10c so an unconfigured host does not page |
+| `as_restore_drill_last_success_timestamp_seconds` | gauge | — | I4 |
+| `as_backup_disk_free_bytes` | gauge | `tier` | C11 — a full disk stops MySQL, not just the backup |
+| `as_media_mirror_last_success_timestamp_seconds` | gauge | — | C12 — uploaded files, which no dump contains |
+| `as_media_mirror_configured` | gauge | — | gates C12 |
+
+`tier` is a closed vocabulary — `daily｜weekly` — fixed in TypeScript and matched
+against the file name, so nothing on disk can invent a series. **Alert rules must
+select a tier**; see C10. With `BACKUP_STATE_DIR` unset the gauges are not
+registered at all, because an always-zero series reads as "nothing is failing"
+when the truth is "nothing is measured".
+
 ### Enquiries, email, media
 
 `as_enquiry_events_total`, `as_email_deliveries_total`,
@@ -180,6 +206,7 @@ is not read as a crash and the last scrape is served before the port closes.
 | `WORKER_METRICS_PORT` | worker | unset | worker metrics/health port; unset means no HTTP surface |
 | `LOG_LEVEL` | worker | `info` in production | `debug｜info｜warn｜error` |
 | `APP_VERSION` | worker | `dev` | reported in the heartbeat |
+| `BACKUP_STATE_DIR` | api, worker | unset | absolute path to the backup state files; unset publishes no backup series and omits the `backup_age` signal |
 
 ## Deployment verification (2026-09-09)
 
@@ -221,9 +248,15 @@ but is refused without the token from any non-loopback source.
   its heartbeat and the Workers card shows it; the API has no equivalent, so
   "which build is serving?" cannot be answered from a probe. Adding it to
   `/api/v1/health` is small and deliberate work, not done here.
-* **Three alert conditions have no series behind them yet**: object storage
-  reachability, backup success and restore-drill age (C9, C10, I4 in
-  `alert-response.md`). Each names what would have to emit it.
+* **One alert condition has no series behind it yet**: object storage
+  reachability (C9 in `alert-response.md`), which names what would have to emit
+  it. Backup success and restore-drill age now emit, from the state files the
+  scheduled backup writes.
+* **Disk space is sampled, not monitored.** `as_backup_disk_free_bytes` is
+  written once per backup run, so it is up to a day stale and says nothing
+  between runs. The backup itself refuses to start when space is short, which
+  stops a backup being the thing that fills the disk — but it does not notice
+  anything else filling it.
 * **Nothing pages a human.** The rules exist and are validated; a destination and
   a responder are a client decision (D07).
 
