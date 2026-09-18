@@ -71,6 +71,20 @@ encrypt() {
   fi
 }
 
+# The encryptor creates its output file before the dump has finished writing, so
+# a failure anywhere in the pipeline leaves a truncated file behind. Left in
+# place it is worse than no backup at all: it is the newest file in the
+# directory, so it is what a retention pass counts and what the weekly tier
+# would promote. Remove it on any failure, including the size check below.
+discard_partial() {
+  rm -f "$TARGET" "${TARGET}.sha256"
+  echo "Removed the incomplete backup at $TARGET." >&2
+}
+trap discard_partial ERR
+
+# BINLOG_ARGS holds two separate flags and must word-split; it is set from a
+# fixed string in this file, never from input.
+# shellcheck disable=SC2086
 mysqldump \
   --host="$HOST" --port="$PORT" --user="$USER" \
   --single-transaction --quick --routines --events --triggers \
@@ -83,6 +97,7 @@ mysqldump \
 SIZE=$(wc -c < "$TARGET")
 if [[ "$SIZE" -lt 1024 ]]; then
   echo "Backup at $TARGET is only ${SIZE} bytes; treat this as a failure." >&2
+  discard_partial
   exit 1
 fi
 

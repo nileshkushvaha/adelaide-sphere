@@ -37,10 +37,21 @@ set -u
 EXPECTED_PNPM=$(node -p 'require("./package.json").packageManager.replace(/^pnpm@/, "")')
 [[ $(pnpm --version) == "$EXPECTED_PNPM" ]] || { echo "Install pnpm@$EXPECTED_PNPM for this Node version first." >&2; exit 1; }
 
+# env_file_value and db_target_from_env_file, shared with the scheduled backup.
+# shellcheck source=../infrastructure/backup/db-target.sh
+# shellcheck disable=SC1091 # resolved at run time, from the release being deployed.
+. "$DIR/infrastructure/backup/db-target.sh"
+
 api_command() (
   set -a
   . "$ROOT/shared/api.env"
   set +a
+  # api.env's DATABASE_URL query string contains an unquoted `&`, so sourcing the
+  # file leaves it unset — a shell reads that `&` as "background this assignment".
+  # systemd parses the file itself, which is why only shells are affected. Read
+  # the value back explicitly rather than trusting what sourcing produced.
+  DATABASE_URL=$(env_file_value "$ROOT/shared/api.env" DATABASE_URL)
+  export DATABASE_URL
   # The application driver uses sslca/sslmode; Prisma CLI uses sslcert/sslaccept.
   # Translate only this subprocess, leaving the shared application URL intact.
   DATABASE_URL=$(node --input-type=module - "$ROOT/shared/mysql-ca.pem" <<'NODE'
@@ -110,20 +121,9 @@ BACKUP_DIR="$ROOT/backups/before-deploy"
 mkdir -p "$BACKUP_DIR"
 BACKUP_LOG=$(mktemp)
 # Where the database actually is, taken from the URL the application itself
-# uses: assuming 127.0.0.1:3306 backs up whatever answers on the default port,
-# which on a host that also runs another MySQL is a different server — the
-# backup then fails to authenticate, or silently dumps the wrong database.
-DB_TARGET=$(
-  set -a
-  . "$ROOT/shared/api.env"
-  set +a
-  node --input-type=module <<'NODE'
-const url = new URL(process.env.DATABASE_URL);
-const database = decodeURIComponent(url.pathname.replace(/^\//, ''));
-if (!database) { console.error('DATABASE_URL has no database name.'); process.exit(1); }
-process.stdout.write(`${url.hostname} ${url.port || '3306'} ${database}`);
-NODE
-)
+# uses. The reasoning and the parser live in one place, shared with the
+# scheduled backup, so the two cannot drift apart.
+DB_TARGET=$(db_target_from_env_file "$ROOT/shared/api.env")
 read -r DB_HOST DB_PORT DB_NAME <<<"$DB_TARGET"
 [[ -n "$DB_HOST" && -n "$DB_PORT" && -n "$DB_NAME" ]] || { echo 'Could not read the database host, port and name from DATABASE_URL.' >&2; exit 1; }
 printf 'Backing up %s from %s:%s\n' "$DB_NAME" "$DB_HOST" "$DB_PORT"
@@ -157,6 +157,8 @@ api_command pnpm db:migrate:status
   set -a
   . "$ROOT/shared/api.env"
   set +a
+  DATABASE_URL=$(env_file_value "$ROOT/shared/api.env" DATABASE_URL)
+  export DATABASE_URL
   cd "$DIR/apps/api"
   node dist/cli/bootstrap-admin.js --seed-only
 )
