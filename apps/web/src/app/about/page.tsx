@@ -58,9 +58,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /** Licensed photographs held by the project (ABT 006); sources in `docs/content/about-photography.md`. */
 const PHOTOS = {
-  skyline: { src: '/about/adelaide-skyline-torrens.webp', alt: 'The Adelaide city skyline across the River Torrens', credit: 'Yu Chu Chin, CC BY-SA 4.0, via Wikimedia Commons' },
-  laneway: { src: '/about/adelaide-leigh-street.webp', alt: 'Leigh Street, a tree-lined laneway of cafés and small bars in the Adelaide city centre', credit: 'Pangalau, CC BY-SA 4.0, via Wikimedia Commons' },
-  market: { src: '/about/adelaide-central-market.webp', alt: 'Fruit and vegetable stalls inside the Adelaide Central Market', credit: 'Pangalau, CC BY-SA 4.0, via Wikimedia Commons' },
+  skyline: { src: '/about/adelaide-skyline-torrens.webp', alt: 'The Adelaide city skyline across the River Torrens', credit: '' },
+  laneway: { src: '/about/adelaide-leigh-street.webp', alt: 'Leigh Street, a tree-lined laneway of cafés and small bars in the Adelaide city centre', credit: '' },
+  market: { src: '/about/adelaide-central-market.webp', alt: 'Fruit and vegetable stalls inside the Adelaide Central Market', credit: '' },
 } as const;
 
 const OFFER: IconPoint[] = [
