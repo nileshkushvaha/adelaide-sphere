@@ -2638,3 +2638,9 @@ Fixes from a static review of `9b90b6b`:
 - **P2:** Retry-After is honoured in full (ms, seconds, HTTP date). Longer than one hour, or unparseable, is held rather than retried.
 
 Additive migration `20260918210000_ai_content_fact_confirmation` (test DB only). Five mutation checks were all caught. Details: [Phase 1D completion record §16](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1d-completion.md).
+
+## Dev database migrated — 19 September 2026
+
+- Owner-authorised: `pnpm db:migrate:deploy` applied the 6 pending migrations to `adelaide_sphere_dev` (`20260917190000_domain_com_au_to_com` through `20260918210000_ai_content_fact_confirmation`). Status: up to date.
+- A `mysqldump` of the dev database was taken first (local session scratch, not in the repo).
+- Checks: API health 200, public posts 200, web home and blog article 200, AI admin 401 unauthenticated. Two seeded price schedules are present as *proposed*; automation stays disabled. Production is untouched.

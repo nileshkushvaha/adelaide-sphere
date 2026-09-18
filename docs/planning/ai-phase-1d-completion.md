@@ -7,7 +7,7 @@
 | IMPLEMENTED | Yes (branch `claude/ai-content-phase-1`: `9b90b6b`, plus the review fixes in §16) |
 | TESTED | Yes, locally: fakes and fixtures only |
 | MIGRATED ON ISOLATED TEST DB | Yes (`adelaide_sphere_test`) |
-| MIGRATED ON RETAINED DB | **No** (dev is 6 migrations behind; production untouched) |
+| MIGRATED ON RETAINED DB | **Dev only** (19 Sep 2026, owner-authorised; production untouched) |
 | DEPLOYED | **No** |
 | ENABLED | **No** (automation disabled by default; no approved price; no byline chosen) |
 | LIVE PROVIDER TESTED | **No.** No server-side `OPENAI_API_KEY` is configured and no live call was authorised. **No external paid call was made.** |

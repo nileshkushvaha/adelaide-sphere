@@ -3,6 +3,10 @@
 Overwrite this file at every phase gate; keep it factual and short. History lives in `docs/setup-progress.md` (and `docs/history/`), requirement status in `docs/requirements-traceability.md`.
 
 ## Phase
+- **19 Sep 2026: dev DB migrated (owner-authorised).**
+  - All 6 pending migrations (domain `.com`, 1A, 1B, 1C, 1D, 1D fact confirmation) are applied to `adelaide_sphere_dev` with `pnpm db:migrate:deploy`; the schema is up to date. A dump was taken first.
+  - Dev API health, public posts and the web blog return 200; AI admin routes return 401 without a session.
+  - Seeded prices are still *proposed*, automation is off and no author is chosen. Production is untouched.
 - **Latest (19 Sep 2026, 1D review fixes):**
   - Locked, single-settle unknown-outcome resolution.
   - Mandatory human fact confirmation (`POST topics/:id/confirm-facts`, `ai_content.review`) before approval and publication; the screen never certifies.
