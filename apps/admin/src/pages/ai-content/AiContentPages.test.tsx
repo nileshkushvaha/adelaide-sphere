@@ -32,6 +32,7 @@ vi.mock("@/api/ai-content", async (importOriginal) => ({
     checkNovelty: vi.fn(),
     setSources: vi.fn(),
     researchAction: vi.fn(),
+    confirmFacts: vi.fn(),
     resolveClaim: vi.fn(),
     addClaim: vi.fn(),
     discover: vi.fn(),
@@ -112,7 +113,7 @@ const options = { authProvider: providerWithPermissions(permissions) };
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(aiContentApi.research).mockResolvedValue({ packets: [], packet: null });
-  vi.mocked(aiContentApi.generation).mockResolvedValue({ runs: [], operations: [], approvals: [], post: null });
+  vi.mocked(aiContentApi.generation).mockResolvedValue({ runs: [], operations: [], approvals: [], post: null, factReview: null });
   vi.mocked(aiContentApi.budget).mockResolvedValue(budget);
   vi.mocked(aiContentApi.list).mockResolvedValue({
     data: [topic],
@@ -456,6 +457,7 @@ it("approves the article version the reviewer is looking at, and shows unsupport
     operations: [{ id: "cmopabcdefghijklmnopqrst", kind: "generate", scope: "full", state: "succeeded", attempts: 1, provider: "openai", model: "gpt-5.6-terra", providerPhase: "done", resultCode: "generated:covered", errorClass: null, estimatedMaxMicros: 120_000, reservedMicros: 120_000, settledMicros: 38_466, costState: "settled", inputTokens: 1233, cachedInputTokens: 0, outputTokens: 3000, reasoningTokens: 1000, resolutionNote: null, createdAt: "2026-09-18T01:00:00.000Z", priceSchedule: { version: "openai-gpt-5.6-terra-2026-07-30", currency: "USD" } }],
     approvals: [],
     post: { id: "cmpostabcdefghijklmnopqr", version: 4, title: "Example Cafe in Norwood", excerpt: "x", seoTitle: null, seoDescription: null, seoKeywords: null, status: "draft", firstPublishedAt: null },
+    factReview: { violations: [], flags: [] },
   });
   vi.mocked(aiContentApi.approve).mockRejectedValue(new ApiError({ kind: "conflict", status: 409, code: "UNSUPPORTED_FACTS", userMessage: "Some facts in the article are not supported by verified evidence.", fields: { facts: ['body.3: "1999" (unsupported value)'] } }));
   renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
@@ -463,6 +465,27 @@ it("approves the article version the reviewer is looking at, and shows unsupport
   await ue.click(screen.getByRole("button", { name: "Approve version 4" }));
   expect(await screen.findByText('body.3: "1999" (unsupported value)')).toBeInTheDocument();
   expect(aiContentApi.approve).toHaveBeenCalledWith(expect.objectContaining({ version: 9 }), 4, undefined);
+});
+it("asks a reviewer to confirm the facts of the exact version, shows possible names, and needs a note", async () => {
+  const ue = user();
+  vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, status: "needs_fact_review", postId: "cmpostabcdefghijklmnopqr", version: 9 });
+  vi.mocked(aiContentApi.generation).mockResolvedValue({
+    runs: [],
+    operations: [],
+    approvals: [],
+    post: { id: "cmpostabcdefghijklmnopqr", version: 4, title: "Example Cafe in Norwood", excerpt: "x", seoTitle: null, seoDescription: null, seoKeywords: null, status: "draft", firstPublishedAt: null },
+    factReview: { violations: [], flags: [{ field: "body.2", token: "Zorbo", reason: "possible_name" }] },
+  });
+  vi.mocked(aiContentApi.confirmFacts).mockResolvedValue({ status: "ready_for_review" });
+  renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  expect(await screen.findByText("Zorbo (body.2)")).toBeInTheDocument();
+  const confirm = screen.getByText("Confirm facts of version 4").closest("button")!;
+  expect(confirm).toBeDisabled();
+  expect(screen.queryByRole("button", { name: /Approve version/ })).not.toBeInTheDocument();
+  await ue.type(screen.getByLabelText("Fact check note"), "Checked hours and address against the council page");
+  await waitFor(() => expect(confirm).toBeEnabled());
+  await ue.click(confirm);
+  await waitFor(() => expect(aiContentApi.confirmFacts).toHaveBeenCalledWith(expect.objectContaining({ version: 9 }), 4, "Checked hours and address against the council page"));
 });
 it("shows a paid-call halt with its reason and the over-threshold warning", async () => {
   vi.mocked(aiContentApi.budget).mockResolvedValue({ ...budget, paidCallsHaltedAt: "2026-09-18T01:00:00.000Z", paidHaltReason: "provider reported model gpt-5.6-sol, approved gpt-5.6-terra" });

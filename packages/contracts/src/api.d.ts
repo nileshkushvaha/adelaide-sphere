@@ -324,6 +324,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/ai-content/topics/{id}/confirm-facts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AiGenerationController_confirmFacts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/ai-content/runs/{id}/apply": {
         parameters: {
             query?: never;
@@ -4129,6 +4145,13 @@ export interface components {
         };
         TopicVersionOnlyDto: {
             expectedVersion: number;
+        };
+        ConfirmFactsDto: {
+            expectedVersion: number;
+            /** @description The article version whose facts the reviewer checked against the evidence. */
+            postVersion: number;
+            /** @description What was checked against the evidence. */
+            note: string;
         };
         ApplyProposalDto: {
             /** @description The article version the proposal was compared with. */
@@ -7936,6 +7959,29 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["TopicVersionOnlyDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiGenerationController_confirmFacts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmFactsDto"];
             };
         };
         responses: {

@@ -21,6 +21,12 @@ export class ApproveContentDto {
   @ApiPropertyOptional({ maxLength: 500 }) @IsOptional() @IsString() @MaxLength(500) note?: string;
 }
 
+export class ConfirmFactsDto {
+  @ApiProperty({ minimum: 1 }) @IsInt() @Min(1) expectedVersion!: number;
+  @ApiProperty({ minimum: 1, description: 'The article version whose facts the reviewer checked against the evidence.' }) @IsInt() @Min(1) postVersion!: number;
+  @ApiProperty({ maxLength: 500, description: 'What was checked against the evidence.' }) @IsString() @MinLength(5) @MaxLength(500) note!: string;
+}
+
 export class TopicVersionOnlyDto {
   @ApiProperty({ minimum: 1 }) @IsInt() @Min(1) expectedVersion!: number;
 }

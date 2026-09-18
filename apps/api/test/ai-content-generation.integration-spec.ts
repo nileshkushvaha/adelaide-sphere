@@ -4,6 +4,7 @@ import { Readable } from 'node:stream';
 import request from 'supertest';
 import { createDatabaseClient, type DatabaseClient } from '@adelaide-sphere/database';
 import { claimOperation, recoverOperations, type ProviderResult, type TextRequest } from '@adelaide-sphere/database/automation';
+import { readPostMaterial } from '@adelaide-sphere/database/editorial';
 import { SESSION_COOKIE_NAME } from '../src/auth/session.service.js';
 import { SUPER_ADMIN_ROLE } from '../src/identity/permissions.js';
 import { ORIGIN, TEST_ADMIN, clearThrottleKeys, seedSuperAdmin } from './integration/auth-fixtures.js';
@@ -175,6 +176,19 @@ describe('AI Content Phase 1D generation (real MySQL/API, fake provider)', () =>
     return detail(item.id);
   }
 
+  /** A person confirms the facts of the article as it stands (the screen alone never certifies). */
+  async function confirm(topicId: string, c = cookie) {
+    const topic = await detail(topicId);
+    const post = await db().post.findUniqueOrThrow({ where: { id: topic.postId } });
+    return admin(agent().post(`${base}/topics/${topicId}/confirm-facts`), c).send({ expectedVersion: topic.version, postVersion: post.version, note: 'Checked every statement against the venue page' });
+  }
+  async function confirmedDraft(title: string) {
+    const drafted = await fullDraft(title);
+    expect(drafted.status).toBe('needs_fact_review');
+    expect((await confirm(drafted.id)).status).toBe(200);
+    return detail(drafted.id);
+  }
+
   beforeAll(async () => {
     ({ runAiOperation } = await workerModule<{ runAiOperation: typeof runAiOperation }>('operations.ts'));
     await truncateApplicationTables();
@@ -285,14 +299,15 @@ describe('AI Content Phase 1D generation (real MySQL/API, fake provider)', () =>
 
       expect(await drain(item.id)).toEqual(['applied:created']);
       const topic = await detail(item.id);
-      expect(topic.status).toBe('ready_for_review');
+      // Screened clean, but no person has confirmed the facts yet: explicit fact review, not ready for approval.
+      expect(topic.status).toBe('needs_fact_review');
       const post = await db().post.findUniqueOrThrow({ where: { id: topic.postId }, include: { tags: true } });
       expect(post).toMatchObject({ status: 'draft', authorId, categoryId, slug: 'example-cafe-norwood', title: 'Example Cafe in Norwood' });
       expect(post.sanitizedBody).toContain('Mo-Fr 07:00-15:00');
       expect(post.sanitizedBody).toMatch(/<a href="\/blog\/norwood-espresso-guide"[^>]*>espresso guide<\/a>/);
       expect(post.tags).toHaveLength(1); // the invented tag id was dropped, never created
       const run = await db().aIGenerationRun.findFirstOrThrow({ where: { itemId: item.id } });
-      expect(run).toMatchObject({ status: 'applied', factCheck: 'passed', provider: 'openai', model: 'gpt-5.6-terra', promptVersion: 'article-prompt.v1', schemaVersion: 'article.v1', disclosureText: expect.stringMatching(/^AI-assisted content/), generationOperationId: op.id });
+      expect(run).toMatchObject({ status: 'applied', factCheck: 'pending', provider: 'openai', model: 'gpt-5.6-terra', promptVersion: 'article-prompt.v1', schemaVersion: 'article.v1', disclosureText: expect.stringMatching(/^AI-assisted content/), generationOperationId: op.id });
       expect(run.promptHash).toMatch(/^[0-9a-f]{64}$/);
       expect(run.researchPacketHash).toMatch(/^[0-9a-f]{64}$/);
       expect(run.imageBriefs).toEqual([expect.objectContaining({ placement: 'featured' })]);
@@ -316,14 +331,19 @@ describe('AI Content Phase 1D generation (real MySQL/API, fake provider)', () =>
       const post = await db().post.findUniqueOrThrow({ where: { id: topic.postId } });
       const refused = await admin(agent().post(`${base}/topics/${item.id}/approve`)).send({ expectedVersion: topic.version, postVersion: post.version });
       expect(refused.status).toBe(409);
-      // A person removes the claim; re-checking against evidence releases it to review.
+      // Confirming is refused while the screen still finds the unsupported value.
+      expect((await confirm(item.id)).body.error.code).toBe('UNSUPPORTED_FACTS');
+      // A person removes the claim; re-checking shows a clean screen but never releases the article by itself.
       await admin(agent().patch(`/api/v1/admin/posts/${post.id}`)).send({ expectedVersion: post.version, bodyMarkdown: post.bodyMarkdown.replace(' Locals rate it 4.8 stars.', ''), bodyFormat: 'markdown' }).expect(200);
       const rechecked = await admin(agent().post(`${base}/topics/${item.id}/recheck-facts`)).send({ expectedVersion: (await detail(item.id)).version }).expect(200);
-      expect(rechecked.body.data.status).toBe('ready_for_review');
+      expect(rechecked.body.data).toMatchObject({ status: 'needs_fact_review', violations: [], confirmed: false });
+      expect((await confirm(item.id)).status).toBe(200);
+      expect((await detail(item.id)).status).toBe('ready_for_review');
+      expect((await db().aIGenerationRun.findFirstOrThrow({ where: { itemId: item.id } })).factCheck).toBe('passed');
     });
 
     it('binds approval to the exact article and research, and the publication gate enforces both', async () => {
-      const drafted = await fullDraft('Payneham gelato shop');
+      const drafted = await confirmedDraft('Payneham gelato shop');
       let post = await db().post.findUniqueOrThrow({ where: { id: drafted.postId } });
       // A person adds a fact the research does not support: approval checks the article as it stands, and refuses.
       await admin(agent().patch(`/api/v1/admin/posts/${post.id}`)).send({ expectedVersion: post.version, bodyMarkdown: `${post.bodyMarkdown}\n\nOpen since 1999 with 40 seats.`, bodyFormat: 'markdown' }).expect(200);
@@ -333,12 +353,17 @@ describe('AI Content Phase 1D generation (real MySQL/API, fake provider)', () =>
       expect(unsupported.body.error.fields.facts).toEqual(expect.arrayContaining([expect.stringMatching(/1999/), expect.stringMatching(/"40"/)]));
       await admin(agent().patch(`/api/v1/admin/posts/${post.id}`)).send({ expectedVersion: post.version, bodyMarkdown: post.bodyMarkdown.replace('\n\nOpen since 1999 with 40 seats.', ''), bodyFormat: 'markdown' }).expect(200);
       post = await db().post.findUniqueOrThrow({ where: { id: post.id } });
+      // The edits invalidated the earlier fact confirmation: approval needs a person to confirm this version.
+      const unconfirmed = await admin(agent().post(`${base}/topics/${drafted.id}/approve`)).send({ expectedVersion: (await detail(drafted.id)).version, postVersion: post.version }).expect(409);
+      expect(unconfirmed.body.error.code).toBe('FACTS_NOT_CONFIRMED');
+      // A reviewer without approval rights may confirm facts; approving stays separate.
+      expect((await confirm(drafted.id, viewerCookie)).status).toBe(200);
       const topic = await detail(drafted.id);
       // The reviewer must have read the current version.
       await admin(agent().post(`${base}/topics/${topic.id}/approve`)).send({ expectedVersion: topic.version, postVersion: post.version + 1 }).expect(409);
       await admin(agent().post(`${base}/topics/${topic.id}/approve`), viewerCookie).send({ expectedVersion: topic.version, postVersion: post.version }).expect(403);
       await admin(agent().post(`${base}/topics/${topic.id}/approve`)).send({ expectedVersion: topic.version, postVersion: post.version, note: 'Checked against the venue site' }).expect(200);
-      const approval = await db().aIApproval.findFirstOrThrow({ where: { itemId: topic.id } });
+      const approval = await db().aIApproval.findFirstOrThrow({ where: { itemId: topic.id, kind: 'content' } });
       const packet = await db().aIResearchPacket.findFirstOrThrow({ where: { itemId: topic.id }, orderBy: { version: 'desc' } });
       expect(approval).toMatchObject({ researchPacketId: packet.id, researchPacketHash: packet.contentHash, postVersion: post.version });
       // Approval never publishes by itself; publishing is the ordinary, separately permitted action.
@@ -350,8 +375,43 @@ describe('AI Content Phase 1D generation (real MySQL/API, fake provider)', () =>
       expect(pub.body.data.aiDisclosure).toMatch(/^AI-assisted content: This article was prepared with AI assistance/);
     });
 
+    it('never lets a clean screen certify facts: a possible name is flagged, and approval and publication need a person to confirm', async () => {
+      const item = await researched('Linden Park brunch bar');
+      // An invented one-word business at the start of a sentence: the screen cannot judge it.
+      fake.state.extra = ' Zorbo serves breakfast next door.';
+      await generate(item.id);
+      expect(await drain(item.id)).toEqual(['generated:covered']);
+      await drain(item.id);
+      fake.state.extra = '';
+      let topic = await detail(item.id);
+      expect(topic.status).toBe('needs_fact_review');
+      const history = (await admin(agent().get(`${base}/topics/${item.id}/generation`)).expect(200)).body.data;
+      expect(history.factReview).toMatchObject({ violations: [], flags: [expect.objectContaining({ token: 'Zorbo', reason: 'possible_name' })] });
+      const post = await db().post.findUniqueOrThrow({ where: { id: topic.postId } });
+      expect((await admin(agent().post(`${base}/topics/${item.id}/approve`)).send({ expectedVersion: topic.version, postVersion: post.version })).status).toBe(409);
+      // Even a content approval forced into place cannot publish without the facts confirmation.
+      await db().aIGenerationRun.updateMany({ where: { itemId: item.id, status: 'applied' }, data: { factCheck: 'passed' } });
+      const material = await db().$transaction((tx) => readPostMaterial(tx, post.id));
+      const packet = await db().aIResearchPacket.findFirstOrThrow({ where: { itemId: item.id }, orderBy: { version: 'desc' } });
+      const admin1 = await db().adminUser.findUniqueOrThrow({ where: { email: TEST_ADMIN.email } });
+      await db().aIApproval.create({ data: { itemId: item.id, kind: 'content', postId: post.id, postVersion: post.version, materialHash: material!.hash, adminId: admin1.id, researchPacketId: packet.id, researchPacketHash: packet.contentHash } });
+      await db().aIContentItem.update({ where: { id: item.id }, data: { status: 'approved', version: { increment: 1 } } });
+      const blocked = await admin(agent().post(`/api/v1/admin/posts/${post.id}/publish`)).send({ expectedVersion: post.version }).expect(409);
+      expect(blocked.body.error.fields.publication).toEqual(expect.arrayContaining([expect.stringMatching(/confirm the facts/)]));
+      await db().aIApproval.updateMany({ where: { itemId: item.id }, data: { invalidatedAt: new Date(), invalidationReason: 'test' } });
+      await db().aIContentItem.update({ where: { id: item.id }, data: { status: 'needs_fact_review', version: { increment: 1 } } });
+      // The confirmation is a person's decision, bound to this version, with a required note.
+      topic = await detail(item.id);
+      await admin(agent().post(`${base}/topics/${item.id}/confirm-facts`)).send({ expectedVersion: topic.version, postVersion: post.version, note: '' }).expect(400);
+      await admin(agent().post(`${base}/topics/${item.id}/confirm-facts`)).send({ expectedVersion: topic.version, postVersion: post.version + 1, note: 'Checked against the venue page' }).expect(409);
+      const confirmed = await confirm(item.id);
+      expect(confirmed.status).toBe(200);
+      expect(confirmed.body.data.flags).toEqual([expect.objectContaining({ token: 'Zorbo' })]);
+      expect(await db().aIApproval.findFirstOrThrow({ where: { itemId: item.id, kind: 'facts', invalidatedAt: null } })).toMatchObject({ postVersion: post.version, materialHash: material!.hash, researchPacketId: packet.id, reason: 'Checked every statement against the venue page' });
+    });
+
     it('refuses publication when the research changed after approval', async () => {
-      const topic = await fullDraft('Marden pho kitchen');
+      const topic = await confirmedDraft('Marden pho kitchen');
       const post = await db().post.findUniqueOrThrow({ where: { id: topic.postId } });
       await admin(agent().post(`${base}/topics/${topic.id}/approve`)).send({ expectedVersion: topic.version, postVersion: post.version }).expect(200);
       // Simulate newer research: a newer verified packet with a different content hash.
@@ -390,6 +450,25 @@ describe('AI Content Phase 1D generation (real MySQL/API, fake provider)', () =>
       const item = await researched('Joslin tapas corner');
       await saveSettings({ maxWorkflowCostMinor: 5 });
       expect((await generate(item.id)).body.error.code).toBe('WORKFLOW_CAP_EXCEEDED');
+      await saveSettings({ maxWorkflowCostMinor: 25 });
+    });
+
+    it('counts every paid call for the same article against its cap, not each call alone', async () => {
+      const topic = await confirmedDraft('College Park churros van');
+      const first = await db().aIOperation.findFirstOrThrow({ where: { itemId: topic.id, kind: 'generate' } });
+      expect(first.costState).toBe('settled');
+      // Room for one more call of the same size on its own, but not on top of what this article already spent.
+      const capMinor = Math.ceil((first.reservedMicros + first.settledMicros! / 2) / 10_000);
+      expect(capMinor * 10_000).toBeLessThan(first.reservedMicros + first.settledMicros!);
+      await saveSettings({ maxWorkflowCostMinor: capMinor });
+      const refused = await generate(topic.id);
+      expect(refused.body.error.code).toBe('WORKFLOW_CAP_EXCEEDED');
+      expect(await db().aIOperation.count({ where: { itemId: topic.id, kind: 'generate' } })).toBe(1);
+      // A different article still has its whole allowance.
+      const other = await researched('Hazelwood Park ice cream');
+      expect((await generate(other.id)).status).toBe(201);
+      await drain(other.id);
+      await drain(other.id);
       await saveSettings({ maxWorkflowCostMinor: 25 });
     });
 
@@ -441,6 +520,39 @@ describe('AI Content Phase 1D generation (real MySQL/API, fake provider)', () =>
       expect(await detail(item.id)).toMatchObject({ status: 'failed', failureCode: 'outcome_abandoned' });
     });
 
+    it('resolves an unknown outcome exactly once when operators race, and settles its cost once', async () => {
+      for (const [title, withId] of [['Rosslyn Park tea house', false], ['Tranmere falafel bar', true]] as const) {
+        const item = await researched(title);
+        fake.state.submitMode = 'unknown';
+        await generate(item.id);
+        await drain(item.id);
+        fake.state.submitMode = 'accept';
+        const op = await opFor(item.id);
+        expect(op.state).toBe('outcome_unknown');
+        if (withId) await db().aIOperation.update({ where: { id: op.id }, data: { providerResponseId: `resp_race_${op.id}` } });
+        const before = (await buckets()).find((b) => b.scope === 'day')!;
+        const resolve = (action: 'reconcile' | 'abandon') => admin(agent().post(`${base}/operations/${op.id}/resolve`)).send({ action, note: 'Checked the provider dashboard for this request' });
+        const results = await Promise.all(withId ? [resolve('reconcile'), resolve('abandon'), resolve('abandon')] : [resolve('abandon'), resolve('abandon'), resolve('abandon')]);
+        expect(results.filter((r) => r.status === 200)).toHaveLength(1);
+        expect(results.filter((r) => r.status === 409)).toHaveLength(2);
+        const after = await db().aIOperation.findUniqueOrThrow({ where: { id: op.id } });
+        const day = (await buckets()).find((b) => b.scope === 'day')!;
+        if (after.state === 'failed') {
+          // Abandoned once: the reservation moved to spent exactly once.
+          expect(after).toMatchObject({ costState: 'uncertain', settledMicros: op.reservedMicros });
+          expect(day.reservedMicros).toBe(before.reservedMicros - op.reservedMicros);
+          expect(day.settledMicros).toBe(before.settledMicros + op.reservedMicros);
+        } else {
+          // Reconcile won: still held, to be settled once when the worker reads the result.
+          expect(after).toMatchObject({ state: 'pending', costState: 'reserved', providerPhase: 'sent' });
+          expect(day).toMatchObject({ reservedMicros: before.reservedMicros, settledMicros: before.settledMicros });
+          await db().aIOperation.update({ where: { id: op.id }, data: { state: 'failed', resultCode: 'test_cleanup' } });
+          await db().$executeRaw`UPDATE ai_budget_buckets SET reservedMicros = reservedMicros - ${op.reservedMicros} WHERE id IN (${op.dayBucketId}, ${op.monthBucketId})`;
+          await db().aIOperation.update({ where: { id: op.id }, data: { costState: 'released' } });
+        }
+      }
+    });
+
     it('treats a worker lost mid-send as unknown, and a worker lost after acceptance as a look-up only', async () => {
       const lost = await researched('Glynde curry lane');
       await generate(lost.id);
@@ -484,7 +596,7 @@ describe('AI Content Phase 1D generation (real MySQL/API, fake provider)', () =>
 
   describe('human protection, proposals and light-model suggestions (T5)', () => {
     it('keeps a regeneration of a human-edited draft as a proposal, and applies it only on the version a person compared', async () => {
-      const topic = await fullDraft('Royston donut stand');
+      const topic = await confirmedDraft('Royston donut stand');
       const post = await db().post.findUniqueOrThrow({ where: { id: topic.postId } });
       await admin(agent().patch(`/api/v1/admin/posts/${post.id}`)).send({ expectedVersion: post.version, title: 'Example Cafe in Norwood, edited by hand' }).expect(200);
       await generate(topic.id);
@@ -502,12 +614,12 @@ describe('AI Content Phase 1D generation (real MySQL/API, fake provider)', () =>
     });
 
     it('uses the light model for title and SEO suggestions, as a proposal only', async () => {
-      const topic = await fullDraft('Maylands sushi train');
+      const topic = await confirmedDraft('Maylands sushi train');
       await generate(topic.id, 'metadata');
       expect((await opFor(topic.id)).model).toBe('gpt-5.6-luna');
       expect(await drain(topic.id)).toEqual(['proposal:metadata']);
       const run = await db().aIGenerationRun.findFirstOrThrow({ where: { itemId: topic.id, scope: 'metadata' } });
-      expect(run).toMatchObject({ status: 'proposal', model: 'gpt-5.6-luna', factCheck: 'passed' });
+      expect(run).toMatchObject({ status: 'proposal', model: 'gpt-5.6-luna', factCheck: 'pending' });
       expect((await detail(topic.id)).status).toBe('ready_for_review');
       const history = (await admin(agent().get(`${base}/topics/${topic.id}/generation`)).expect(200)).body.data;
       expect(history.runs[0]).toMatchObject({ scope: 'metadata', status: 'proposal' });
@@ -515,7 +627,7 @@ describe('AI Content Phase 1D generation (real MySQL/API, fake provider)', () =>
     });
 
     it('never regenerates an article that has been published', async () => {
-      const topic = await fullDraft('Beulah laksa bowl');
+      const topic = await confirmedDraft('Beulah laksa bowl');
       const post = await db().post.findUniqueOrThrow({ where: { id: topic.postId } });
       await admin(agent().post(`${base}/topics/${topic.id}/approve`)).send({ expectedVersion: topic.version, postVersion: post.version }).expect(200);
       await admin(agent().post(`/api/v1/admin/posts/${post.id}/publish`)).send({ expectedVersion: post.version }).expect(200);

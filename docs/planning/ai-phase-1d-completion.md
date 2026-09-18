@@ -4,10 +4,10 @@
 
 | Status | 1D |
 |---|---|
-| IMPLEMENTED | Yes (branch `claude/ai-content-phase-1`, uncommitted at the time of writing) |
+| IMPLEMENTED | Yes (branch `claude/ai-content-phase-1`: `9b90b6b`, plus the review fixes in §16) |
 | TESTED | Yes, locally: fakes and fixtures only |
 | MIGRATED ON ISOLATED TEST DB | Yes (`adelaide_sphere_test`) |
-| MIGRATED ON RETAINED DB | **No** (dev is 5 migrations behind; production untouched) |
+| MIGRATED ON RETAINED DB | **No** (dev is 6 migrations behind; production untouched) |
 | DEPLOYED | **No** |
 | ENABLED | **No** (automation disabled by default; no approved price; no byline chosen) |
 | LIVE PROVIDER TESTED | **No.** No server-side `OPENAI_API_KEY` is configured and no live call was authorised. **No external paid call was made.** |
@@ -203,7 +203,7 @@ This proves that:
 
 ## 11. Deployment requirements (not done)
 
-1. Authorise and apply the 5 pending migrations on dev (`.com` domain, 1A, 1B, 1C, 1D). Production follows the normal release path.
+1. Authorise and apply the 6 pending migrations on dev (`.com` domain, 1A, 1B, 1C, 1D, 1D fact confirmation). Production follows the normal release path.
 2. Set `OPENAI_API_KEY` in the worker's server secret store only.
 3. Run RBAC sync and assign `ai_content.review`, `ai_content.generate` and `ai_content.approve`.
 4. Check and **approve** the two seeded price versions on the Pricing page.
@@ -239,3 +239,38 @@ Not complete: 1E images (AI-049/081), 1F cadence, 1G auto-publish, Phase 2.
 ## 15. Owner decisions required to open 1E
 
 See the final report of this session. In short: the image approach (paid generation or not), provider/model and price, image budget, required vs optional featured image, and credit/disclosure wording for AI images.
+
+## 16. Review fixes (19 September 2026)
+
+A static review of `9b90b6b` found three P1 issues and one P2 issue. All four are fixed and verified locally. There were no live calls and no retained migrations.
+
+| Finding | Fix |
+|---|---|
+| **P1: concurrent unknown-outcome resolution could corrupt budget accounting** | `resolveUnknownOperation` locks the operation row (`FOR UPDATE`) first. Leaving `outcome_unknown` is state-conditional (exactly one resolution wins; the others get 409). Abandonment settles only while `costState = 'reserved'`, so the reservation moves to spent once. |
+| **P1: the fact screen could certify unsupported relationships and miss sentence-initial one-word names** | The screen no longer certifies anything. It still blocks unsupported values and names. A clean screen leaves a new draft in **Needs Fact Review** (`factCheck: pending`). A person with `ai_content.review` must confirm the facts with a note (`POST topics/:id/confirm-facts`). The confirmation is recorded as an `ai_approvals` row of kind `facts`, bound to the article version, material hash and research packet id/hash. Approval (`FACTS_NOT_CONFIRMED`) and the shared publication guard both require a live confirmation for the exact current state. Any material edit, proposal or regeneration invalidates it. Possible sentence-initial names the screen cannot judge (for example "Zorbo serves breakfast") are shown to the confirmer as flags. Re-checking and proposal apply no longer attempt the forbidden `ready_for_review → needs_fact_review` transition. |
+| **P1: the per-article cap was enforced per call** | `reserveBudget` sums what the article's other paid calls hold (reserved) or spent (settled/uncertain). It reads the sum under the day-bucket lock, with the item row already locked by the request. It refuses when that plus the new worst case would exceed the cap. Generation, regeneration and metadata calls all count. The setting is renamed in the UI to "Maximum AI cost per article" and described as cumulative. Consequence: an article that has spent its allowance cannot be regenerated until the owner raises the cap. |
+| **P2: Retry-After could be shortened or zeroed** | The adapter reads `retry-after-ms`, `Retry-After` delta-seconds and HTTP-date in full. A wait longer than one hour, or one that cannot be parsed, is not retried early: the request is refused as `<class>_hold` (not processed, so the reservation is released and the item fails for a person to retry later). |
+
+**Migration.** `20260918210000_ai_content_fact_confirmation` widens `ai_approvals.kind` to `('content','facts')`. It is additive, the policy check passes, and the schema diff is empty. It has been applied only to `adelaide_sphere_test`.
+
+**New tests:**
+
+- 1D spec (now 19 tests):
+  - resolve race (abandon×3, and reconcile vs abandon×2);
+  - cumulative per-article cap;
+  - clean screen never certifies (flagged name, forced content approval still blocked at publish, confirmation note/version binding);
+  - existing flows updated to confirm facts.
+- Domain: review flags.
+- Worker: full Retry-After parsing and hold.
+- Admin: confirmation UI (flags shown, note required, exact version sent, no approve button before confirmation).
+- The 1B fixtures record the facts confirmation alongside approval. A freshly applied unconfirmed run now waits in fact review.
+
+**Mutation checks (full 1D spec, each restored):**
+
+| Mutation | Caught |
+|---|---|
+| Cumulative cap removed | yes |
+| Approval without confirmation | yes |
+| Publication guard without confirmation | yes |
+| Resolve without lock and state conditions | yes (race test) |
+| Clean screen certifies again | yes |

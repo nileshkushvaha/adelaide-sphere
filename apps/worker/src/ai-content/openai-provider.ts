@@ -24,9 +24,31 @@ const RETRIEVE_TIMEOUT_MS = 15_000;
 
 export type FetchLike = (url: string, init: { method: string; headers: Record<string, string>; body?: string; signal: AbortSignal }) => Promise<{ status: number; headers: { get(name: string): string | null }; text(): Promise<string> }>;
 
-function retryAfterMs(headers: { get(name: string): string | null }): number {
-  const value = Number(headers.get('retry-after'));
-  return Number.isFinite(value) && value >= 0 ? Math.min(value, 3600) * 1000 : 0;
+/** The longest provider-requested wait we hold a reservation through; anything longer is not retried. */
+export const MAX_PROVIDER_RETRY_DELAY_MS = 3_600_000;
+
+/**
+ * The provider's requested wait, in full: `retry-after-ms`, or `Retry-After`
+ * as delta-seconds or an HTTP date. 0 when no wait was requested; null when a
+ * wait was requested but cannot be honoured exactly (unparseable, or longer
+ * than we hold a reservation), so the caller never retries early.
+ */
+export function retryAfterMs(headers: { get(name: string): string | null }, now = Date.now()): number | null {
+  const ms = headers.get('retry-after-ms')?.trim();
+  const raw = headers.get('retry-after')?.trim();
+  let delay: number;
+  if (ms) {
+    if (!/^\d+(?:\.\d+)?$/.test(ms)) return null;
+    delay = Math.ceil(Number(ms));
+  } else if (raw) {
+    if (/^\d+$/.test(raw)) delay = Number(raw) * 1000;
+    else {
+      const at = Date.parse(raw);
+      if (!Number.isFinite(at)) return null;
+      delay = Math.max(0, at - now);
+    }
+  } else return 0;
+  return delay <= MAX_PROVIDER_RETRY_DELAY_MS ? delay : null;
 }
 
 const safeJson = (text: string): unknown => {
@@ -111,7 +133,13 @@ export class OpenAiTextProvider implements TextProvider {
       return id ? { kind: 'accepted', responseId: id } : { kind: 'unknown', errorClass: 'accepted_without_id' };
     }
     const refused = classify(response.status, json);
-    if (refused) return { kind: 'rejected', ...refused, retryAfterMs: retryAfterMs(response.headers) };
+    if (refused) {
+      if (!refused.retryable) return { kind: 'rejected', ...refused, retryAfterMs: 0 };
+      const wait = retryAfterMs(response.headers);
+      // Not processed, but the requested wait cannot be honoured exactly: hold instead of retrying early.
+      if (wait === null) return { kind: 'rejected', errorClass: `${refused.errorClass}_hold`, retryable: false, retryAfterMs: 0 };
+      return { kind: 'rejected', ...refused, retryAfterMs: wait };
+    }
     // 500, 502, 504 and anything unexpected: the provider may have started work.
     return { kind: 'unknown', errorClass: `http_${response.status}` };
   }

@@ -170,6 +170,7 @@ export {
   articleUnits,
   billingPeriods,
   coverageViolations,
+  reviewFlags,
   escapeMarkdown,
   factualValues,
   maxCallCostMicros,
@@ -190,6 +191,7 @@ export {
   type GeneratedMetadata,
   type GeneratedParagraph,
   type GeneratedSection,
+  type ReviewFlag,
   type TokenRates,
   type TokenUsage,
 } from './ai-generation.js';

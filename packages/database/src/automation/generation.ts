@@ -513,7 +513,8 @@ export async function completeGeneration(db: DatabaseClient, lease: OperationLea
           expectedMaterialHash: meta.expectedMaterialHash,
           artifact: parsed.metadata as unknown as Prisma.InputJsonObject,
           artifactHash: sha256(JSON.stringify(parsed.metadata)),
-          factCheck: violations.length === 0 ? 'passed' : 'failed',
+          // The screen never certifies facts: a clean draft still awaits a person's confirmation.
+          factCheck: violations.length === 0 ? 'pending' : 'failed',
           coverage: violations as unknown as Prisma.InputJsonArray,
           ...provenance,
         },
@@ -567,7 +568,8 @@ export async function completeGeneration(db: DatabaseClient, lease: OperationLea
         expectedMaterialHash: meta.expectedMaterialHash,
         artifact: artifact as unknown as Prisma.InputJsonObject,
         artifactHash: artifactHash(artifact),
-        factCheck: violations.length === 0 ? 'passed' : 'failed',
+        // The screen never certifies facts: a clean draft still awaits a person's confirmation.
+          factCheck: violations.length === 0 ? 'pending' : 'failed',
         coverage: violations as unknown as Prisma.InputJsonArray,
         imageBriefs: article.imageBriefs as unknown as Prisma.InputJsonArray,
         internalLinks: resolved as unknown as Prisma.InputJsonArray,

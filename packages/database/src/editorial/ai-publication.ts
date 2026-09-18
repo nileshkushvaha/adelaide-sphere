@@ -53,8 +53,9 @@ const PUBLISHABLE_FROM: Record<'publish' | 'schedule', readonly AiItemStatus[]> 
  * - the item must be approved (or already scheduled/published by approval);
  * - a human approval must exist for exactly the article's current material
  *   state; a system decision never counts as human approval (1G adds policy);
- * - the run that produced the content must have passed the fact gate, which
- *   only the research verifier can set;
+ * - the run that produced the content must have passed the fact gate, and a
+ *   person must have confirmed the facts of exactly this material state against
+ *   the current research packet (the automatic screen never certifies alone);
  * - byline and category must still be active at commit time (F52);
  * - automated (scheduled) publication additionally needs automation enabled:
  *   disabling AI stops automated publication, not a human's own action (F37).
@@ -80,6 +81,15 @@ export async function aiPublicationDecision(tx: Tx, input: { postId: string; act
   }
   const run = await tx.aIGenerationRun.findFirst({ where: { itemId: item.id, status: 'applied' }, orderBy: { generationVersion: 'desc' }, select: { factCheck: true } });
   if (run?.factCheck !== 'passed') reasons.push('The facts in this AI article have not been verified.');
+  // A person must have confirmed the facts of exactly this article state against the current research.
+  const latestPacket = await tx.aIResearchPacket.findFirst({ where: { itemId: item.id }, orderBy: { version: 'desc' }, select: { id: true, contentHash: true } });
+  const confirmation = latestPacket
+    ? await tx.aIApproval.findFirst({
+        where: { itemId: item.id, postId: input.postId, kind: 'facts', invalidatedAt: null, adminId: { not: null }, materialHash: material.hash, researchPacketId: latestPacket.id, researchPacketHash: latestPacket.contentHash },
+        select: { id: true },
+      })
+    : null;
+  if (!confirmation) reasons.push('A person must confirm the facts of the current version against the research.');
   // Evidence ages: volatile facts must have been retrieved recently and events must still be upcoming (1C).
   const stale = await researchFreshnessBlocker(tx, item.id, new Date());
   if (stale) reasons.push(stale);

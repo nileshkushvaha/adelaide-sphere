@@ -100,6 +100,16 @@ async function lockBucket(tx: Tx, scope: 'day' | 'month', period: string, curren
   return { id: row.id, reserved: Number(row.reservedMicros), settled: Number(row.settledMicros) };
 }
 
+/** What the other paid calls for this operation's article hold (reserved) or spent (settled or uncertain). */
+async function articleCommittedMicros(tx: Tx, operationId: string): Promise<number> {
+  const rows = await tx.$queryRaw<{ total: bigint | number | string | null }[]>`
+    SELECT COALESCE(SUM(CASE WHEN o.costState = 'reserved' THEN o.reservedMicros ELSE o.settledMicros END), 0) AS total
+      FROM ai_operations o
+      JOIN ai_operations me ON me.id = ${operationId}
+     WHERE o.itemId = me.itemId AND o.id <> me.id AND o.costState IN ('reserved', 'settled', 'uncertain')`;
+  return Number(rows[0]?.total ?? 0);
+}
+
 /**
  * Reserves an operation's maximum cost against today's and this month's caps
  * and the per-workflow cap, in the caller's transaction (which must commit
@@ -119,6 +129,13 @@ export async function reserveBudget(tx: Tx, input: { operationId: string; maxMic
   const month = await lockBucket(tx, 'month', periods.month, limits.currency);
   if (day.reserved + day.settled + input.maxMicros > limits.dailyMicros) throw new BudgetRefusal('BUDGET_EXCEEDED', "Today's AI budget cannot cover this generation.");
   if (month.reserved + month.settled + input.maxMicros > limits.monthlyMicros) throw new BudgetRefusal('BUDGET_EXCEEDED', "This month's AI budget cannot cover this generation.");
+  // The per-article cap is cumulative: every paid call for the same article (generation,
+  // regeneration, metadata suggestions) counts what it holds or spent. Read under the day
+  // bucket lock, which every reservation, settlement and release of today's calls takes.
+  const spentOnArticle = await articleCommittedMicros(tx, input.operationId);
+  if (spentOnArticle + input.maxMicros > limits.workflowMicros) {
+    throw new BudgetRefusal('WORKFLOW_CAP_EXCEEDED', 'This article has used its AI budget; another generation could take it over the per-article cap.');
+  }
   await tx.$executeRaw`UPDATE ai_budget_buckets SET reservedMicros = reservedMicros + ${input.maxMicros}, version = version + 1, updatedAt = UTC_TIMESTAMP(3) WHERE id IN (${day.id}, ${month.id})`;
   const updated = await tx.aIOperation.updateMany({
     where: { id: input.operationId, costState: 'none' },

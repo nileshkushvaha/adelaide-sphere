@@ -39,6 +39,7 @@ export function ArticleCard({ topic, onChange }: { topic: AiTopic; onChange: () 
   const [problem, setProblem] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
+  const [factNote, setFactNote] = useState("");
   // One key per intended generation: a retry after a lost response is the same request, not a second charge.
   const requestKey = useRef<string>(crypto.randomUUID());
   const act = async (work: () => Promise<unknown>, done: string, newKey = false) => {
@@ -109,6 +110,16 @@ export function ArticleCard({ topic, onChange }: { topic: AiTopic; onChange: () 
             Re-check facts against research
           </Button>
         )}
+        {post && (topic.status === "needs_fact_review" || topic.status === "ready_for_review") && can(PERMISSION.aiContentReview) && history.status === "ready" && (
+          <FactConfirmation
+            data={history.data}
+            postVersion={post.version}
+            note={factNote}
+            onNote={setFactNote}
+            busy={busy}
+            onConfirm={() => void act(() => aiContentApi.confirmFacts(topic, post.version, factNote.trim()), "Facts confirmed for this version")}
+          />
+        )}
         {post && topic.status === "ready_for_review" && can(PERMISSION.aiContentApprove) && (
           <Space direction="vertical" style={{ width: "100%" }}>
             <Input.TextArea aria-label="Approval note" rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} placeholder="What you checked (optional)" />
@@ -120,6 +131,37 @@ export function ArticleCard({ topic, onChange }: { topic: AiTopic; onChange: () 
       </Space>
       {history.status === "loading" ? <PageLoader /> : history.status === "error" ? <ErrorState message={history.message} onRetry={reloadHistory} /> : <History data={history.data} topic={topic} onChange={() => { onChange(); reloadHistory(); }} />}
     </Card>
+  );
+}
+
+/**
+ * Explicit fact review: the automatic screen only finds unsupported values and
+ * names; whether each statement says what its evidence says is a person's check,
+ * recorded against this exact version. Approval needs it.
+ */
+function FactConfirmation({ data, postVersion, note, onNote, busy, onConfirm }: { data: Awaited<ReturnType<typeof aiContentApi.generation>>; postVersion: number; note: string; onNote: (v: string) => void; busy: boolean; onConfirm: () => void }) {
+  const confirmed = data.approvals.some((a) => a.kind === "facts" && a.postVersion === postVersion && !a.invalidatedAt);
+  const review = data.factReview;
+  if (confirmed) return <Alert type="success" showIcon message={`Facts confirmed for version ${postVersion}.`} />;
+  return (
+    <Space direction="vertical" style={{ width: "100%" }}>
+      <Alert
+        type="warning"
+        showIcon
+        message="Confirm the facts before approval"
+        description="Check each statement against its evidence. The automatic check only finds values and names not in research."
+      />
+      {review && review.violations.length > 0 && (
+        <Alert type="error" showIcon message="Not supported by the research: fix these first" description={review.violations.map((v) => `${v.token} (${v.field})`).join(", ")} />
+      )}
+      {review && review.flags.length > 0 && (
+        <Alert type="info" showIcon message="Possible names the check could not judge" description={review.flags.map((f) => `${f.token} (${f.field})`).join(", ")} />
+      )}
+      <Input.TextArea aria-label="Fact check note" rows={2} maxLength={500} value={note} onChange={(e) => onNote(e.target.value)} placeholder="What you checked against the evidence" />
+      <Button loading={busy} disabled={note.trim().length < 5 || Boolean(review && review.violations.length > 0)} onClick={onConfirm}>
+        Confirm facts of version {postVersion}
+      </Button>
+    </Space>
   );
 }
 

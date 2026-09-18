@@ -3,7 +3,7 @@ import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { CurrentAdmin, RequirePermissions, type AuthenticatedRequest } from '../auth/decorators.js';
 import { getRequestId } from '../common/request-id.js';
 import type { AdminPrincipal } from '../identity/identity.service.js';
-import { ApplyProposalDto, ApproveContentDto, GenerateDto, ProposePriceDto, ResolveOperationDto, ResumePaidCallsDto, TopicArticleSettingsDto, TopicVersionOnlyDto } from './ai-generation.dto.js';
+import { ApplyProposalDto, ApproveContentDto, ConfirmFactsDto, GenerateDto, ProposePriceDto, ResolveOperationDto, ResumePaidCallsDto, TopicArticleSettingsDto, TopicVersionOnlyDto } from './ai-generation.dto.js';
 import { AiGenerationService } from './ai-generation.service.js';
 
 const context = (req: AuthenticatedRequest) => ({ ip: req.ip ?? 'unknown', userAgent: req.headers['user-agent'], requestId: getRequestId(req) });
@@ -54,6 +54,14 @@ export class AiGenerationController {
   @RequirePermissions('ai_content.view', 'ai_content.review')
   async recheck(@Param('id') id: string, @Body() body: TopicVersionOnlyDto, @CurrentAdmin() admin: AdminPrincipal, @Req() req: AuthenticatedRequest) {
     return { data: await this.service.recheck(id, body.expectedVersion, admin, context(req)) };
+  }
+
+  @Header('Cache-Control', 'no-store')
+  @Post('topics/:id/confirm-facts')
+  @HttpCode(200)
+  @RequirePermissions('ai_content.view', 'ai_content.review')
+  async confirmFacts(@Param('id') id: string, @Body() body: ConfirmFactsDto, @CurrentAdmin() admin: AdminPrincipal, @Req() req: AuthenticatedRequest) {
+    return { data: await this.service.confirmFacts(id, body, admin, context(req)) };
   }
 
   @Header('Cache-Control', 'no-store')

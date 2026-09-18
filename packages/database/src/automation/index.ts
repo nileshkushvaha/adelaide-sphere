@@ -86,4 +86,4 @@ export {
   type ProviderResult,
   type TextRequest,
 } from './generation.js';
-export { applyProposal, approveContent, approvePrice, postCoverage, proposePrice, recheckFacts, resolveUnknownOperation, resumePaidCalls, type PriceInput } from './review.js';
+export { applyProposal, approveContent, approvePrice, confirmFacts, currentFactConfirmation, postCoverage, postFactReview, proposePrice, recheckFacts, resolveUnknownOperation, resumePaidCalls, type PriceInput } from './review.js';

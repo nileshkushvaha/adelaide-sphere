@@ -143,3 +143,14 @@ Workstream 1D only, under the owner's Phase 1D decisions, verified locally again
 Evidence: new 1D spec 16/16; full integration 380/380 plus 5/5; all unit suites; e2e 20/20; six mutation checks, all caught. Details: [Phase 1D completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1d-completion.md).
 
 Not migrated on any retained database, not deployed, not enabled, not live-provider tested. No external paid call was made. Images (1E), cadence (1F), auto-publish (1G) and Phase 2 remain planned.
+
+## AI Content Phase 1D review fixes — 19 September 2026
+
+Fixes from a static review of `9b90b6b`:
+
+- **P1:** unknown-outcome resolution is locked and state-conditional, so its cost settles once.
+- **P1:** the fact screen no longer certifies. Every AI draft needs a person's fact confirmation (approval kind `facts`, bound to version, material hash and research packet) before approval and publication. Possible sentence-initial names are flagged to the confirmer.
+- **P1:** the per-article cap is cumulative across all paid calls for the article.
+- **P2:** Retry-After is honoured in full (ms, seconds, HTTP date). Longer than one hour, or unparseable, is held rather than retried.
+
+Additive migration `20260918210000_ai_content_fact_confirmation` (test DB only). Five mutation checks were all caught. Details: [Phase 1D completion record §16](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1d-completion.md).

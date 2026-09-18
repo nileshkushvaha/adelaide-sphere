@@ -4,6 +4,8 @@ import {
   ResearchCommandError,
   applyProposal,
   approveContent,
+  confirmFacts,
+  postFactReview,
   approvePrice,
   budgetStatus,
   proposePrice,
@@ -16,7 +18,7 @@ import type { RequestContext } from '../auth/auth.service.js';
 import { databaseCode, retryTransaction } from '../common/database-retry.js';
 import { DatabaseService } from '../database/database.service.js';
 import type { AdminPrincipal } from '../identity/identity.service.js';
-import type { ApplyProposalDto, ApproveContentDto, GenerateDto, ProposePriceDto, ResolveOperationDto, TopicArticleSettingsDto } from './ai-generation.dto.js';
+import type { ApplyProposalDto, ApproveContentDto, ConfirmFactsDto, GenerateDto, ProposePriceDto, ResolveOperationDto, TopicArticleSettingsDto } from './ai-generation.dto.js';
 import { AiContentService } from './ai-content.service.js';
 
 type Violation = { field?: string; token?: string; reason?: string };
@@ -90,10 +92,13 @@ export class AiGenerationService {
         take: 20,
         select: { id: true, kind: true, scope: true, state: true, attempts: true, provider: true, model: true, providerPhase: true, resultCode: true, errorClass: true, estimatedMaxMicros: true, reservedMicros: true, settledMicros: true, costState: true, inputTokens: true, cachedInputTokens: true, outputTokens: true, reasoningTokens: true, resolutionNote: true, createdAt: true, updatedAt: true, priceSchedule: { select: { version: true, currency: true } } },
       }),
-      db.aIApproval.findMany({ where: { itemId }, orderBy: { createdAt: 'desc' }, take: 20, select: { id: true, postVersion: true, adminId: true, reason: true, createdAt: true, invalidatedAt: true, invalidationReason: true, researchPacketId: true } }),
+      db.aIApproval.findMany({ where: { itemId }, orderBy: { createdAt: 'desc' }, take: 20, select: { id: true, kind: true, postVersion: true, adminId: true, reason: true, createdAt: true, invalidatedAt: true, invalidationReason: true, researchPacketId: true } }),
       item.postId ? db.post.findUnique({ where: { id: item.postId }, select: { id: true, version: true, title: true, excerpt: true, seoTitle: true, seoDescription: true, seoKeywords: true, status: true, firstPublishedAt: true } }) : null,
     ]);
-    return { runs, operations, approvals, post };
+    // What the automatic screen found on the article as it stands, for the person confirming its facts.
+    const packet = await db.aIResearchPacket.findFirst({ where: { itemId }, orderBy: { version: 'desc' }, select: { id: true, status: true } });
+    const factReview = item.postId && packet?.status === 'verified' ? await this.run((tx) => postFactReview(tx, itemId, item.postId!, packet.id)) : null;
+    return { runs, operations, approvals, post, factReview };
   }
 
   async approve(itemId: string, input: ApproveContentDto, actor: AdminPrincipal, ctx: RequestContext) {
@@ -103,7 +108,12 @@ export class AiGenerationService {
 
   async recheck(itemId: string, expectedVersion: number, actor: AdminPrincipal, ctx: RequestContext) {
     const result = await this.run((tx) => recheckFacts(tx, { itemId, expectedVersion, adminId: actor.id, requestId: ctx.requestId }));
-    return { status: result.status, violations: result.violations, topic: await this.topics.detail(itemId) };
+    return { status: result.status, violations: result.violations, flags: result.flags, confirmed: result.confirmed, topic: await this.topics.detail(itemId) };
+  }
+
+  async confirmFacts(itemId: string, input: ConfirmFactsDto, actor: AdminPrincipal, ctx: RequestContext) {
+    const result = await this.run((tx) => confirmFacts(tx, { itemId, expectedVersion: input.expectedVersion, postVersion: input.postVersion, note: input.note, adminId: actor.id, requestId: ctx.requestId }));
+    return { status: result.status, flags: result.flags, topic: await this.topics.detail(itemId) };
   }
 
   async applyProposal(runId: string, input: ApplyProposalDto, actor: AdminPrincipal, ctx: RequestContext) {

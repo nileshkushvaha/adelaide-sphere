@@ -318,6 +318,51 @@ export function coverageViolations(units: readonly { field: string; text: string
   return violations.slice(0, 100);
 }
 
+/**
+ * Ordinary sentence openers (imperatives and connectives) that are not worth a
+ * reviewer's attention as possible names. Used only for review flags.
+ */
+const SENTENCE_STARTERS = new Set(
+  'After Again Along Arrive Ask Avoid Be Before Book Bring Buy Call Can Check Choose Come Consider Do Don’t Don\'t Drop Eat Enjoy Even Expect Find Follow Get Give Go Grab Have Head If In Is Just Keep Look Make Meanwhile Most Near Nearby Next Not Now On Once Order Other Over Park Phone Plan Please Remember Reserve See Since Start Still Stop Take Tell Then Try Until Use Visit Walk Wander Watch What While With Without Yes You'.split(' '),
+);
+
+export interface ReviewFlag {
+  field: string;
+  token: string;
+  reason: 'possible_name';
+}
+
+/**
+ * Words the automatic check cannot judge, for the person confirming the facts.
+ * A capitalised word that starts a sentence may be ordinary capitalisation or a
+ * one-word business name ("Zorbo serves breakfast"). It is flagged unless the
+ * evidence or allowed names support it, it is common language, or the article
+ * itself uses it in lowercase. Flags never certify anything: the coverage check
+ * only screens, and a person confirms every AI article's facts (plan §G step 7).
+ */
+export function reviewFlags(units: readonly { field: string; text: string }[], ctx: CoverageContext): ReviewFlag[] {
+  const names = corpusOf([...ctx.names, ...ctx.claims.flatMap((c) => [c.subject, c.value, ...c.excerpts])]);
+  // Case-sensitive on purpose: only a genuinely lowercase use shows ordinary language.
+  const original = ` ${units.map((u) => u.text).join(' \n ')} `;
+  const flags: ReviewFlag[] = [];
+  const seen = new Set<string>();
+  for (const unit of units) {
+    for (const m of unit.text.matchAll(/(?:^|[.!?:\n]\s*)([A-Z][\p{L}'’&-]{2,})/gu)) {
+      const word = m[1]!.replace(/(?:[’']s)$/u, '');
+      if (COMMON_NAMES.has(word) || SENTENCE_STARTERS.has(word) || seen.has(word)) continue;
+      // Adverbs and gerunds ("Frequently", "Finding") open sentences; business names rarely take these forms.
+      if (/(?:ly|ing)$/.test(word)) continue;
+      if (new RegExp(`^(?:${DAYS}|${MONTHS_RE})$`, 'i').test(word)) continue;
+      if (nameSupported(word, names.text)) continue;
+      // Used elsewhere in lowercase: ordinary language at the start of a sentence.
+      if (new RegExp(`[^\\p{L}]${word.toLowerCase()}[^\\p{L}]`, 'u').test(original)) continue;
+      seen.add(word);
+      flags.push({ field: unit.field, token: word, reason: 'possible_name' });
+    }
+  }
+  return flags.slice(0, 50);
+}
+
 /** Every text unit of a generated article, with the claims it cites where it cites any. */
 export function articleUnits(a: GeneratedArticle): { field: string; text: string; claimIds?: string[] }[] {
   return [

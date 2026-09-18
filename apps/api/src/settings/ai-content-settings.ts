@@ -156,11 +156,11 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
     ),
     declaration(
       'maxWorkflowCostMinor',
-      'Maximum cost of one article generation (minor units)',
+      'Maximum AI cost per article (minor units)',
       'integer',
       25,
       { min: 0, max: 100000000 },
-      'A generation whose worst-case cost exceeds this is refused before any call.',
+      'Cumulative per article: every generation, regeneration and suggestion for the same article counts what it holds or spent. A call whose worst case would take the article over this is refused before it is made.',
     ),
     declaration(
       'generationOutputTokenLimit',

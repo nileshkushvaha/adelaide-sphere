@@ -3,13 +3,19 @@
 Overwrite this file at every phase gate; keep it factual and short. History lives in `docs/setup-progress.md` (and `docs/history/`), requirement status in `docs/requirements-traceability.md`.
 
 ## Phase
+- **Latest (19 Sep 2026, 1D review fixes):**
+  - Locked, single-settle unknown-outcome resolution.
+  - Mandatory human fact confirmation (`POST topics/:id/confirm-facts`, `ai_content.review`) before approval and publication; the screen never certifies.
+  - A cumulative per-article cap, and full Retry-After handling.
+  - Migration `20260918210000_ai_content_fact_confirmation` is on the test DB only, so **dev is now 6 migrations behind**.
+  - See [Phase 1D completion record §16](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1d-completion.md).
 - **Latest (18 Sep 2026, AI Content Phase 1D):** budgeted, reviewed text generation from verified research.
   - OpenAI adapter behind a provider-neutral seam; Terra/Luna are code constants; Sol is not approved.
   - Approved-price schedule, day/month/workflow reservations, and a paid-call halt on discrepancy.
   - Fact and name coverage sends violations to Needs Fact Review; proposals and CAS apply for human edits.
   - Research-bound approval; unknown-outcome resolution; the owner's byline and disclosure settings.
   - Verified on `adelaide_sphere_test` only with a fake provider: 1D spec 16/16, integration 380/380 + 5/5, all unit suites.
-  - **Dev DB is 5 migrations behind** (domain `.com`, 1A–1D). No `OPENAI_API_KEY` is configured and no live/paid call was made. Seeded prices are proposed, not approved; no author is chosen. Not deployed or enabled.
+  - **Dev DB was 5 migrations behind** (domain `.com`, 1A–1D; now 6 with the review fix). No `OPENAI_API_KEY` is configured and no live/paid call was made. Seeded prices are proposed, not approved; no author is chosen. Not deployed or enabled.
   - Work is on branch `claude/ai-content-phase-1`. **STOP before 1E** (owner image decisions). See [Phase 1D completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1d-completion.md).
 - **Latest (18 Sep 2026, AI Content Phase 1C):** free public research with the SSRF-safe fetch, evidence, typed claims, freshness and change detection, first-class Needs Fact Review, local novelty with the inventory epoch and serialised admission, rejected history, feed discovery and the source registry (`ai_content.review` permission). Verified on `adelaide_sphere_test` only: 1C spec 20/20, integration 364/364 + 5/5, all unit suites. **Dev DB is 4 migrations behind** (domain `.com`, 1A, 1B, 1C); retained, dev and production migrations are not authorised. Not deployed; research runs only while automation is enabled. **STOP before 1D:** needs owner provider, credential, pricing, budget and byline decisions. See [Phase 1C completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1c-completion.md).
 - **Latest (18 Sep 2026, AI Content Phase 1B):** canonical AI item → Post mapping, runs, leased/fenced operations with DB recovery, approvals bound to the material hash, control epoch, and one AI publication policy shared by the admin publish/schedule commands and the scheduled publisher (seam: `@adelaide-sphere/database/editorial` and `/automation`). Verified on `adelaide_sphere_test` only: new spec 18/18, integration 344/344 + 5/5, all unit suites. **Dev DB is 3 migrations behind** (domain `.com`, 1A, 1B): the dev API's blog edit/publish routes fail until `pnpm db:migrate:deploy` is authorized. Not deployed, not enabled. **STOP: 1C needs the owner's pilot editorial-strategy/source-policy approval.** See [Phase 1B completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1b-completion.md).

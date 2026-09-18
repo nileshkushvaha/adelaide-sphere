@@ -1,6 +1,7 @@
 import {
   billingPeriods,
   coverageViolations,
+  reviewFlags,
   factualValues,
   maxCallCostMicros,
   minorToMicros,
@@ -61,6 +62,16 @@ describe('fact coverage (unsupported additions never reach review as ready)', ()
 
   it('allows advice without facts and without citations', () => {
     expect(coverageViolations([{ field: 'p', text: 'Arrive early on weekends and bring a keep cup.' }], ctx)).toEqual([]);
+  });
+
+  it('flags a one-word name at the start of a sentence for the person confirming facts, not ordinary words', () => {
+    // The screen cannot tell a sentence-initial name from capitalisation, so it never passes it silently.
+    expect(reviewFlags([{ field: 'p', text: 'Zorbo serves breakfast nearby. Example Cafe opens early.' }], ctx)).toEqual([{ field: 'p', token: 'Zorbo', reason: 'possible_name' }]);
+    expect(reviewFlags([{ field: 'p', text: 'Arrive early. Quolla sells pastries too.' }], ctx)).toEqual([{ field: 'p', token: 'Quolla', reason: 'possible_name' }]);
+    // Ordinary openers are not flagged: imperatives, adverbs and gerunds.
+    expect(reviewFlags([{ field: 'h', text: 'Finding it' }, { field: 'p', text: 'Check before you go. Phone ahead. Frequently asked questions.' }], ctx)).toEqual([]);
+    // Used in lowercase elsewhere, known to the evidence, or common: not flagged.
+    expect(reviewFlags([{ field: 'p', text: 'Bring cash, and bring a keep cup.' }, { field: 'q', text: 'Example Cafe is small. Norwood is busy.' }], ctx)).toEqual([]);
   });
 });
 

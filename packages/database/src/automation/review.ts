@@ -1,4 +1,4 @@
-import { coverageViolations, htmlToPlainText, type AiItemStatus, type CoverageViolation } from '@adelaide-sphere/domain';
+import { coverageViolations, htmlToPlainText, reviewFlags, type AiItemStatus, type CoverageViolation, type ReviewFlag } from '@adelaide-sphere/domain';
 import type { Prisma } from '../generated/prisma/client.js';
 import { invalidateApprovals, lockLinkedAiItem, moveAiItem } from '../editorial/ai-publication.js';
 import { syncContentMedia } from '../editorial/content-media.js';
@@ -30,7 +30,7 @@ async function currentPacket(tx: Tx, itemId: string, now: Date) {
  * must be supported by verified evidence (a person's edit is held to the same
  * rule as the model's output; plan §G step 7).
  */
-export async function postCoverage(tx: Tx, itemId: string, postId: string, packetId: string): Promise<CoverageViolation[]> {
+export async function postFactReview(tx: Tx, itemId: string, postId: string, packetId: string): Promise<{ violations: CoverageViolation[]; flags: ReviewFlag[] }> {
   const post = await tx.post.findUniqueOrThrow({ where: { id: postId }, include: { category: { select: { name: true } }, tags: { include: { tag: { select: { name: true } } } } } });
   const item = await tx.aIContentItem.findUniqueOrThrow({ where: { id: itemId }, select: { title: true } });
   const [claims, evidence, location, packet] = await Promise.all([
@@ -57,7 +57,56 @@ export async function postCoverage(tx: Tx, itemId: string, postId: string, packe
     ...(post.coverAlt ? [{ field: 'coverAlt', text: post.coverAlt }] : []),
     ...blocks.map((text, i) => ({ field: `body.${i}`, text })),
   ];
-  return coverageViolations(units, { claims, names });
+  return { violations: coverageViolations(units, { claims, names }), flags: reviewFlags(units, { claims, names }) };
+}
+
+/** The screen alone: violations block, but passing it never certifies the facts. */
+export async function postCoverage(tx: Tx, itemId: string, postId: string, packetId: string): Promise<CoverageViolation[]> {
+  return (await postFactReview(tx, itemId, postId, packetId)).violations;
+}
+
+/** The live fact confirmation for exactly this article state and research packet, if a person gave one. */
+export async function currentFactConfirmation(tx: Tx, itemId: string, postId: string, materialHash: string, packet: { id: string; contentHash: string }) {
+  return tx.aIApproval.findFirst({
+    where: { itemId, postId, kind: 'facts', invalidatedAt: null, adminId: { not: null }, materialHash, researchPacketId: packet.id, researchPacketHash: packet.contentHash },
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, adminId: true, createdAt: true },
+  });
+}
+
+/**
+ * Explicit fact review (review finding P1): a person confirms that every
+ * factual statement in the article as it stands says what its verified
+ * evidence says, relationships included (which business opens when, which
+ * price belongs to what). The automatic coverage check only screens: it must
+ * be clean, and any possible names it could not judge are shown to the person,
+ * but it never certifies facts on its own. The confirmation is bound to the
+ * article version, its material hash and the research packet; any change to
+ * either needs a new confirmation.
+ */
+export async function confirmFacts(tx: Tx, input: { itemId: string; expectedVersion: number; postVersion: number; note: string; adminId: string; requestId?: string | null; now?: Date }) {
+  const now = input.now ?? new Date();
+  const note = input.note.trim();
+  if (note.length < 5) throw new GenerationCommandError('VALIDATION_ERROR', 'Record what you checked against the evidence.', 400, { fields: { note: ['A note is required'] } });
+  const { item, postId } = await lockPostAndItem(tx, input.itemId);
+  if (item.version !== input.expectedVersion) throw new GenerationCommandError('STALE_VERSION', 'This topic changed. Reload it before trying again.');
+  if (item.status !== 'needs_fact_review' && item.status !== 'ready_for_review') throw new GenerationCommandError('INVALID_TRANSITION', 'Facts can be confirmed for an article in review.');
+  const material = await readPostMaterial(tx, postId);
+  if (!material || material.post.version !== input.postVersion) throw new GenerationCommandError('STALE_VERSION', 'The article changed. Check the latest version before confirming.');
+  if (material.post.status !== 'draft') throw new GenerationCommandError('INVALID_TRANSITION', 'Only a draft can be fact-checked here.');
+  const packet = await currentPacket(tx, item.id, now);
+  const review = await postFactReview(tx, item.id, postId, packet.id);
+  if (review.violations.length > 0) {
+    throw new GenerationCommandError('UNSUPPORTED_FACTS', 'Some facts in the article are not supported by verified evidence. Fix them first.', 409, { violations: review.violations });
+  }
+  const run = await tx.aIGenerationRun.findFirst({ where: { itemId: item.id, status: 'applied' }, orderBy: { generationVersion: 'desc' }, select: { id: true } });
+  await tx.aIApproval.create({
+    data: { itemId: item.id, runId: run?.id ?? null, kind: 'facts', postId, postVersion: material.post.version, materialHash: material.hash, adminId: input.adminId, reason: note.slice(0, 500), researchPacketId: packet.id, researchPacketHash: packet.contentHash },
+  });
+  if (run) await tx.aIGenerationRun.update({ where: { id: run.id }, data: { factCheck: 'passed', coverage: [] } });
+  if (item.status === 'needs_fact_review') await moveAiItem(tx, item, 'ready_for_review');
+  await audit(tx, 'ai_content.item.facts_confirmed', 'ai_topic', item.id, input.adminId, { postId, postVersion: material.post.version, packetId: packet.id, flags: review.flags.length }, input.requestId);
+  return { status: 'ready_for_review' as AiItemStatus, flags: review.flags };
 }
 
 async function lockPostAndItem(tx: Tx, itemId: string) {
@@ -89,6 +138,9 @@ export async function approveContent(tx: Tx, input: { itemId: string; expectedVe
   if (violations.length > 0) {
     throw new GenerationCommandError('UNSUPPORTED_FACTS', 'Some facts in the article are not supported by verified evidence.', 409, { violations });
   }
+  if (!(await currentFactConfirmation(tx, item.id, postId, material.hash, packet))) {
+    throw new GenerationCommandError('FACTS_NOT_CONFIRMED', 'A person must confirm the facts of this exact version against the evidence before it can be approved.');
+  }
   const run = await tx.aIGenerationRun.findFirst({ where: { itemId: item.id, status: 'applied' }, orderBy: { generationVersion: 'desc' }, select: { id: true } });
   await tx.aIApproval.create({
     data: { itemId: item.id, runId: run?.id ?? null, kind: 'content', postId, postVersion: material.post.version, materialHash: material.hash, adminId: input.adminId, reason: input.note?.slice(0, 500) ?? null, researchPacketId: packet.id, researchPacketHash: packet.contentHash },
@@ -99,9 +151,9 @@ export async function approveContent(tx: Tx, input: { itemId: string; expectedVe
 }
 
 /**
- * Re-checks an article's facts after a person fixed them (fact review →
- * ready for review). The newest applied run's fact check becomes "passed"
- * only when the article as it stands is fully supported.
+ * Re-runs the automatic screen on the article as it stands (after a person
+ * fixed something). It reports violations and possible names; it never moves
+ * an article to ready for review — only a person's fact confirmation does.
  */
 export async function recheckFacts(tx: Tx, input: { itemId: string; expectedVersion: number; adminId: string; requestId?: string | null; now?: Date }) {
   const now = input.now ?? new Date();
@@ -109,13 +161,13 @@ export async function recheckFacts(tx: Tx, input: { itemId: string; expectedVers
   if (item.version !== input.expectedVersion) throw new GenerationCommandError('STALE_VERSION', 'This topic changed. Reload it before trying again.');
   if (item.status !== 'needs_fact_review' && item.status !== 'ready_for_review') throw new GenerationCommandError('INVALID_TRANSITION', 'Facts can be re-checked for an article in review.');
   const packet = await currentPacket(tx, item.id, now);
-  const violations = await postCoverage(tx, item.id, postId, packet.id);
+  const { violations, flags } = await postFactReview(tx, item.id, postId, packet.id);
+  const material = await readPostMaterial(tx, postId);
+  const confirmed = violations.length === 0 && material ? Boolean(await currentFactConfirmation(tx, item.id, postId, material.hash, packet)) : false;
   const run = await tx.aIGenerationRun.findFirst({ where: { itemId: item.id, status: 'applied' }, orderBy: { generationVersion: 'desc' }, select: { id: true } });
-  if (run) await tx.aIGenerationRun.update({ where: { id: run.id }, data: { factCheck: violations.length === 0 ? 'passed' : 'failed', coverage: violations as unknown as Prisma.InputJsonArray } });
-  const to: AiItemStatus = violations.length === 0 ? 'ready_for_review' : 'needs_fact_review';
-  if (to !== item.status) await moveAiItem(tx, item, to);
-  await audit(tx, 'ai_content.item.facts_rechecked', 'ai_topic', item.id, input.adminId, { violations: violations.length, status: to }, input.requestId);
-  return { status: to, violations };
+  if (run) await tx.aIGenerationRun.update({ where: { id: run.id }, data: { factCheck: violations.length > 0 ? 'failed' : confirmed ? 'passed' : 'pending', coverage: violations as unknown as Prisma.InputJsonArray } });
+  await audit(tx, 'ai_content.item.facts_rechecked', 'ai_topic', item.id, input.adminId, { violations: violations.length, flags: flags.length, confirmed }, input.requestId);
+  return { status: item.status, violations, flags, confirmed };
 }
 
 /**
@@ -153,10 +205,11 @@ export async function applyProposal(tx: Tx, input: { runId: string; expectedPost
   const invalidated = await invalidateApprovals(tx, item.id, 'proposal_applied');
   const packet = await currentPacket(tx, item.id, now).catch(() => null);
   const violations = packet ? await postCoverage(tx, item.id, postId, packet.id) : [{ field: 'research', token: 'packet', reason: 'unsupported_value' as const }];
-  await tx.aIGenerationRun.update({ where: { id: run.id }, data: { factCheck: violations.length === 0 ? 'passed' : 'failed', coverage: violations as unknown as Prisma.InputJsonArray } });
+  // The applied text has not been confirmed by anyone yet (the previous confirmation was just
+  // invalidated), so it is never "passed"; the item stays in review until a person confirms.
+  await tx.aIGenerationRun.update({ where: { id: run.id }, data: { factCheck: violations.length === 0 ? 'pending' : 'failed', coverage: violations as unknown as Prisma.InputJsonArray } });
   const fresh = await lockLinkedAiItem(tx, postId);
-  const to: AiItemStatus = violations.length === 0 ? 'ready_for_review' : 'needs_fact_review';
-  if (fresh && fresh.status !== to) await moveAiItem(tx, fresh, to);
+  const to: AiItemStatus = fresh?.status ?? item.status;
   await audit(tx, 'ai_content.run.proposal_applied', 'ai_topic', item.id, input.adminId, { runId: run.id, scope: run.scope, approvalsInvalidated: invalidated, violations: violations.length }, input.requestId);
   return { status: to, violations };
 }
@@ -171,20 +224,31 @@ export async function applyProposal(tx: Tx, input: { runId: string; expectedPost
 export async function resolveUnknownOperation(tx: Tx, input: { operationId: string; action: 'reconcile' | 'abandon'; note: string; adminId: string; requestId?: string | null }) {
   const note = input.note.trim();
   if (note.length < 5) throw new GenerationCommandError('VALIDATION_ERROR', 'Record what you checked and why.', 400, { fields: { note: ['A note is required'] } });
-  const op = await tx.aIOperation.findUnique({ where: { id: input.operationId }, select: { id: true, kind: true, state: true, itemId: true, providerResponseId: true, costState: true, reservedMicros: true, dayBucketId: true, monthBucketId: true } });
-  if (!op || op.kind !== 'generate') throw new GenerationCommandError('NOT_FOUND', 'This operation does not exist.', 404);
+  // Lock the operation row first: two operators (or a reconcile and an abandon)
+  // resolving at once serialise here, and the second sees the first's outcome.
+  const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM ai_operations WHERE id = ${input.operationId} FOR UPDATE`;
+  if (locked.length === 0) throw new GenerationCommandError('NOT_FOUND', 'This operation does not exist.', 404);
+  const op = await tx.aIOperation.findUniqueOrThrow({ where: { id: input.operationId }, select: { id: true, kind: true, state: true, itemId: true, providerResponseId: true, costState: true, reservedMicros: true, dayBucketId: true, monthBucketId: true } });
+  if (op.kind !== 'generate') throw new GenerationCommandError('NOT_FOUND', 'This operation does not exist.', 404);
   if (op.state !== 'outcome_unknown') throw new GenerationCommandError('INVALID_TRANSITION', 'Only an operation with an unknown outcome needs resolving.');
+  const leaveUnknown = async (data: Prisma.AIOperationUpdateManyMutationInput) => {
+    // State-conditional as well as locked: exactly one resolution ever leaves outcome_unknown.
+    const moved = await tx.aIOperation.updateMany({ where: { id: op.id, state: 'outcome_unknown' }, data });
+    if (moved.count !== 1) throw new GenerationCommandError('INVALID_TRANSITION', 'This operation was resolved by someone else.');
+  };
   if (input.action === 'reconcile') {
     if (!op.providerResponseId) throw new GenerationCommandError('NOT_RECONCILABLE', 'The provider never returned an id for this request, so it cannot be looked up. Abandon it with a note.');
     // Back to pending in the "sent" phase: the worker retrieves by id and never sends again.
-    await tx.aIOperation.update({ where: { id: op.id }, data: { state: 'pending', providerPhase: 'sent', attempts: 0, nextAttemptAt: new Date(), resolutionNote: note.slice(0, 500) } });
+    // The reservation stays counted; the worker settles it once when the result is read.
+    await leaveUnknown({ state: 'pending', providerPhase: 'sent', attempts: 0, nextAttemptAt: new Date(), resolutionNote: note.slice(0, 500) });
     await enqueueOperationDelivery(tx, op.id);
   } else {
-    if (op.costState === 'reserved') {
-      await tx.aIOperation.update({ where: { id: op.id }, data: { costState: 'uncertain', settledMicros: op.reservedMicros } });
+    await leaveUnknown({ state: 'failed', resultCode: 'abandoned', providerPhase: 'done', resolutionNote: note.slice(0, 500) });
+    // Settle once: only a reservation still held moves to spent, conditionally on its cost state.
+    const settled = await tx.aIOperation.updateMany({ where: { id: op.id, costState: 'reserved' }, data: { costState: 'uncertain', settledMicros: op.reservedMicros } });
+    if (settled.count === 1) {
       await tx.$executeRaw`UPDATE ai_budget_buckets SET reservedMicros = reservedMicros - ${op.reservedMicros}, settledMicros = settledMicros + ${op.reservedMicros}, version = version + 1, updatedAt = UTC_TIMESTAMP(3) WHERE id IN (${op.dayBucketId}, ${op.monthBucketId})`;
     }
-    await tx.aIOperation.update({ where: { id: op.id }, data: { state: 'failed', resultCode: 'abandoned', providerPhase: 'done', resolutionNote: note.slice(0, 500) } });
     const item = op.itemId ? await tx.$queryRaw<{ id: string; status: AiItemStatus; version: number; postId: string | null }[]>`SELECT id, status, version, postId FROM ai_content_items WHERE id = ${op.itemId} FOR UPDATE` : [];
     const it = item[0];
     if (it && it.status === 'generating') {

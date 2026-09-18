@@ -107,7 +107,10 @@ describe('AI Content Phase 1B editorial foundation (real MySQL/API)', () => {
   /** An approval as the 1D approve command records it: bound to the article and to the research it certified. */
   async function recordApproval(itemId: string, postId: string, material: { post: { version: number }; hash: string }) {
     const packet = await db().aIResearchPacket.findFirstOrThrow({ where: { itemId }, orderBy: { version: 'desc' } });
-    await db().aIApproval.create({ data: { itemId, kind: 'content', postId, postVersion: material.post.version, materialHash: material.hash, adminId, researchPacketId: packet.id, researchPacketHash: packet.contentHash } });
+    const bound = { itemId, postId, postVersion: material.post.version, materialHash: material.hash, adminId, researchPacketId: packet.id, researchPacketHash: packet.contentHash };
+    // A person confirmed the facts of this state, then approved it (1D: the screen never certifies alone).
+    await db().aIApproval.create({ data: { ...bound, kind: 'facts' } });
+    await db().aIApproval.create({ data: { ...bound, kind: 'content' } });
   }
 
   /** What the research verifier and the 1D approval command will write; fixtures only. */
@@ -165,7 +168,8 @@ describe('AI Content Phase 1B editorial foundation (real MySQL/API)', () => {
       expect(await claimAndApply(first.operationId)).toBe('applied:created');
 
       const item = await db().aIContentItem.findUniqueOrThrow({ where: { id: itemId } });
-      expect(item).toMatchObject({ status: 'ready_for_review', humanModifiedAt: null, failureStage: null });
+      // No person has confirmed the facts of a fresh draft yet, so it waits in explicit fact review (1D review fix).
+      expect(item).toMatchObject({ status: 'needs_fact_review', humanModifiedAt: null, failureStage: null });
       const post = await db().post.findUniqueOrThrow({ where: { id: item.postId! }, include: { tags: true } });
       expect(post).toMatchObject({ status: 'draft', slug: 'central-market-guide', authorId, categoryId, firstPublishedAt: null });
       expect(post.sanitizedBody).not.toContain('<script');

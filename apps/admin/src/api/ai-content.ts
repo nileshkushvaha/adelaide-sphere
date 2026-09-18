@@ -189,8 +189,10 @@ export interface GenerationOperation {
 export interface GenerationHistory {
   runs: GenerationRun[];
   operations: GenerationOperation[];
-  approvals: { id: string; postVersion: number; adminId: string | null; reason: string | null; createdAt: string; invalidatedAt: string | null; invalidationReason: string | null }[];
+  approvals: { id: string; kind: "content" | "facts"; postVersion: number; adminId: string | null; reason: string | null; createdAt: string; invalidatedAt: string | null; invalidationReason: string | null }[];
   post: { id: string; version: number; title: string; excerpt: string; seoTitle: string | null; seoDescription: string | null; seoKeywords: string | null; status: string; firstPublishedAt: string | null } | null;
+  /** The automatic screen of the article as it stands: violations block; flags are for the person confirming facts. */
+  factReview: { violations: { field: string; token: string; reason: string }[]; flags: { field: string; token: string; reason: "possible_name" }[] } | null;
 }
 export interface BudgetStatus {
   enabled: boolean;
@@ -375,9 +377,13 @@ export const aiContentApi = {
     httpClient
       .request<{ data: AiTopic }>(`/admin/ai-content/topics/${topic.id}/approve`, { method: "POST", body: { expectedVersion: topic.version, postVersion, ...(note ? { note } : {}) } })
       .then((r) => r.data.data),
+  confirmFacts: (topic: AiTopic, postVersion: number, note: string) =>
+    httpClient
+      .request<{ data: { status: TopicStatus } }>(`/admin/ai-content/topics/${topic.id}/confirm-facts`, { method: "POST", body: { expectedVersion: topic.version, postVersion, note } })
+      .then((r) => r.data.data),
   recheckFacts: (topic: AiTopic) =>
     httpClient
-      .request<{ data: { status: TopicStatus; violations: { field: string; token: string; reason: string }[] } }>(`/admin/ai-content/topics/${topic.id}/recheck-facts`, { method: "POST", body: { expectedVersion: topic.version } })
+      .request<{ data: { status: TopicStatus; violations: { field: string; token: string; reason: string }[]; confirmed: boolean } }>(`/admin/ai-content/topics/${topic.id}/recheck-facts`, { method: "POST", body: { expectedVersion: topic.version } })
       .then((r) => r.data.data),
   applyProposal: (runId: string, expectedPostVersion: number) =>
     httpClient

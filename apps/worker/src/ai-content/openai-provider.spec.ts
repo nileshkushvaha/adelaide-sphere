@@ -1,5 +1,5 @@
 import type { TextRequest } from '@adelaide-sphere/database/automation';
-import { OpenAiTextProvider, mapResponse, type FetchLike } from './openai-provider.js';
+import { OpenAiTextProvider, mapResponse, retryAfterMs, type FetchLike } from './openai-provider.js';
 
 const request: TextRequest = { provider: 'openai', model: 'gpt-5.6-terra', instructions: 'Rules', input: '{"claims":[]}', schemaName: 'local_article', schema: { type: 'object' }, maxOutputTokens: 8000 };
 
@@ -50,6 +50,25 @@ describe('OpenAI Responses adapter: submission (provider contract, no network)',
     };
     expect(await new OpenAiTextProvider('k', timeout).submit(request)).toEqual({ kind: 'unknown', errorClass: 'submit_timeout' });
     expect(await new OpenAiTextProvider('k', fakeFetch(200, 'not json').impl).submit(request)).toEqual({ kind: 'unknown', errorClass: 'accepted_without_id' });
+  });
+  it('honours the full requested wait and holds instead of retrying early when it cannot', async () => {
+    const at = Date.parse('2026-09-18T10:00:00Z');
+    const h = (v: Record<string, string>) => ({ get: (n: string) => v[n.toLowerCase()] ?? null });
+    expect(retryAfterMs(h({}), at)).toBe(0);
+    expect(retryAfterMs(h({ 'retry-after': '120' }), at)).toBe(120_000);
+    expect(retryAfterMs(h({ 'retry-after': '3600' }), at)).toBe(3_600_000);
+    expect(retryAfterMs(h({ 'retry-after-ms': '1500' }), at)).toBe(1500);
+    // HTTP-date form: the time until that moment, never zero.
+    expect(retryAfterMs(h({ 'retry-after': 'Fri, 18 Sep 2026 10:05:00 GMT' }), at)).toBe(300_000);
+    // Longer than a reservation is held, or not understood: no retry time at all.
+    expect(retryAfterMs(h({ 'retry-after': '7200' }), at)).toBeNull();
+    expect(retryAfterMs(h({ 'retry-after': 'soon' }), at)).toBeNull();
+    expect(await new OpenAiTextProvider('k', fakeFetch(429, { error: { code: 'rate_limit_exceeded' } }, { 'retry-after': '7200' }).impl).submit(request)).toEqual({
+      kind: 'rejected',
+      errorClass: 'rate_limited_hold',
+      retryable: false,
+      retryAfterMs: 0,
+    });
   });
 });
 

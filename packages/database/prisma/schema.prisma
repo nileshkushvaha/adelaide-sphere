@@ -2179,6 +2179,8 @@ model AIOperation {
 
 enum AIApprovalKind {
   content
+  /// A person confirmed the article's factual statements against the verified evidence (1D review fix).
+  facts
 }
 
 /// Immutable, attributable approval of one exact article state (AI-171/172).
