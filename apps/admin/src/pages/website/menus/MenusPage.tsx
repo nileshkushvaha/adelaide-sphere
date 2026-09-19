@@ -147,7 +147,7 @@ export function MenusPage() {
               <label htmlFor="menu-select" style={{ fontWeight: 500 }}>
                 Select a menu to edit:
               </label>
-              <Select
+              <Select placeholder="Choose a menu"
                 id="menu-select"
                 style={{ minWidth: 260 }}
                 value={selectedId ?? undefined}
@@ -201,7 +201,7 @@ export function MenusPage() {
         <label htmlFor="new-menu-name" style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
           Menu name
         </label>
-        <Input
+        <Input placeholder="e.g. Main menu"
           id="new-menu-name"
           autoFocus
           value={newName}
@@ -391,7 +391,7 @@ function MenuEditor({ detail, readOnly, dirty, setDirty, announce, onSaved, onRe
             <label htmlFor="menu-name" style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
               Menu name
             </label>
-            <Input
+            <Input placeholder="e.g. Main menu"
               id="menu-name"
               value={draft.name}
               maxLength={MENU_LIMITS.name}

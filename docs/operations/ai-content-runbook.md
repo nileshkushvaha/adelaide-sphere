@@ -22,7 +22,7 @@ Phase 1G, 19 September 2026. Covers the AI Content feature (Phases 1A–1G) on t
 4. **RBAC**: run the existing permission sync (`pnpm --filter api admin:seed-rbac`). Then assign deliberately:
    - `ai_content.view`, `.manage_topics`, `.review`, `.generate`, `.approve`, `.configure`.
    - Publishing still needs `posts.publish`.
-5. **Secrets**: set `OPENAI_API_KEY` in the **worker's** server environment only. Never put it in settings, chat or a repository. Without it, nothing paid is ever sent.
+5. **Secrets**: set `OPENAI_API_KEY` (and, for the image candidates, `XAI_API_KEY` / `GEMINI_API_KEY`) in the **worker's** server environment only, from separately billed API accounts, never consumer plans or the Gemini free tier. Never put them in settings, chat or a repository. Without a key, that provider is never called; without an approved price, no provider is.
 6. **Worker settings**: `AI_WORKER_CONCURRENCY` (default 1, at most 4).
 
 Automation stays **off** after deploy. Nothing happens until step 7.
@@ -39,11 +39,13 @@ In the admin:
    - text budget (USD 0.50 per day / 10.00 per month / 0.25 per article by default);
    - image budget (0 until set);
    - image mode (hybrid);
-   - then **Automation configured enabled**.
+   - then **AI automation enabled**.
 3. **Research Sources:** register the official sources for your topics.
 4. **Daily slot** (optional): turn on "Daily slot enabled". Then approve topics with "Approve for the daily slot".
 
 ## 3. Pilot (the Phase 1 acceptance evidence still outstanding)
+
+> **Image-provider pilot** (provider amendment 01 §23): use **Compare providers** on an article in review (needs `ai_content.generate` + `ai_content.configure`). Check the quoted total, then run. Review the results side by side and approve at most one through the normal approval. Read the recorded facts under **AI pricing → Image pilot evidence**. The hard ceiling is set by the image budget (375/375 minor for USD 3.75, corrected for configuration-dependent prices); raise `maxWorkflowCostMinor` to 75 for the pilot and restore 25 afterwards. Keep the pilot manual: `titleMode` manual, `postingEnabled` off and `publicationMode` review_required. For xAI, approve one price per resolution and quality used; a billed cost that does not match halts paid calls.
 
 Run 1–3 controlled articles end to end and record, for each:
 
@@ -81,7 +83,7 @@ Review the drafts for accuracy and usefulness before publishing each one manuall
 
 ## 5. Kill switch
 
-**AI Settings → turn off "Automation configured enabled".** Immediately:
+**AI Settings → turn off "AI automation enabled".** Immediately:
 
 - No research, discovery, slot, draft or image request starts. In-flight operations are fenced (the control epoch advances), so late results are kept as proposals and never applied.
 - **Scheduled AI articles are held.** Human publishing of ordinary articles is unaffected.

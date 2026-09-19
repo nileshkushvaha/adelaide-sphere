@@ -163,7 +163,7 @@ export function ServiceAlertEditorPage() {
         <Input.TextArea rows={4} maxLength={400} showCount placeholder="What visitors need to know, and what to do about it." />
       </Form.Item>
       <Form.Item label="Severity" name="severity" extra="Emergency interrupts what a screen reader is saying, so keep it for genuine outages." rules={[{ required: true }]}>
-        <FormSelect
+        <FormSelect placeholder="Choose a severity"
           style={{ maxWidth: 280 }}
           options={ALERT_SEVERITIES.map((severity) => ({ value: severity, label: alertPresentation(severity).label }))}
         />
@@ -187,7 +187,7 @@ export function ServiceAlertEditorPage() {
         <InputNumber min={0} max={100} placeholder="0" />
       </Form.Item>
       <Form.Item label="Display order" name="displayOrder">
-        <InputNumber min={0} max={9999} />
+        <InputNumber placeholder="0" min={0} max={9999} />
       </Form.Item>
 
       <div style={{ marginTop: 8 }}>

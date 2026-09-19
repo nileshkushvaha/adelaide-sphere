@@ -1,3 +1,4 @@
+import { AiWorkspace } from "@/pages/ai-content/AiWorkspace";
 import { Suspense, lazy } from 'react';
 import { Authenticated } from '@refinedev/core';
 import { CatchAllNavigate } from '@refinedev/react-router';
@@ -124,6 +125,7 @@ export function AppRoutes() {
         <Route path="/areas/:id" element={<TermEditorPage config={AREAS_CONFIG} />} />
         <Route path="/media" element={<MediaLibraryPage />} />
         <Route path="/media/:id" element={<MediaDetailPage />} />
+        <Route element={<AiWorkspace />}>
         <Route path="/ai-content" element={<AiOverviewPage />} />
         <Route path="/ai-content/topics" element={<AiTopicQueuePage />} />
         <Route path="/ai-content/topics/:id" element={<AiTopicDetailPage />} />
@@ -132,6 +134,7 @@ export function AppRoutes() {
         <Route path="/ai-content/pricing" element={<PricingPage />} />
         <Route path="/ai-content/schedule" element={<SchedulePage />} />
         <Route path="/ai-content/settings" element={<AiSettingsPage />} />
+        </Route>
         <Route path="/posts" element={<PostsPage />} />
         <Route path="/posts/new" element={<PostEditorPage />} />
         <Route path="/posts/:id" element={<PostEditorPage />} />

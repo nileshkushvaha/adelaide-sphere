@@ -1,4 +1,4 @@
-import type { ImageRequest } from '@adelaide-sphere/database/automation';
+import { imageModelCapability, nativeImageSize, type ImageRequest } from '@adelaide-sphere/database/automation';
 import type { ImageUsage } from '@adelaide-sphere/domain';
 import type { ImageOutcome, ImageProvider } from './image-provider.js';
 import { classify, OPENAI_API_BASE, retryAfterMs, safeJson, type FetchLike } from './openai-provider.js';
@@ -42,7 +42,12 @@ export class OpenAiImageProvider implements ImageProvider {
   ) {}
 
   async generate(request: ImageRequest): Promise<ImageOutcome> {
-    const body = JSON.stringify({ model: request.model, prompt: request.prompt, size: request.size, quality: request.quality, output_format: request.outputFormat, moderation: 'auto', n: 1 });
+    // The neutral aspect ratio and resolution map to OpenAI's exact pixel size (declared in the capability layer).
+    const cap = imageModelCapability('openai', request.model);
+    const size = cap ? nativeImageSize(cap, request.aspectRatio, request.resolution) : null;
+    if (!size) return { kind: 'rejected', errorClass: 'unsupported_request', retryable: false, retryAfterMs: 0 };
+    // GPT image models always return base64 (the URL format is not offered), so no provider URL can arise.
+    const body = JSON.stringify({ model: request.model, prompt: request.prompt, size, quality: request.quality, output_format: 'png', moderation: 'auto', n: 1 });
     let response;
     try {
       response = await this.fetchImpl(`${this.base}/images/generations`, {
@@ -58,13 +63,19 @@ export class OpenAiImageProvider implements ImageProvider {
     const text = await response.text().catch(() => null);
     if (response.status >= 200 && response.status < 300) {
       if (text === null) return { kind: 'unknown', errorClass: 'image_body_lost' };
-      if (text.length > MAX_RESPONSE_CHARS) return { kind: 'generated', bytes: null, usage: null, size: null, quality: null };
+      if (text.length > MAX_RESPONSE_CHARS) return { kind: 'generated', bytes: null, usage: null, images: 1, servedModel: null, providerRequestId: null, mismatch: null, reportedCostMicros: null };
       const json = safeJson(text) as Record<string, unknown> | null;
       if (!json) return { kind: 'unknown', errorClass: 'image_body_unreadable' };
       const first = Array.isArray(json.data) ? (json.data[0] as { b64_json?: unknown } | undefined) : undefined;
       const b64 = typeof first?.b64_json === 'string' ? first.b64_json : null;
       const bytes = b64 && /^[A-Za-z0-9+/]+={0,2}$/.test(b64) ? Buffer.from(b64, 'base64') : null;
-      return { kind: 'generated', bytes: bytes && bytes.byteLength > 0 ? bytes : null, usage: usageOf(json), size: typeof json.size === 'string' ? json.size : null, quality: typeof json.quality === 'string' ? json.quality : null };
+      // The response echoes size and quality; anything other than what was requested was not what was priced.
+      const reportedSize = typeof json.size === 'string' ? json.size : null;
+      const reportedQuality = typeof json.quality === 'string' ? json.quality : null;
+      const mismatch = (reportedSize !== null && reportedSize !== size) || (reportedQuality !== null && reportedQuality !== request.quality) ? `${reportedSize ?? '?'} ${reportedQuality ?? '?'}, requested ${size} ${request.quality}` : null;
+      const images = Array.isArray(json.data) ? Math.max(1, json.data.length) : 1;
+      // The images response names no model and carries no request id.
+      return { kind: 'generated', bytes: bytes && bytes.byteLength > 0 ? bytes : null, usage: usageOf(json), images, servedModel: null, providerRequestId: null, mismatch, reportedCostMicros: null };
     }
     const refused = classify(response.status, text === null ? null : safeJson(text));
     if (refused) {

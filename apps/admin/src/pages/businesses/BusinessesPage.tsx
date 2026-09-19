@@ -168,7 +168,7 @@ export function BusinessesPage() {
                 { value: 'no', label: 'Not featured' },
               ]}
             />
-            <Select
+            <Select placeholder="Sort by"
               aria-label="Sort by"
               value={sortKey}
               onChange={(value: SortKey) => {

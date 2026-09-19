@@ -252,7 +252,7 @@ export function CommentsPage() {
         {dialogError && <Alert type="error" showIcon role="alert" message={dialogError} style={{ marginBottom: 12 }} />}
         <Form form={decisionForm} layout="vertical" requiredMark={false}>
           <Form.Item label="Reason (recorded in the audit log)" name="reason" rules={pending && DECISIONS[pending.decision].reasonRequired ? [{ required: true, message: 'A reason is required' }] : undefined}>
-            <Input.TextArea rows={3} maxLength={500} />
+            <Input.TextArea placeholder="Why, for the audit log" rows={3} maxLength={500} />
           </Form.Item>
         </Form>
       </Modal>
@@ -266,7 +266,7 @@ export function CommentsPage() {
         {dialogError && <Alert type="error" showIcon role="alert" message={dialogError} style={{ marginBottom: 12 }} />}
         <Form form={replyForm} layout="vertical" requiredMark={false}>
           <Form.Item label="Your reply" name="text" rules={[{ required: true, min: 2, message: 'Write a reply of at least 2 characters' }]}>
-            <Input.TextArea rows={5} maxLength={2000} showCount />
+            <Input.TextArea placeholder="Write your reply" rows={5} maxLength={2000} showCount />
           </Form.Item>
         </Form>
       </Modal>
@@ -275,7 +275,7 @@ export function CommentsPage() {
         {dialogError && <Alert type="error" showIcon role="alert" message={dialogError} style={{ marginBottom: 12 }} />}
         <Form form={redactForm} layout="vertical" requiredMark={false}>
           <Form.Item label="Published text" name="publicText">
-            <Input.TextArea rows={4} maxLength={2000} />
+            <Input.TextArea placeholder="The text readers will see" rows={4} maxLength={2000} />
           </Form.Item>
           <Form.Item label="Reason" name="reason" rules={[{ required: true, min: 5, message: 'Give at least 5 characters' }]}>
             <Input maxLength={500} placeholder="e.g. Off topic for this article" />

@@ -2706,3 +2706,76 @@ Additive migration `20260918210000_ai_content_fact_confirmation` (test DB only).
 - **Next:** Phase 1 acceptance needs the pilot and the owner's review. Phase 2 needs separate approval. Record: [Phase 1G completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1g-completion.md).
 
 - **Update (19 Sep 2026):** owner-authorised: `20260919180000_ai_content_retention` applied to `adelaide_sphere_dev` after a dump; schema up to date. The dev servers were not running, so no live route check was possible.
+
+## Dev RBAC sync — 19 September 2026
+
+- Symptom: after the AI migrations, the AI screens did not appear in the dev admin. Cause: the permission catalogue had never been synced on `adelaide_sphere_dev`, so no `ai_content.*` permission existed and the menu hid every AI screen (the deploy step "run RBAC sync" from 1A–1G had not been run on dev).
+- Owner-requested fix: `node dist/cli/bootstrap-admin.js --seed-only` (the `admin:seed-rbac` command without its `nest build`, so the running API's `dist/` was not rewritten). Dry-run first: nothing to retire. Result: 6 permissions created (`ai_content.view`, `.manage_topics`, `.review`, `.generate`, `.approve`, `.configure`), all granted to Super Admin; sessions refresh on the next request.
+- Other roles still need these permissions assigned deliberately (Admin → Roles).
+
+## AI provider amendment 01 (Google Gemini) — proposed 19 September 2026
+
+- Owner-requested planning only. The request assumed a point before 1E; 1E–1G are already implemented and accepted, so this is a follow-on amendment and does not restructure 1E.
+- Official Google documentation was checked on 19 September 2026: models, pricing, API terms (Workspace ≠ API; free-tier data use; under-18 clause), image generation, the Interactions API, structured output and errors.
+- Added proposed requirements AI-PROVIDER-01–10 and AI-IMAGE-PROVIDER-01–07, with the matrix rows and plan §Q. No code, schema, settings or provider call.
+- **Stopped for owner review.** Record: [Provider amendment 01](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-provider-amendment-01.md).
+
+- **Update (19 Sep 2026):**
+  - On the owner's explicit instruction, Amendment 01 is appended to the master AI SRS (additive; the original text is verified unchanged).
+  - AI-PROVIDER-11 and AI-IMAGE-PROVIDER-08/09 are added.
+  - The OpenAI-versus-Gemini image comparison (official sources) and the revised 1E.1/1E.2/1E.3 mapping are recorded.
+  - Recommended 1E.2: Gemini `gemini-3.1-flash-image`. The owner decides. Documentation only; stopped for owner approval.
+
+- **Update (19 Sep 2026, xAI):**
+  - Researched xAI/Grok from official docs (docs.x.ai; x.ai/legal).
+  - Key facts:
+    - the API is under separate Enterprise terms and billed per image (consumer plan ≠ API);
+    - `grok-imagine-image-2.0` is USD 0.04 per image, with no documented 1K/2K difference;
+    - native 16:9;
+    - the default response is a hosted URL, so we must request `b64_json`;
+    - no Retry-After, request id or idempotency documented;
+    - 30-day retention, and no training without permission;
+    - US-only processing, with no guaranteed region;
+    - retired models are silently redirected.
+  - Amendment §14–§21, SRS Amendment 01 and the matrix are updated. Stopped for owner approval.
+
+## AI image providers: P1, xAI, Gemini, comparison mode — 19 September 2026
+
+Owner-approved scope: P1 → xAI adapter → Gemini image adapter → comparison mode → pilot preparation → STOP. 1E.2 is not selected. **Uncommitted; no live provider call; dev DB not migrated.**
+
+- **P1:**
+  - the neutral request `{provider, model, aspectRatio, resolution, quality}` (OpenAI 1E request byte-identical);
+  - the `IMAGE_MODELS` capability registry (billing unit, text/thinking, inline bytes, served model, request id, reconciliation, grounding, location, retention);
+  - allowlisted `imageProvider`/`imageModel`/`imageAspectRatio`/`imageResolution` settings;
+  - per-image or per-token price units with text/thinking bounds;
+  - unit-aware settlement;
+  - model-substitution halt;
+  - request id, served model and latency on jobs.
+- **Adapters:**
+  - xAI: forces `b64_json`; per-image billing; substitution guard.
+  - Gemini: Interactions API; no tools; `store: false`; thinking billed as text output.
+  - Each has contract tests over fixture fetch.
+- **Comparison mode:** quote → confirm (the total must match) → one budgeted operation per provider, all or nothing. It uses a `comparison` slot that never supersedes featured versions and is never attached. Approving one through the normal approval replaces the rest. It also adds an evidence endpoint and an admin card.
+- **Migrations:** `20260919200000_ai_image_providers_p1` and `20260919210000_ai_image_comparison` (additive; the 1E price size maps to `1k`). Applied to the test DB only.
+- **Tests:** images spec 13/13; `pnpm test` all green (worker 146, admin 369); integration 408/408 + 5/5; e2e 20/20; typecheck, lint, builds, contracts and migration policy pass; two mutation checks caught.
+- **Pilot proposal:** 8 briefs × 4 settings plus a 2K subset, hard ceiling USD 3.00 for images. It needs credentials, configuration and briefs from the owner: [amendment §23](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-provider-amendment-01.md).
+- **Update (19 Sep 2026): xAI pricing correction and dev migration.**
+  - Configuration-dependent xAI prices; `auto` not offered; reservation at the highest approved configuration; settlement at the reported `cost_in_usd_ticks`, checked against the approved price.
+  - The pilot configuration is proven manual-only.
+  - Images spec 14/14; integration 409/409 + 5/5.
+  - Owner-authorised: both migrations applied to `adelaide_sphere_dev` after a dump.
+  - Live fixes: the zero-budget warning, a doubled full stop, and the stale AI Settings header. See amendment §24.
+
+
+## 19 September 2026 — AI content admin UI refresh
+
+Reviewed the overview, topics, topic detail, fact review, sources, pricing, schedule and settings routes, including research/generation/image panels. Added shared permission-aware navigation, linked queue counts and URL filters, consistent theme-based statuses and semantic card headings. Grouped settings, added a sticky save bar, and display spending limits in currency units while retaining integer minor units in requests. Creation/proposal forms collapse to keep queues readable. Fact review no longer shows manual-topic creation. Image comparisons keep inputs locked during requests and explain the 2–4 model selection.
+
+Verification: admin TypeScript and ESLint; existing assertions updated for changed labels and expanded forms, **not executed** (owner's no-suite rule). Signed-in Chrome overview/topic rendering verified. Full mobile/dark-theme visual sweep remains open. Existing uncommitted provider work retained. No business settings, database migrations, paid calls, deployment, commit or push. Details: `docs/audits/ai-content-ui-refresh.md`.
+- **Update (19 Sep 2026):**
+  - Correction override: approve a topic whose only overlap is a cancelled topic, with a reason, audited.
+  - Admin placeholders on every visible input.
+  - Settings copy and label fixes.
+  - Isolated rehearsal and live dev research (no paid call).
+  - Pilot ceiling corrected to USD 3.75.
+  - Integration 411/411 + 5/5; unit, e2e, lint, typecheck and builds pass (amendment §24.7).

@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Equals, IsIn, IsInt, IsISO8601, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import { PaginationQueryDto } from '../common/pagination.js';
+import { ArrayMaxSize, ArrayMinSize, Equals, IsArray, IsIn, IsInt, IsISO8601, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength, ValidateNested } from 'class-validator';
 
 const ID = /^[a-z0-9]{20,40}$/;
 
@@ -50,21 +52,25 @@ export class ResumePaidCallsDto {
 
 export class ProposePriceDto {
   @ApiProperty({ maxLength: 64 }) @IsString() @Matches(/^[a-z0-9][a-z0-9.-]{2,63}$/) version!: string;
-  @ApiProperty({ enum: ['openai'] }) @IsIn(['openai']) provider!: 'openai';
-  @ApiProperty({ enum: ['gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-image-2.5-flare'] }) @IsIn(['gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-image-2.5-flare']) model!: string;
+  @ApiProperty({ enum: ['openai', 'xai', 'google'] }) @IsIn(['openai', 'xai', 'google']) provider!: string;
+  @ApiProperty({ description: 'A listed text or image model of the provider.' }) @IsString() @Matches(/^[a-z0-9][a-z0-9.-]{1,63}$/) model!: string;
   @ApiProperty({ enum: ['USD', 'AUD', 'EUR', 'GBP'] }) @IsIn(['USD', 'AUD', 'EUR', 'GBP']) currency!: string;
-  @ApiProperty({ description: 'Millionths of the currency per million input tokens (USD 2.00 = 2000000).' }) @IsInt() @Min(1) @Max(1_000_000_000) inputMicrosPerMTok!: number;
+  @ApiProperty({ description: 'Millionths of the currency per million input tokens (USD 2.00 = 2000000); zero only for a per-image price that bills no input.' }) @IsInt() @Min(0) @Max(1_000_000_000) inputMicrosPerMTok!: number;
   @ApiProperty() @IsInt() @Min(0) @Max(1_000_000_000) cachedInputMicrosPerMTok!: number;
-  @ApiProperty() @IsInt() @Min(1) @Max(1_000_000_000) outputMicrosPerMTok!: number;
+  @ApiProperty({ description: 'Per million output tokens; zero only for a per-image price, which has no token output rate.' }) @IsInt() @Min(0) @Max(1_000_000_000) outputMicrosPerMTok!: number;
   @ApiProperty({ description: 'Input tokens above which a different price applies; such calls are refused.' }) @IsInt() @Min(1000) @Max(10_000_000) longContextThresholdTokens!: number;
-  @ApiPropertyOptional({ enum: ['1536x1024', '1024x1024', '1024x1536'], description: 'Image models only: the size this price covers.' }) @IsOptional() @IsIn(['1536x1024', '1024x1024', '1024x1536']) imageSize?: string;
-  @ApiPropertyOptional({ enum: ['low', 'medium', 'high'], description: 'Image models only: the quality this price covers.' }) @IsOptional() @IsIn(['low', 'medium', 'high']) imageQuality?: string;
-  @ApiPropertyOptional({ minimum: 1, maximum: 100000, description: 'Image models only: the most output tokens one image at this size and quality may use. A call is bounded by it; usage above it halts paid calls.' })
+  @ApiPropertyOptional({ enum: ['0.5k', '1k', '2k', '4k'], description: 'Image models only: the resolution tier this price covers.' }) @IsOptional() @IsIn(['0.5k', '1k', '2k', '4k']) imageResolution?: string;
+  @ApiPropertyOptional({ enum: ['low', 'medium', 'high', 'auto'], description: 'Image models only: the quality this price covers.' }) @IsOptional() @IsIn(['low', 'medium', 'high', 'auto']) imageQuality?: string;
+  @ApiPropertyOptional({ enum: ['token', 'image'], description: 'Image models only: how the provider bills, which must match the model.' }) @IsOptional() @IsIn(['token', 'image']) pricingUnit?: 'token' | 'image';
+  @ApiPropertyOptional({ minimum: 1, maximum: 100000, description: 'Token unit: the most image output tokens one image may use. Usage above it halts paid calls.' })
   @IsOptional()
   @IsInt()
   @Min(1)
   @Max(100_000)
   maxOutputTokens?: number;
+  @ApiPropertyOptional({ minimum: 1, description: 'Image unit: millionths of the currency per generated image (USD 0.04 = 40000).' }) @IsOptional() @IsInt() @Min(1) @Max(100_000_000) perImageMicros?: number;
+  @ApiPropertyOptional({ minimum: 1, description: 'Text or thinking output billed with an image, per million tokens (only for models that bill it).' }) @IsOptional() @IsInt() @Min(1) @Max(1_000_000_000) textOutputMicrosPerMTok?: number;
+  @ApiPropertyOptional({ minimum: 1, maximum: 100000, description: 'The most text or thinking tokens one image may use.' }) @IsOptional() @IsInt() @Min(1) @Max(100_000) maxTextOutputTokens?: number;
   @ApiProperty({ maxLength: 500 }) @IsString() @Matches(/^https:\/\/[^\s]+$/) @MaxLength(500) sourceUrl!: string;
   @ApiProperty() @IsISO8601() effectiveFrom!: string;
 }
@@ -76,6 +82,34 @@ export class GenerateImageDto {
   @IsString()
   @MaxLength(1000)
   prompt?: string;
+}
+
+export class ComparisonCandidateDto {
+  @ApiProperty({ enum: ['openai', 'xai', 'google'] }) @IsIn(['openai', 'xai', 'google']) provider!: string;
+  @ApiProperty({ description: 'A listed image model of the provider.' }) @IsString() @Matches(/^[a-z0-9][a-z0-9.-]{1,63}$/) model!: string;
+  @ApiProperty({ enum: ['1k', '2k'] }) @IsIn(['1k', '2k']) resolution!: string;
+  @ApiProperty({ enum: ['low', 'medium', 'high', 'auto'] }) @IsIn(['low', 'medium', 'high', 'auto']) quality!: string;
+}
+
+export class QuoteImageComparisonDto {
+  @ApiPropertyOptional({ maxLength: 1000, description: "A generic scene; defaults to the draft's image brief. The same screened prompt goes to every provider." })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  prompt?: string;
+  @ApiProperty({ enum: ['3:2', '16:9', '1:1', '2:3'] }) @IsIn(['3:2', '16:9', '1:1', '2:3']) aspectRatio!: string;
+  @ApiProperty({ type: [ComparisonCandidateDto], minItems: 2, maxItems: 4 })
+  @IsArray()
+  @ArrayMinSize(2)
+  @ArrayMaxSize(4)
+  @ValidateNested({ each: true })
+  @Type(() => ComparisonCandidateDto)
+  candidates!: ComparisonCandidateDto[];
+}
+
+export class RequestImageComparisonDto extends QuoteImageComparisonDto {
+  @ApiProperty({ minimum: 1 }) @IsInt() @Min(1) expectedVersion!: number;
+  @ApiProperty({ minimum: 1, description: 'The total maximum shown by the quote; refused if the prices changed since.' }) @IsInt() @Min(1) expectedTotalMicros!: number;
 }
 
 export class ApproveImageDto {
@@ -92,4 +126,9 @@ export class RejectImageDto {
 export class ReviewSlotDto {
   @ApiProperty({ minimum: 1 }) @IsInt() @Min(1) expectedVersion!: number;
   @ApiProperty({ maxLength: 500, description: 'What was checked or decided about the missed slot.' }) @IsString() @MinLength(5) @MaxLength(500) note!: string;
+}
+
+export class ImageEvidenceQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({ enum: ['featured', 'comparison'] }) @IsOptional() @IsIn(['featured', 'comparison']) slot?: 'featured' | 'comparison';
+  @ApiPropertyOptional({ description: 'One topic only.' }) @IsOptional() @Matches(ID) itemId?: string;
 }

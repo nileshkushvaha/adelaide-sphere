@@ -123,7 +123,7 @@ export function HoursEditor({ businessId, businessVersion, readOnly, onSaved }: 
       {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 12 }} />}
       <Form<HoursFormValues> form={form} layout="vertical" requiredMark={false} onFinish={submit} disabled={readOnly || state.status !== 'ready'} initialValues={{ mode: 'unknown', weekly: emptyWeek(), exceptions: [] }}>
         <Form.Item label="Hours" name="mode" extra="Unknown hours are never shown as open or closed on the public site.">
-          <Select style={{ maxWidth: 320 }} options={[{ value: 'unknown', label: 'Not recorded yet' }, { value: 'scheduled', label: 'Weekly schedule' }]} />
+          <Select placeholder="Choose how hours are recorded" style={{ maxWidth: 320 }} options={[{ value: 'unknown', label: 'Not recorded yet' }, { value: 'scheduled', label: 'Weekly schedule' }]} />
         </Form.Item>
         {mode === 'scheduled' && (
           <>
@@ -133,7 +133,7 @@ export function HoursEditor({ businessId, businessVersion, readOnly, onSaved }: 
               <div key={day} className="as-hours-day">
                 <Typography.Text strong style={{ paddingTop: 6 }}>{capitalise(day)}</Typography.Text>
                 <Form.Item name={['weekly', day, 'state']} style={{ marginBottom: 8 }}>
-                  <Select aria-label={`${capitalise(day)} hours`} options={DAY_STATES} />
+                  <Select placeholder={"Choose the day's hours"} aria-label={`${capitalise(day)} hours`} options={DAY_STATES} />
                 </Form.Item>
                 <div>{weekly?.[day]?.state === 'intervals' && <IntervalRows name={['weekly', day, 'intervals']} disabled={readOnly} />}</div>
               </div>
@@ -150,7 +150,7 @@ export function HoursEditor({ businessId, businessVersion, readOnly, onSaved }: 
                           <Input type="date" />
                         </Form.Item>
                         <Form.Item name={[field.name, 'kind']} label="Hours" style={{ width: 170 }}>
-                          <Select aria-label="Exception hours" style={{ width: '100%' }} options={EXCEPTION_KINDS} />
+                          <Select placeholder="Choose the exception" aria-label="Exception hours" style={{ width: '100%' }} options={EXCEPTION_KINDS} />
                         </Form.Item>
                         <Form.Item name={[field.name, 'note']} label="Note" style={{ width: 220 }}>
                           <Input maxLength={120} placeholder="e.g. Christmas Day" />

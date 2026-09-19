@@ -206,10 +206,13 @@ export {
   effectiveImageMode,
   imagePromptProblems,
   imagePromptWithPolicy,
-  imageTokenUsage,
+  imageCallCostMicros,
+  imageUsageTokens,
   maxImageCallCostMicros,
   type ImageMode,
   type ImagePromptProblem,
+  type ImagePrice,
+  type ImagePriceUnit,
   type ImageUsage,
 } from './ai-images.js';
 export { WEEKDAYS, addDays, localDate, localWeekday, parseSlotTime, parseWeekdays, zonedTimeToUtc, type Weekday } from './ai-schedule.js';

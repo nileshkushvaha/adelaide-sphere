@@ -375,7 +375,7 @@ export function BusinessEditorPage() {
                     <Col xs={24} md={12}><Form.Item label="Longitude" name={['address', 'longitude']} extra="Optional. Places the pin on the map."><InputNumber style={{ width: '100%' }} min={129} max={141} step={0.000001} placeholder="138.6007" /></Form.Item></Col>
                   </Row>
                   <Form.Item label="What visitors see" name="addressVisibility" extra="Choose the area only where a business works from home or by appointment." style={{ marginBottom: 0 }}>
-                    <Select options={[{ value: 'full', label: 'The full street address' }, { value: 'areaOnly', label: 'The local area only' }]} />
+                    <Select placeholder="Choose what visitors see" options={[{ value: 'full', label: 'The full street address' }, { value: 'areaOnly', label: 'The local area only' }]} />
                   </Form.Item>
                 </>
               )}
@@ -394,7 +394,7 @@ export function BusinessEditorPage() {
                     {fields.map((field) => (
                       <div key={field.key} className="as-field-row">
                         <Form.Item name={[field.name, 'kind']} style={{ marginBottom: 8, width: 150 }}>
-                          <Select aria-label="Link type" style={{ width: '100%' }} optionLabelProp="title" options={LINK_KINDS.map((k) => ({ value: k, title: brandLabel(k), label: <BrandOptionLabel kind={k} /> }))} />
+                          <Select placeholder="Choose a link type" aria-label="Link type" style={{ width: '100%' }} optionLabelProp="title" options={LINK_KINDS.map((k) => ({ value: k, title: brandLabel(k), label: <BrandOptionLabel kind={k} /> }))} />
                         </Form.Item>
                         <Form.Item name={[field.name, 'url']} rules={[{ required: true, message: 'URL is required' }]} style={{ marginBottom: 8, width: 300 }}>
                           <Input aria-label="Link URL" placeholder="https://facebook.com/yourpage" maxLength={500} inputMode="url" />

@@ -227,7 +227,7 @@ export function EnquiriesPage() {
         {dialogError && <Alert type="error" showIcon role="alert" message={dialogError} style={{ marginBottom: 12 }} />}
         <Form form={form} layout="vertical" requiredMark={false}>
           <Form.Item label="Reason (recorded in the audit log)" name="reason" rules={[{ required: true, min: 5, message: 'Give at least 5 characters' }]}>
-            <Input.TextArea rows={3} maxLength={500} />
+            <Input.TextArea placeholder="Why, for the audit log" rows={3} maxLength={500} />
           </Form.Item>
         </Form>
       </Modal>

@@ -150,6 +150,12 @@ export interface AdmissionInput {
   followUp?: { postId: string; reason: string } | null;
   /** Phase 1F: approve for the daily slot. Admitted now; research starts when a slot takes it. */
   forSlot?: boolean;
+  /**
+   * A person's correction of a topic they cancelled (for example a wrong brief): allowed only when every
+   * overlap is a cancelled topic. Those cancelled topics are marked as replaced and leave the inventory;
+   * this admitted topic now represents the subject. Never for a rejected topic, an active one or an article.
+   */
+  correction?: { reason: string } | null;
 }
 
 /**
@@ -168,9 +174,24 @@ export async function admitTopic(tx: Tx, input: AdmissionInput) {
   if (input.forSlot && item.status !== 'queued') throw new ResearchCommandError('INVALID_TRANSITION', 'Only a queued topic can wait for the daily slot.');
   if (!settings.enabled) throw new ResearchCommandError('AUTOMATION_DISABLED', 'AI automation is switched off, so no research can start.');
   if (item.researchUrls.length === 0) throw new ResearchCommandError('NO_RESEARCH_SOURCES', 'Add at least one source page before approving research.', 400, { fields: { researchUrls: ['Add at least one https source page'] } });
-  const novelty = await assessNovelty(tx, { title: item.title, itemId: item.id, includeUnadmitted: false });
+  if (input.followUp && input.correction) throw new ResearchCommandError('VALIDATION_ERROR', 'Approve either as a follow-up of an article or as a correction, not both.', 400, { fields: { correctionReason: ['Choose one'] } });
+  let novelty = await assessNovelty(tx, { title: item.title, itemId: item.id, includeUnadmitted: false });
   if (novelty.status === 'duplicate') {
     throw new ResearchCommandError('NOVELTY_DUPLICATE', 'This topic duplicates existing content or another topic.', 409, { novelty: noveltyDetailJson(novelty.matches) });
+  }
+  let corrected: string[] = [];
+  if (input.correction) {
+    // Only cancelled history may be corrected; anything else (a rejected idea, an article, an active topic) still decides.
+    const others = novelty.matches.filter((m) => !(m.kind === 'item' && m.status === 'cancelled'));
+    if (novelty.status !== 'review' || others.length > 0 || novelty.matches.length === 0) {
+      throw new ResearchCommandError('NOVELTY_REVIEW_REQUIRED', 'Only a topic whose sole overlap is a cancelled topic can be approved as a correction.', 409, { novelty: noveltyDetailJson(novelty.matches) });
+    }
+    corrected = novelty.matches.map((m) => m.id);
+    // The cancelled topics stay on record (and in the audit trail) but no longer take part in novelty.
+    await tx.aIContentItem.updateMany({ where: { id: { in: corrected }, status: 'cancelled' }, data: { topicTokens: null } });
+    for (const id of corrected) await auditItem(tx, 'ai_content.topic.replaced_by_correction', id, input.adminId, { correctedBy: item.id, reason: input.correction.reason.slice(0, 200) }, input.requestId);
+    novelty = await assessNovelty(tx, { title: item.title, itemId: item.id, includeUnadmitted: false });
+    if (novelty.status !== 'clear') throw new ResearchCommandError('NOVELTY_REVIEW_REQUIRED', 'This topic still overlaps other content.', 409, { novelty: noveltyDetailJson(novelty.matches) });
   }
   if (novelty.status === 'review' && !input.followUp) {
     throw new ResearchCommandError('NOVELTY_REVIEW_REQUIRED', 'This topic overlaps existing content. Approve it only as a justified follow-up.', 409, { novelty: noveltyDetailJson(novelty.matches) });
@@ -195,13 +216,14 @@ export async function admitTopic(tx: Tx, input: AdmissionInput) {
     failureStage: null,
     failureCode: null,
     ...(input.followUp ? { followUpOfPostId: input.followUp.postId, followUpReason: input.followUp.reason.slice(0, 500) } : {}),
+    ...(input.correction ? { followUpReason: `Correction of a cancelled topic: ${input.correction.reason}`.slice(0, 500) } : {}),
   });
   if (input.forSlot) {
-    await auditItem(tx, 'ai_content.topic.approved_for_slot', item.id, input.adminId, { novelty: novelty.status, followUp: Boolean(input.followUp), inventoryEpoch: epoch }, input.requestId);
+    await auditItem(tx, 'ai_content.topic.approved_for_slot', item.id, input.adminId, { novelty: novelty.status, followUp: Boolean(input.followUp), correctionOf: corrected.join(',') || null, inventoryEpoch: epoch }, input.requestId);
     return null;
   }
   const opened = await openPacket(tx, item.id, item.title, epoch, settings);
-  await auditItem(tx, 'ai_content.topic.approved', item.id, input.adminId, { novelty: novelty.status, followUp: Boolean(input.followUp), packetVersion: opened.packetVersion, inventoryEpoch: epoch }, input.requestId);
+  await auditItem(tx, 'ai_content.topic.approved', item.id, input.adminId, { novelty: novelty.status, followUp: Boolean(input.followUp), correctionOf: corrected.join(',') || null, packetVersion: opened.packetVersion, inventoryEpoch: epoch }, input.requestId);
   return opened;
 }
 

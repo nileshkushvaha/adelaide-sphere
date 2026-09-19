@@ -134,7 +134,7 @@ export function LinkDialog({ initialUrl, onCancel, onApply, onRemove }: { initia
             children: (
               <Space direction="vertical" style={{ width: '100%' }}>
                 <Space.Compact style={{ width: '100%' }}>
-                  <Select aria-label="What to find" value={type} onChange={setType} options={LINK_TYPES.map((option) => ({ value: option.value, label: option.label }))} style={{ width: 180 }} />
+                  <Select placeholder="Choose what to find" aria-label="What to find" value={type} onChange={setType} options={LINK_TYPES.map((option) => ({ value: option.value, label: option.label }))} style={{ width: 180 }} />
                   <Input.Search aria-label="Search by name" placeholder="Search by name" allowClear onSearch={setQuery} />
                 </Space.Compact>
                 {results.status === 'ready' && results.data.length === 0 && <Typography.Text type="secondary">Nothing found.</Typography.Text>}

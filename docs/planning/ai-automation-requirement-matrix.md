@@ -584,3 +584,44 @@ Evidence:
 Details: [Phase 1G completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1g-completion.md).
 
 **Phase 1 is implemented but not accepted**: pilot evidence and owner acceptance are open. AI-379, AI-384 and AI-386 are only partly met, by owner decision. Not migrated on dev (1 behind), not deployed, not enabled. Phase 2 has not started.
+
+## Provider amendment 01 (Google Gemini) — proposed 19 September 2026
+
+Additive owner-directed amendment; the master SRS text is unchanged. Details and sources: [Provider amendment 01](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-provider-amendment-01.md).
+
+| ID | Requirement (short) | Current status | Planned workstream |
+|---|---|---|---|
+| AI-PROVIDER-01 | Several approved text providers, configuration-driven | Gap: single-provider constants | P1, P3 |
+| AI-PROVIDER-02 | Several approved image providers; ids and prices verified, not permanent | **Implemented (P1/xAI/Gemini, 19 Sep 2026)**: `IMAGE_MODELS` registry, three adapters; activation needs keys and approved prices | Pilot |
+| AI-PROVIDER-03 | Workspace ≠ API entitlement; paid Cloud-billed project only; never the free tier | Documented; activation rule | P2/P3 activation |
+| AI-PROVIDER-04 | Capability record fields (sizes, aspect, grounding, reconciliation, pricing, approval) | **Met for images** (P1 `ImageModelCapability`); text registry unchanged | P3 (text) |
+| AI-PROVIDER-05 | A provider change never weakens the gates | Met (gates are provider-independent) | Regression in P2/P3 |
+| AI-PROVIDER-06 | Explicit fallback only; never after an unknown outcome; default none | Met (no fallback) | P1 setting stays `none` |
+| AI-PROVIDER-07 | Credentials server-side only | Met (OpenAI); same rule for Gemini | P2/P3 |
+| AI-PROVIDER-08 | Provider grounding disabled; never evidence | **Met for images**: the Gemini adapter sends no tools (contract test) | P3 (text) |
+| AI-PROVIDER-09 | Backoff without a retry header; 5xx/timeout stays unknown | **Met** (OpenAI, xAI, Gemini image adapters; contract tests) | P3 (text) |
+| AI-PROVIDER-10 | Controlled comparative evaluation, proposals only | **Implemented for images** (comparison mode); the pilot awaits approval | Pilot |
+| AI-IMAGE-PROVIDER-01 | Gemini image candidate; HYBRID; automatic OFF | **Met**: Gemini adapter (fixtures only); hybrid and off unchanged | Pilot |
+| AI-IMAGE-PROVIDER-02 | Admin selects an approved provider and model; invalid combinations refused before a paid call | **Met** (P1 settings + capability validation; adapters refuse before fetch) | — |
+| AI-IMAGE-PROVIDER-03 | Full request provenance, including the provider request id | **Met** (request id where supplied: Gemini interaction id; served model; latency; evidence endpoint) | — |
+| AI-IMAGE-PROVIDER-04 | Media pipeline canonical; no provider URL | Met (1E) | — |
+| AI-IMAGE-PROVIDER-05 | Never documentary; watermark kept; disclosure still shown | Met (1E) | P2 (grounding off) |
+| AI-IMAGE-PROVIDER-06 | One featured image; supporting off; explicit budgeted regeneration | Met (1E) | — |
+| AI-IMAGE-PROVIDER-07 | The image price bounds all billed tokens, including text and thinking | **Met** (P1: text/thinking rate + bound, reserved and settled; unpriceable without a rate) | — |
+| AI-PROVIDER-11 | Every provider price stays proposed until an admin approves it; no approved or boundable price means no paid call | Met (1D/1E price schedules), provider-keyed | — |
+| AI-IMAGE-PROVIDER-08 | Configurable reader disclosure, initially "Illustrative image created with AI." | Met (1E `imageDisclosureText`, shown as the caption) | — |
+| AI-IMAGE-PROVIDER-09 | An unknown outcome never triggers automatic paid regeneration, with any provider | Met (1E hold; recovery never re-sends) | Regression in P2 |
+
+| AI-PROVIDER-12 | A consumer plan (Grok Free or paid, Google Workspace with Gemini) is never API entitlement | Documented; activation rule | P2/xAI activation |
+| AI-PROVIDER-13 | Pinned model; a reported or substituted model mismatch halts paid calls; retiring models removed before their date | **Met for images** (served model recorded; mismatch settles uncertain, halts, job `model_substituted`); OpenAI images report none | — |
+| AI-PROVIDER-14 | Processing location and retention recorded per provider/model and accepted by the owner | **Recorded** in the capability registry and shown in the price form and comparison quote; owner acceptance open | Pilot |
+| AI-IMAGE-PROVIDER-10 | Per-image or per-token price unit; worst-case reservation per unit | **Met** (P1 `pricingUnit`, `perImageMicros`) | — |
+| AI-IMAGE-PROVIDER-11 | Inline base64 results only; never keep a provider URL | **Met** (xAI requests `b64_json`, a URL-only result is unusable; Gemini inline; tests) | — |
+| AI-IMAGE-PROVIDER-12 | Controlled provider comparison: explicit, confirmed, separately budgeted per provider, never automatic, results never auto-attached | **Met** (quote → confirm with total; all-or-nothing; `comparison` slot; normal approval) | Pilot |
+| AI-IMAGE-PROVIDER-13 | Configuration-dependent prices; reservation at the highest approved configuration; settlement at the provider-reported cost, which must match the approved price or the call is uncertain and paid calls halt; provider-decided quality (`auto`) not offered | **Met** (19 Sep 2026 correction, amendment §24; xAI `cost_in_usd_ticks`) | Pilot |
+
+xAI/Grok was added as the third candidate image provider (19 September 2026). AI-PROVIDER-02 and 10 were amended accordingly.
+
+**19 September 2026: P1, the xAI and Gemini image adapters and comparison mode are implemented** (uncommitted; test DB only; no live call). Status above; details in [amendment §22](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-provider-amendment-01.md). 1E.2 is not selected; the pilot (§23) awaits approval.
+
+Also appended to the master SRS as "Amendment 01" (owner's explicit instruction; the original text is unchanged). Phase 1E is restructured as 1E.1 (foundation, implemented) / 1E.2 (first provider: owner decision after the controlled comparison) / 1E.3 (further providers).

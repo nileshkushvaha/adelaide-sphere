@@ -136,7 +136,7 @@ export function DocumentDetail({ asset }: { asset: MediaAsset }) {
       }
     >
       <Form.Item label="Title" name="title" extra="Shown as the link text when the document is added to an article, a page or a menu." rules={[{ required: true, whitespace: true, message: 'Give the document a title' }]}>
-        <Input maxLength={180} showCount />
+        <Input placeholder="Document title" maxLength={180} showCount />
       </Form.Item>
     </RecordEditorPage>
   );

@@ -334,6 +334,43 @@ describe('AI Content Phase 1C research and fact review (real MySQL/API, fixture 
       await setSources(again.id, [{ url: 'https://cafe.example.org/' }]);
       const refused = await approve(again.id, {}, 409);
       expect(refused.body.error.fields.novelty[0]).toMatch(/previously rejected/);
+      // A correction never overrides a REJECTED idea.
+      expect((await approve(again.id, { correctionReason: 'The earlier brief was wrong and has been fixed' }, 409)).body.error.message).toMatch(/cancelled topic/);
+    });
+
+    it('admits a topic that overlaps only a topic a person cancelled, as its recorded correction, and nothing else', async () => {
+      const original = await topic('Glenelg tram day out');
+      await admin(agent().post(`${base}/topics/${original.id}/actions`)).send({ expectedVersion: original.version, action: 'cancel', reason: 'The brief named the wrong place' }).expect(201);
+      const corrected = await topic('Glenelg tram day out');
+      expect(corrected.noveltyStatus).toBe('review');
+      await setSources(corrected.id, [{ url: 'https://cafe.example.org/' }]);
+      expect((await approve(corrected.id, {}, 409)).body.error.code).toBe('NOVELTY_REVIEW_REQUIRED');
+      // A reason is required, and it is either a follow-up or a correction, never both.
+      expect((await approve(corrected.id, { correctionReason: 'short' }, 400)).body.error.fields.correctionReason).toBeDefined();
+      expect((await approve(corrected.id, { action: 'refresh', correctionReason: 'The earlier brief named the wrong place' }, 400)).body.error.fields.correctionReason).toBeDefined();
+      await approve(corrected.id, { correctionReason: 'The earlier brief named the wrong place' }, 200);
+      expect(await detail(corrected.id)).toMatchObject({ status: 'researching', noveltyStatus: 'clear', followUpOfPostId: null, followUpReason: 'Correction of a cancelled topic: The earlier brief named the wrong place' });
+      // The cancelled original stays on record, audited as replaced, and no longer takes part in novelty.
+      expect(await db().aIContentItem.findUniqueOrThrow({ where: { id: original.id } })).toMatchObject({ status: 'cancelled', topicTokens: null });
+      expect(await db().auditLog.findFirst({ where: { action: 'ai_content.topic.replaced_by_correction', targetId: original.id } })).toMatchObject({ metadata: { correctedBy: corrected.id } });
+      expect((await db().auditLog.findFirstOrThrow({ where: { action: 'ai_content.topic.approved', targetId: corrected.id } })).metadata).toMatchObject({ correctionOf: original.id });
+      // The admitted correction now represents the subject: a third topic with the same title is refused outright.
+      const third = await admin(agent().post(`${base}/topics`)).set('Idempotency-Key', randomUUID()).send({ title: 'Glenelg tram day out', priority: 0 });
+      expect(third.status).toBe(409);
+      await drain();
+    });
+
+    it('never approves as a correction a topic that also overlaps an active topic or an article', async () => {
+      const cancelled = await topic('Semaphore jetty sunset walk');
+      await admin(agent().post(`${base}/topics/${cancelled.id}/actions`)).send({ expectedVersion: cancelled.version, action: 'cancel', reason: 'Replaced' }).expect(201);
+      const active = await topic('Semaphore jetty at sunset');
+      await setSources(active.id, [{ url: 'https://cafe.example.org/' }]);
+      await approve(active.id, { correctionReason: 'The earlier brief named the wrong place' }, 200);
+      const another = await topic('Sunset walk on Semaphore jetty');
+      await setSources(another.id, [{ url: 'https://cafe.example.org/' }]);
+      const refused = await approve(another.id, { correctionReason: 'The earlier brief named the wrong place' }, 409);
+      expect(refused.body.error.code).toMatch(/NOVELTY_(DUPLICATE|REVIEW_REQUIRED)/);
+      await drain();
     });
 
     it('runs two workers for one research operation into exactly one packet result', async () => {

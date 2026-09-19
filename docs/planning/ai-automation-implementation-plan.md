@@ -429,7 +429,7 @@ Tests above must be implemented alongside the slices and executed when the owner
 | **1B — Canonical integration and durable execution foundation** | 1A accepted; schema transaction design reviewed. | Add run/operation/approval/outbox/lease/slot/budget structures as needed, minimal E2/E3/E7→N2 shared seam, both publication guards, human edit tracking, transactionally mapped draft creation, server-only dependency boundaries and DB recovery. Use provider fixtures, keep production generation off. | T2/T3/T5/T6; bundle/dependency static checks; normal blog regression. | Both publication paths cannot bypass AI gate; stale workers cannot overwrite; repeated create/apply yields one Post. No real auto publish. |
 | **1C — Public retrieval, topic intelligence and research** | 1B invariants proven; editorial strategy/source policy approved for pilot. | N3 free-source adapter, bounded public retrieval, private local novelty checks, epoch admission, rejected history, evidence/claims/freshness, topic approval and first-class fact-review UX. | T1/T3/T4, cold-start and source-change cases. | Manual topic obtains an inspectable verified packet or explicit hold; duplicate/uncertain topic cannot proceed silently. Automatic discovery proposals use real recent signals plus inventory. Before 1D, only free/local checks or fixtures run; paid semantic comparison remains disabled. |
 | **1D — Text generation, budgets and protected review draft** | Provider choice/secret/cost ceiling/byline approved; 1C accepted. | First text adapter, reservations/settlement, structured result validation, sanitizer/field mapping to existing draft, SEO/links, prompt-only image briefs, run/cost/history, review/approval, explicit proposal/diff/regeneration. First live mode remains manual topic + review + manual image. | T4–T8, end-to-end fake-provider flow and controlled approved live evidence. | One protected canonical draft per item; unsupported facts block; usage reconciles; human edit and normal editor behaviour preserved. |
-| **1E — Complete image modes** | 1D accepted; image provider/policy/caps approved. | Server intake through media pipeline, one featured slot default, per-item manual/hybrid/automatic controls, actual-image alt/credit checks, partial failure/reconciliation and required-image gate. | T6/T7/T9 and review UI. | All three modes work without duplicate generation or broken attachments; optional vs required failure behaviour proven. |
+| **1E — Complete image modes** (revised by Amendment 01: **1E.1** provider-neutral foundation, implemented and accepted; **1E.2** first approved provider, chosen by the owner after a controlled OpenAI / Gemini / xAI comparison; **1E.3** further providers, built but inactive until a price is approved) | 1D accepted; image provider/policy/caps approved. | Server intake through media pipeline, one featured slot default, per-item manual/hybrid/automatic controls, actual-image alt/credit checks, partial failure/reconciliation and required-image gate. | T6/T7/T9 and review UI. | All three modes work without duplicate generation or broken attachments; optional vs required failure behaviour proven. |
 | **1F — Configured cadence and automatic topic selection** | 1C–1E accepted; operating time/caps/missed policy set. | Extend registered ticks, durable slots/quota, weekdays/pause/min queue, manual/automatic/hybrid selection, short scheduler + bounded AI consumer, existing scheduled publisher integration. Review required remains default. | T3/T6/T10; two replicas, manual race, DST and recovery drills. | Approximately one/day policy enforced as safe ceiling; no duplicate slot/article; missed/empty slots visible; existing human schedules unchanged. |
 | **1G — Auto-publish hardening and Phase 1 acceptance** | Reviewed pilot evidence acceptable; owner explicitly enables auto policy. | Final source/reference/media/content/version/budget/novelty gate, conservative live settings controls, alerts/recovery, retention and rollout/rollback runbook. No new unrelated features. | Full relevant T1–T10/T12 plus all Phase 1 source acceptance rows 378–391. | Demonstrated safety of both publish paths and kill switch; documented quality/cost review; stable production observation and owner Phase 1 acceptance. |
 | **2A — Durable social intents and review UI, no sending** | **1G complete and owner approves Phase 2**; chosen accounts identified. | Add N5 intent/attempt/connection metadata, E5 publication fan-out/cutover, per-platform settings/permissions, canonical caption proposals/media selection, bounded historical preview/backfill. All send flags off. | T2/T3/T8/T11; no historical activation flood; blog unaffected by social failures. | Exactly one local intent per key, both publish paths covered, existing published selection requires explicit action. |
@@ -471,3 +471,30 @@ Approve scope → 1A disabled control plane → 1B safe canonical integration �
 ## FIRST IMPLEMENTATION SLICE
 
 **Implement 1A only after approval:** a disabled-by-default AI Content settings area and manual Topic Queue inside the current admin, backed by existing Setting/AuditLog/RBAC and minimal new versioned topic/control records. Include request dedupe, bounded create/list/cancel, safe settings CAS, permission guards and relevant tests. No provider calls, spending, generated Posts, automatic discovery, scheduler activation or social publishing. This is the smallest useful production-safe slice: the owner can inspect configuration and topic workflow while the existing blog remains operational and untouched by automation. Its acceptance does not authorize later phases automatically.
+
+
+## Q. Provider amendment 01 (proposed 19 September 2026, after 1G)
+
+Google Gemini is added as an additional, owner-selectable provider for text and images behind the existing `TextProvider` and `ImageProvider` boundaries, without reopening the completed 1D/1E business logic. The proposed follow-on workstreams are:
+
+- **P1:** provider selection and registry; the provider-neutral image request (aspect and resolution tier); image text/thinking-output pricing.
+- **P2:** the Gemini image adapter.
+- **P3:** the Gemini text adapter.
+- **P4:** the comparative pilot.
+
+Entry, scope, tests and exit are in [Provider amendment 01](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-provider-amendment-01.md). **Not approved; no implementation.**
+
+**Update (19 September 2026):** Amendment 01 is also appended to the master SRS on the owner's instruction, adding AI-PROVIDER-11 and AI-IMAGE-PROVIDER-08/09. The OpenAI-versus-Gemini image comparison and the 1E.2 recommendation are in the amendment §7–§10. Still not approved; no implementation.
+
+**Update (19 September 2026, xAI):**
+
+- xAI/Grok is added as a third candidate image provider (`ImageGenerationProvider → OpenAI | Gemini | xAI`), with AI-PROVIDER-12–14 and AI-IMAGE-PROVIDER-10–12.
+- The proposed order is:
+  1. **P1**: shared contract fixes (neutral request, per-image or per-token price unit, model-substitution guard, provider request id, processing location and retention, selection settings).
+  2. The **xAI adapter**.
+  3. The **Gemini adapter** (P2).
+  4. **Comparison mode** (AI-IMAGE-PROVIDER-12).
+  5. The **controlled pilot**.
+  6. The owner chooses 1E.2.
+- Gemini text (P3) is unchanged.
+- See amendment §14–§21. Not approved; no implementation.

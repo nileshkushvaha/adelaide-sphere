@@ -117,7 +117,7 @@ export function EditorialTermEditorPage({ config }: { config: EditorialTermsConf
         />
       </Form.Item>
       <Form.Item label="Landing content (Markdown)" name="landingContent" extra="Shown on the landing page. Without it the page is not indexed.">
-        <Input.TextArea rows={10} maxLength={5000} showCount />
+        <Input.TextArea placeholder="Markdown shown on the landing page" rows={10} maxLength={5000} showCount />
       </Form.Item>
       <>
           {/* A real heading, so the group is announced as one — the same section the directory categories use. */}

@@ -1,21 +1,13 @@
 import { useRef, useState } from "react";
-import { Alert, App, Button, Card, Checkbox, Descriptions, Empty, Input, Select, Space, Tag, Typography } from "antd";
+import { Alert, App, Button, Card, Checkbox, Descriptions, Empty, Input, Select, Space, Typography } from "antd";
 import { Link } from "react-router";
 import { aiContentApi, money, type AiTopic, type ImageJob, type TopicImages } from "@/api/ai-content";
 import { useCapabilities } from "@/auth/access-control";
 import { PERMISSION } from "@/auth/permissions";
-import { ErrorState, PageLoader } from "@/components/ui";
+import { ErrorState, PageLoader, StatusTag } from "@/components/ui";
 import { errorMessage, fieldErrors, useAsync } from "@/shared/useAsync";
+import { CompareProvidersButton } from "./ImageComparison";
 
-const STATUS_COLOR: Record<ImageJob["status"], string> = {
-  requested: "blue",
-  stored: "gold",
-  approved: "green",
-  rejected: "default",
-  failed: "red",
-  outcome_unknown: "volcano",
-  superseded: "default",
-};
 const STATUS_LABEL: Record<ImageJob["status"], string> = {
   requested: "Being made",
   stored: "Awaiting review",
@@ -62,8 +54,8 @@ export function FeaturedImageCard({ topic, onChange }: { topic: AiTopic; onChang
       setBusy(false);
     }
   };
-  if (state.status === "loading") return <Card title="Featured image" style={{ marginTop: 16 }}><PageLoader /></Card>;
-  if (state.status === "error") return <Card title="Featured image" style={{ marginTop: 16 }}><ErrorState message={state.message} onRetry={reload} /></Card>;
+  if (state.status === "loading") return <Card title={<h2 className="as-ai-card-heading">Featured image</h2>} style={{ marginTop: 16 }}><PageLoader /></Card>;
+  if (state.status === "error") return <Card title={<h2 className="as-ai-card-heading">Featured image</h2>} style={{ marginTop: 16 }}><ErrorState message={state.message} onRetry={reload} /></Card>;
   const data: TopicImages = state.data;
   const mode = data.override ?? data.globalMode;
   const editable = EDITABLE.includes(topic.status) && Boolean(data.post);
@@ -71,12 +63,12 @@ export function FeaturedImageCard({ topic, onChange }: { topic: AiTopic; onChang
   const inFlight = data.jobs.some((j) => j.status === "requested" || j.status === "outcome_unknown");
 
   return (
-    <Card title="Featured image" style={{ marginTop: 16 }}>
+    <Card title={<h2 className="as-ai-card-heading">Featured image</h2>} style={{ marginTop: 16 }}>
       {Boolean(problem) && <Problem error={problem} />}
       <Space direction="vertical" style={{ width: "100%" }}>
         <Space wrap align="center">
           <Typography.Text id="ai-image-mode-label">Image mode</Typography.Text>
-          <Select
+          <Select placeholder="Choose an image mode"
             aria-labelledby="ai-image-mode-label"
             disabled={!can(PERMISSION.aiContentReview) || busy || ["published", "cancelled", "rejected", "scheduled", "approved"].includes(topic.status)}
             value={data.override ?? "default"}
@@ -121,7 +113,7 @@ export function FeaturedImageCard({ topic, onChange }: { topic: AiTopic; onChang
                 onClick={() =>
                   modal.confirm({
                     title: "Generate a featured image?",
-                    content: `One ${data.size} image at ${data.quality} quality. Its maximum cost is reserved from the image budget first.`,
+                    content: `One ${data.aspectRatio} ${data.resolution.toUpperCase()} image at ${data.quality} quality from ${data.model}. Its maximum cost is reserved from the image budget first.`,
                     okText: "Generate image",
                     onOk: () => act(() => aiContentApi.generateImage(topic, requestKey.current, prompt ?? undefined), "Image requested", true),
                   })
@@ -129,17 +121,52 @@ export function FeaturedImageCard({ topic, onChange }: { topic: AiTopic; onChang
               >
                 {data.jobs.length > 0 ? "Generate a new image" : "Generate image"}
               </Button>
+              {can(PERMISSION.aiContentConfigure) && (
+                <CompareProvidersButton
+                  topic={topic}
+                  prompt={prompt ?? ""}
+                  disabled={inFlight || busy || !text.trim()}
+                  onDone={() => {
+                    message.success("Comparison requested");
+                    onChange();
+                    reload();
+                  }}
+                />
+              )}
             </Space>
           )
         )}
         {data.jobs.length === 0 ? (
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="No image generated" />
         ) : (
-          data.jobs.map((job) => <ImageJobRow key={job.id} job={job} data={data} topic={topic} busy={busy} act={act} />)
+          <>
+            {comparisons(data.jobs).map(([runId, jobs]) => (
+              <section key={runId} aria-label="Provider comparison">
+                <Typography.Title level={5}>Provider comparison</Typography.Title>
+                <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+                  {jobs.map((job) => (
+                    <ImageJobRow key={job.id} job={job} data={data} topic={topic} busy={busy} act={act} />
+                  ))}
+                </div>
+              </section>
+            ))}
+            {data.jobs
+              .filter((job) => job.slot !== "comparison")
+              .map((job) => (
+                <ImageJobRow key={job.id} job={job} data={data} topic={topic} busy={busy} act={act} />
+              ))}
+          </>
         )}
       </Space>
     </Card>
   );
+}
+
+/** Comparison results grouped by run, newest run first, providers in the order they were requested. */
+function comparisons(jobs: ImageJob[]): [string, ImageJob[]][] {
+  const runs = new Map<string, ImageJob[]>();
+  for (const job of jobs) if (job.slot === "comparison" && job.comparisonRunId) runs.set(job.comparisonRunId, [...(runs.get(job.comparisonRunId) ?? []), job]);
+  return [...runs.entries()].map(([id, list]) => [id, [...list].sort((a, b) => a.imageVersion - b.imageVersion)]);
 }
 
 function ImageJobRow({ job, data, topic, busy, act }: { job: ImageJob; data: TopicImages; topic: AiTopic; busy: boolean; act: (work: () => Promise<unknown>, done: string) => Promise<void> }) {
@@ -150,12 +177,13 @@ function ImageJobRow({ job, data, topic, busy, act }: { job: ImageJob; data: Top
   const ready = job.media?.status === "ready";
   const currency = job.operation.priceSchedule?.currency ?? "USD";
   const cost = job.operation.settledMicros !== null ? `${money(job.operation.settledMicros, currency)} (${job.operation.costState})` : `up to ${money(job.operation.reservedMicros, currency)} reserved`;
+  const name = job.slot === "comparison" ? `${job.provider} · ${job.model}` : `Image ${job.imageVersion}`;
   const canApprove = can(PERMISSION.aiContentApprove) && can(PERMISSION.postsUpdate) && EDITABLE.includes(topic.status) && data.post;
   return (
-    <Card size="small" type="inner" title={<Space wrap><span>Image {job.imageVersion}</span><Tag color={STATUS_COLOR[job.status]}>{STATUS_LABEL[job.status]}</Tag>{job.isFeatured && <Tag color="green">Featured</Tag>}</Space>}>
+    <Card size="small" type="inner" title={<Space wrap><span>{name}</span><StatusTag status={job.status} label={STATUS_LABEL[job.status]} />{job.isFeatured && <StatusTag status="approved" label="Featured" />}</Space>}>
       <Space direction="vertical" style={{ width: "100%" }}>
         {ready && job.media?.previewUrl && (
-          <img src={job.media.previewUrl} alt={`Generated image ${job.imageVersion}, awaiting description`} style={{ maxWidth: "100%", width: 480, borderRadius: 8 }} />
+          <img src={job.media.previewUrl} alt={`Generated ${job.slot === "comparison" ? `${job.provider} result` : `image ${job.imageVersion}`}, awaiting description`} style={{ maxWidth: "100%", width: 480, borderRadius: 8 }} />
         )}
         {job.media && job.media.status === "quarantined" && <Typography.Text type="secondary">Processing through the media pipeline…</Typography.Text>}
         {job.media?.status === "rejected" && <Alert type="error" showIcon message={job.media.rejectionReason ?? "The media pipeline rejected this image."} />}
@@ -173,7 +201,7 @@ function ImageJobRow({ job, data, topic, busy, act }: { job: ImageJob; data: Top
                     let note = "";
                     modal.confirm({
                       title: "Abandon this request and count its full reservation as spent?",
-                      content: <Input.TextArea aria-label="What you checked" rows={3} maxLength={500} onChange={(e) => (note = e.target.value)} />,
+                      content: <Input.TextArea placeholder="What you checked with the provider" aria-label="What you checked" rows={3} maxLength={500} onChange={(e) => (note = e.target.value)} />,
                       okText: "Abandon",
                       onOk: () => act(() => aiContentApi.resolveOperation(job.operationId, "abandon", note), "Request abandoned"),
                     });
@@ -189,7 +217,10 @@ function ImageJobRow({ job, data, topic, busy, act }: { job: ImageJob; data: Top
           size="small"
           column={1}
           items={[
-            { key: "model", label: "Model", children: `${job.model} · ${job.size} · ${job.quality}` },
+            { key: "model", label: "Model", children: `${job.model} · ${job.aspectRatio ?? ""} ${job.size} · ${job.quality}` },
+            ...(job.servedModel && job.servedModel !== job.model ? [{ key: "served", label: "Served by", children: job.servedModel }] : []),
+            ...(job.providerRequestId ? [{ key: "request", label: "Provider request", children: job.providerRequestId }] : []),
+            ...(job.latencyMs !== null ? [{ key: "latency", label: "Time taken", children: `${(job.latencyMs / 1000).toFixed(1)} s` }] : []),
             { key: "cost", label: "Cost", children: cost },
             { key: "disclosure", label: "Reader disclosure", children: job.disclosureText },
             ...(job.failureCode ? [{ key: "failure", label: "Failure", children: job.failureCode.replace(/_/g, " ") }] : []),
@@ -198,7 +229,7 @@ function ImageJobRow({ job, data, topic, busy, act }: { job: ImageJob; data: Top
         />
         {(job.status === "stored" || job.status === "approved") && ready && canApprove && (
           <Space direction="vertical" style={{ width: "100%" }}>
-            <Input.TextArea aria-label={`Alt text for image ${job.imageVersion}`} rows={2} maxLength={255} value={alt} onChange={(e) => setAlt(e.target.value)} placeholder="Describe what this image actually shows" />
+            <Input.TextArea aria-label={`Alt text for ${job.slot === "comparison" ? `the ${job.provider} result` : `image ${job.imageVersion}`}`} rows={2} maxLength={255} value={alt} onChange={(e) => setAlt(e.target.value)} placeholder="Describe what this image actually shows" />
             <Checkbox checked={fromImage} onChange={(e) => setFromImage(e.target.checked)}>
               I wrote this alt text from the image above, not from the draft
             </Checkbox>
@@ -226,7 +257,7 @@ function ImageJobRow({ job, data, topic, busy, act }: { job: ImageJob; data: Top
                     let note = "";
                     modal.confirm({
                       title: "Reject this image?",
-                      content: <Input.TextArea aria-label="Why it is rejected" rows={3} maxLength={500} onChange={(e) => (note = e.target.value)} />,
+                      content: <Input.TextArea placeholder="Why this image is rejected" aria-label="Why it is rejected" rows={3} maxLength={500} onChange={(e) => (note = e.target.value)} />,
                       okText: "Reject",
                       onOk: () => act(() => aiContentApi.rejectImage(job.id, note), "Image rejected"),
                     });

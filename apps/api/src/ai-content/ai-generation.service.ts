@@ -9,7 +9,9 @@ import {
   featuredBrief,
   readImageSettings,
   rejectImage,
+  quoteImageComparison,
   requestImage,
+  requestImageComparison,
   reviewMissedSlot,
   scheduleStatus,
   postFactReview,
@@ -20,13 +22,15 @@ import {
   requestGeneration,
   resolveUnknownOperation,
   resumePaidCalls,
+  IMAGE_MODELS,
 } from '@adelaide-sphere/database/automation';
 import type { RequestContext } from '../auth/auth.service.js';
 import { databaseCode, retryTransaction } from '../common/database-retry.js';
+import { collectionMeta, skipFor } from '../common/pagination.js';
 import { DatabaseService } from '../database/database.service.js';
 import { ObjectStoragePort } from '../media/storage.port.js';
 import type { AdminPrincipal } from '../identity/identity.service.js';
-import type { ApplyProposalDto, ApproveContentDto, ApproveImageDto, ReviewSlotDto, ConfirmFactsDto, GenerateDto, GenerateImageDto, RejectImageDto, ProposePriceDto, ResolveOperationDto, TopicArticleSettingsDto } from './ai-generation.dto.js';
+import type { ApplyProposalDto, ApproveContentDto, ApproveImageDto, ReviewSlotDto, ConfirmFactsDto, GenerateDto, GenerateImageDto, ImageEvidenceQueryDto, QuoteImageComparisonDto, RejectImageDto, RequestImageComparisonDto, ProposePriceDto, ResolveOperationDto, TopicArticleSettingsDto } from './ai-generation.dto.js';
 import { AiContentService } from './ai-content.service.js';
 
 type Violation = { field?: string; token?: string; reason?: string };
@@ -155,6 +159,26 @@ export class AiGenerationService {
     return db.aIPriceSchedule.findMany({ orderBy: [{ provider: 'asc' }, { model: 'asc' }, { createdAt: 'desc' }], take: 100 });
   }
 
+  imageModels() {
+    return IMAGE_MODELS.map((m) => ({
+      provider: m.provider,
+      model: m.model,
+      label: m.label,
+      aspectRatios: [...m.aspectRatios],
+      resolutions: [...m.resolutions],
+      qualities: [...m.qualities],
+      priceUnit: m.priceUnit,
+      billsTextOutput: m.billsTextOutput,
+      reportsServedModel: m.reportsServedModel,
+      suppliesRequestId: m.suppliesRequestId,
+      reportsCost: m.reportsCost,
+      reconciliation: m.reconciliation,
+      processingLocation: m.processingLocation,
+      retention: m.retention,
+      source: m.source,
+    }));
+  }
+
   async propose(input: ProposePriceDto, actor: AdminPrincipal, ctx: RequestContext) {
     try {
       return await this.run((tx) => proposePrice(tx, { ...input, effectiveFrom: new Date(input.effectiveFrom), adminId: actor.id, requestId: ctx.requestId }));
@@ -172,6 +196,95 @@ export class AiGenerationService {
     return { ...result, topic: await this.topics.detail(itemId) };
   }
 
+  // ---- controlled provider comparison (provider amendment 01) ---------------
+
+  async quoteImageComparison(itemId: string, input: QuoteImageComparisonDto) {
+    return this.run((tx) => quoteImageComparison(tx, { itemId, prompt: input.prompt ?? null, aspectRatio: input.aspectRatio, candidates: input.candidates }));
+  }
+
+  async requestImageComparison(itemId: string, input: RequestImageComparisonDto, key: string | undefined, actor: AdminPrincipal, ctx: RequestContext) {
+    if (!key || !/^[a-zA-Z0-9_-]{16,100}$/.test(key)) throw new HttpException({ code: 'VALIDATION_ERROR', message: 'Some fields are invalid', fields: { idempotencyKey: ['Supply an Idempotency-Key of 16–100 letters, digits, hyphens or underscores'] } }, 400);
+    const result = await this.run((tx) =>
+      requestImageComparison(tx, {
+        itemId,
+        expectedVersion: input.expectedVersion,
+        prompt: input.prompt ?? null,
+        aspectRatio: input.aspectRatio,
+        candidates: input.candidates,
+        expectedTotalMicros: input.expectedTotalMicros,
+        adminId: actor.id,
+        requestKey: key,
+        requestId: ctx.requestId,
+      }),
+    );
+    return { ...result, topic: await this.topics.detail(itemId) };
+  }
+
+  /**
+   * Pilot evidence (amendment 01 §19): one row per generated image with what it
+   * was asked for, what served it, how long it took, what it cost and the media
+   * it produced. Recorded facts only; there is no automated quality score.
+   */
+  async imageEvidence(query: ImageEvidenceQueryDto) {
+    const db = await this.database.client();
+    const where = { ...(query.slot ? { slot: query.slot } : {}), ...(query.itemId ? { itemId: query.itemId } : {}) };
+    const [total, jobs] = await Promise.all([
+      db.aIImageJob.count({ where }),
+      db.aIImageJob.findMany({
+        where,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: skipFor(query.page, query.pageSize),
+        take: query.pageSize,
+        include: {
+          item: { select: { title: true } },
+          operation: { select: { state: true, costState: true, reservedMicros: true, settledMicros: true, errorClass: true, priceSchedule: { select: { version: true, currency: true } } } },
+          mediaAsset: { select: { status: true, checksum: true } },
+        },
+      }),
+    ]);
+    // "Regeneration": an earlier request for the same article went to the same provider and model.
+    const earlier = await db.aIImageJob.findMany({
+      where: { itemId: { in: [...new Set(jobs.map((j) => j.itemId))] } },
+      select: { itemId: true, provider: true, model: true, createdAt: true, id: true },
+    });
+    const data = jobs.map((j) => ({
+      jobId: j.id,
+      itemId: j.itemId,
+      topic: j.item.title,
+      slot: j.slot,
+      comparisonRunId: j.comparisonRunId,
+      imageVersion: j.imageVersion,
+      status: j.status,
+      provider: j.provider,
+      model: j.model,
+      servedModel: j.servedModel,
+      policyVersion: j.policyVersion,
+      promptHash: j.promptHash,
+      prompt: j.prompt,
+      aspectRatio: j.aspectRatio,
+      resolution: j.resolution,
+      quality: j.quality,
+      size: j.size,
+      latencyMs: j.latencyMs,
+      currency: j.operation.priceSchedule?.currency ?? null,
+      priceVersion: j.operation.priceSchedule?.version ?? null,
+      reservedMicros: j.operation.reservedMicros,
+      settledMicros: j.operation.settledMicros,
+      reportedCostMicros: j.reportedCostMicros,
+      costState: j.operation.costState,
+      operationState: j.operation.state,
+      errorClass: j.operation.errorClass,
+      providerRequestId: j.providerRequestId,
+      mediaAssetId: j.mediaAssetId,
+      checksum: j.checksum,
+      mediaStatus: j.mediaAsset?.status ?? null,
+      failureCode: j.failureCode,
+      regeneration: earlier.some((e) => e.itemId === j.itemId && e.provider === j.provider && e.model === j.model && (e.createdAt < j.createdAt || (e.createdAt.getTime() === j.createdAt.getTime() && e.id < j.id))),
+      createdAt: j.createdAt,
+    }));
+    return { data, meta: collectionMeta(query.page, query.pageSize, total) };
+  }
+
   /** The article's image state: mode, brief, the current featured image and every generated version with its cost. */
   async images(itemId: string) {
     const db = await this.database.client();
@@ -182,16 +295,25 @@ export class AiGenerationService {
       db.$transaction((tx) => featuredBrief(tx, itemId)),
       db.aIImageJob.findMany({
         where: { itemId },
-        orderBy: { imageVersion: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { imageVersion: 'desc' }],
         take: 20,
         select: {
           id: true,
+          slot: true,
+          comparisonRunId: true,
+          provider: true,
           imageVersion: true,
           status: true,
           prompt: true,
           model: true,
           size: true,
+          aspectRatio: true,
+          resolution: true,
           quality: true,
+          servedModel: true,
+          providerRequestId: true,
+          latencyMs: true,
+          reportedCostMicros: true,
           width: true,
           height: true,
           disclosureText: true,
@@ -210,7 +332,10 @@ export class AiGenerationService {
       globalMode: settings.imageMode === 'hybrid' ? 'hybrid' : 'manual',
       override: item.imageMode,
       brief,
-      size: settings.size,
+      provider: settings.provider,
+      model: settings.model,
+      aspectRatio: settings.aspectRatio,
+      resolution: settings.resolution,
       quality: settings.quality,
       disclosureText: settings.disclosureText,
       post,

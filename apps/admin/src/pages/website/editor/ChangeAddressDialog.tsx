@@ -59,7 +59,7 @@ export function ChangeAddressDialog({ currentSlug, live, onCancel, onSubmit }: P
       </Typography.Paragraph>
       <Form layout="vertical" component={false}>
         <Form.Item label="New address" htmlFor="page-new-address" validateStatus={problem ? 'error' : undefined} help={problem ?? 'Lower-case letters, numbers and single hyphens.'}>
-          <Input id="page-new-address" addonBefore="/" value={slug} maxLength={64} onChange={(event) => setSlug(event.target.value)} onPressEnter={() => void submit()} autoFocus />
+          <Input placeholder="new-address" id="page-new-address" addonBefore="/" value={slug} maxLength={64} onChange={(event) => setSlug(event.target.value)} onPressEnter={() => void submit()} autoFocus />
         </Form.Item>
         <Form.Item label="Why? (optional)" htmlFor="page-address-reason" extra="Kept in the activity log.">
           <Input.TextArea id="page-address-reason" rows={2} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} placeholder="e.g. A clearer name for the service" />

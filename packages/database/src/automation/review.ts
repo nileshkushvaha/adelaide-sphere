@@ -10,7 +10,7 @@ import { AI_CONTROL_ID } from './control.js';
 import { GenerationCommandError, verifiedClaims } from './generation.js';
 import { configuredLocation } from './novelty.js';
 import { enqueueOperationDelivery } from './operations.js';
-import { IMAGE_PROVIDER_CAPABILITIES } from './providers.js';
+import { imageModelCapability, TEXT_PROVIDER_CAPABILITIES } from './providers.js';
 
 type Tx = Prisma.TransactionClient;
 
@@ -282,26 +282,50 @@ export interface PriceInput {
   cachedInputMicrosPerMTok: number;
   outputMicrosPerMTok: number;
   longContextThresholdTokens: number;
-  /** Image models only: the size and quality covered and the approved per-image output-token bound. */
-  imageSize?: string | null;
+  /** Image models only: the resolution tier and quality covered, the billing unit and its bounds. */
+  imageResolution?: string | null;
   imageQuality?: string | null;
+  pricingUnit?: 'token' | 'image' | null;
   maxOutputTokens?: number | null;
+  perImageMicros?: number | null;
+  textOutputMicrosPerMTok?: number | null;
+  maxTextOutputTokens?: number | null;
   sourceUrl: string;
   effectiveFrom: Date;
 }
 
-/** A proposed price version; it prices nothing until approved. */
+const intIn = (v: unknown, min: number, max: number) => typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max;
+
+/** A proposed price version; it prices nothing until approved (AI-PROVIDER-11). */
 export async function proposePrice(tx: Tx, input: PriceInput & { adminId: string; requestId?: string | null }) {
-  // An image price must say exactly what it covers and bound one image's output; a text price must not.
-  const image = IMAGE_PROVIDER_CAPABILITIES[input.provider]?.[input.model];
+  // An image price says exactly what it covers, in the unit the provider bills, and bounds everything it
+  // bills for one image (AI-IMAGE-PROVIDER-07/10); a text price carries none of these fields.
+  const image = imageModelCapability(input.provider, input.model);
   const fields: Record<string, string[]> = {};
+  // Only a model listed in reviewed code can ever be priced (text or image); free text is refused.
+  if (!image && !TEXT_PROVIDER_CAPABILITIES[input.provider]?.[input.model]) fields.model = [`${input.model} is not a listed model for ${input.provider}`];
   if (image) {
-    if (!input.imageSize || !image.sizes.includes(input.imageSize)) fields.imageSize = [`Choose one of ${image.sizes.join(', ')}`];
+    if (!input.imageResolution || !image.resolutions.includes(input.imageResolution)) fields.imageResolution = [`Choose one of ${image.resolutions.join(', ')}`];
     if (!input.imageQuality || !image.qualities.includes(input.imageQuality)) fields.imageQuality = [`Choose one of ${image.qualities.join(', ')}`];
-    if (!Number.isInteger(input.maxOutputTokens) || input.maxOutputTokens! < 1 || input.maxOutputTokens! > 100_000) fields.maxOutputTokens = ['Enter the most output tokens one image at this size and quality can use (1–100,000)'];
-  } else if (input.imageSize || input.imageQuality || input.maxOutputTokens) {
-    fields.imageSize = ['Image fields apply only to image models'];
+    if (input.pricingUnit !== image.priceUnit) fields.pricingUnit = [`${image.label} is billed per ${image.priceUnit}`];
+    if (image.priceUnit === 'token' && !intIn(input.maxOutputTokens, 1, 100_000)) fields.maxOutputTokens = ['Enter the most image output tokens one image can use (1–100,000)'];
+    if (image.priceUnit === 'image' && !intIn(input.perImageMicros, 1, 100_000_000)) fields.perImageMicros = ['Enter the price of one image in millionths of the currency (USD 0.04 = 40000)'];
+    const text = input.textOutputMicrosPerMTok !== null && input.textOutputMicrosPerMTok !== undefined;
+    if (image.billsTextOutput) {
+      if (!text || !intIn(input.textOutputMicrosPerMTok, 1, 1_000_000_000)) fields.textOutputMicrosPerMTok = ['This model always bills text or thinking output: enter its price'];
+      if (!intIn(input.maxTextOutputTokens, 1, 100_000)) fields.maxTextOutputTokens = ['Enter the most text or thinking tokens one image can use (1–100,000)'];
+    } else if (text || input.maxTextOutputTokens) {
+      fields.textOutputMicrosPerMTok = ['This model bills no text output with an image'];
+    }
+  } else if (input.imageResolution || input.imageQuality || input.maxOutputTokens || input.perImageMicros || input.textOutputMicrosPerMTok || input.maxTextOutputTokens || (input.pricingUnit && input.pricingUnit !== 'token')) {
+    fields.imageResolution = ['Image fields apply only to image models'];
   }
+  // A token rate prices every text call and every token-billed image. A per-image price has no output or
+  // cached-input token rate, and bills prompt input per token only where the provider does (0 otherwise).
+  if (image?.priceUnit === 'image' ? input.outputMicrosPerMTok !== 0 || input.cachedInputMicrosPerMTok !== 0 : input.outputMicrosPerMTok < 1) {
+    fields.outputMicrosPerMTok = [image?.priceUnit === 'image' ? 'A per-image price has no cached-input or output token rate: enter 0' : 'Enter the output price'];
+  }
+  if (image?.priceUnit !== 'image' && input.inputMicrosPerMTok < 1) fields.inputMicrosPerMTok = ['Enter the input price'];
   if (Object.keys(fields).length > 0) throw new GenerationCommandError('VALIDATION_ERROR', 'Some fields are invalid', 400, { fields });
   const row = await tx.aIPriceSchedule.create({
     data: {
@@ -313,9 +337,13 @@ export async function proposePrice(tx: Tx, input: PriceInput & { adminId: string
       cachedInputMicrosPerMTok: input.cachedInputMicrosPerMTok,
       outputMicrosPerMTok: input.outputMicrosPerMTok,
       longContextThresholdTokens: input.longContextThresholdTokens,
-      imageSize: image ? input.imageSize! : null,
+      imageSize: image ? input.imageResolution! : null,
       imageQuality: image ? input.imageQuality! : null,
-      maxOutputTokens: image ? input.maxOutputTokens! : null,
+      pricingUnit: image ? image.priceUnit : 'token',
+      maxOutputTokens: image && image.priceUnit === 'token' ? input.maxOutputTokens! : null,
+      perImageMicros: image && image.priceUnit === 'image' ? input.perImageMicros! : null,
+      textOutputMicrosPerMTok: image?.billsTextOutput ? input.textOutputMicrosPerMTok! : null,
+      maxTextOutputTokens: image?.billsTextOutput ? input.maxTextOutputTokens! : null,
       sourceUrl: input.sourceUrl,
       effectiveFrom: input.effectiveFrom,
       createdByAdminId: input.adminId,
@@ -338,6 +366,6 @@ export async function approvePrice(tx: Tx, input: { priceId: string; adminId: st
   // Retires the previous approved version for the same model (and, for images, the same size and quality).
   await tx.aIPriceSchedule.updateMany({ where: { provider: row.provider, model: row.model, imageSize: row.imageSize, imageQuality: row.imageQuality, status: 'approved' }, data: { status: 'retired' } });
   await tx.aIPriceSchedule.update({ where: { id: row.id }, data: { status: 'approved', approvedByAdminId: input.adminId, approvedAt: new Date() } });
-  await audit(tx, 'ai_content.price.approved', 'ai_price', row.id, input.adminId, { version: row.version, model: row.model, currency: row.currency, inputMicrosPerMTok: row.inputMicrosPerMTok, outputMicrosPerMTok: row.outputMicrosPerMTok, imageSize: row.imageSize, imageQuality: row.imageQuality, maxOutputTokens: row.maxOutputTokens }, input.requestId);
+  await audit(tx, 'ai_content.price.approved', 'ai_price', row.id, input.adminId, { version: row.version, model: row.model, currency: row.currency, inputMicrosPerMTok: row.inputMicrosPerMTok, outputMicrosPerMTok: row.outputMicrosPerMTok, imageResolution: row.imageSize, imageQuality: row.imageQuality, pricingUnit: row.pricingUnit, maxOutputTokens: row.maxOutputTokens, perImageMicros: row.perImageMicros }, input.requestId);
   return tx.aIPriceSchedule.findUniqueOrThrow({ where: { id: row.id } });
 }

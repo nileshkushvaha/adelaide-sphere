@@ -2447,11 +2447,19 @@ model AIPriceSchedule {
   cachedInputMicrosPerMTok   Int
   outputMicrosPerMTok        Int
   longContextThresholdTokens Int
-  /// Image models only: the size and quality this price covers, and the approved bound on output
-  /// tokens for one image at that size and quality (the provider does not publish one for every model).
+  /// Image models only: the resolution tier (for example 1k, 2k) and quality this price covers, and
+  /// the approved bound on image output tokens for one image (token unit; the provider does not
+  /// publish one for every model).
   imageSize                  String?       @db.VarChar(16)
   imageQuality               String?       @db.VarChar(16)
   maxOutputTokens            Int?
+  /// Image models: how the provider bills (AI-IMAGE-PROVIDER-10): per token, or per generated image.
+  pricingUnit                String        @default("token") @db.VarChar(8)
+  /// Image unit: the price of one generated image.
+  perImageMicros             Int?
+  /// Text or thinking output billed with an image, and the approved bound for one image (AI-IMAGE-PROVIDER-07).
+  textOutputMicrosPerMTok    Int?
+  maxTextOutputTokens        Int?
   sourceUrl                  String        @db.VarChar(500)
   effectiveFrom              DateTime      @db.DateTime(3)
   status                     AIPriceStatus @default(proposed)
@@ -2503,6 +2511,9 @@ enum AIImageMode {
 
 enum AIImageSlot {
   featured
+  /// A result of a controlled provider comparison (amendment 01): never replaces a featured version and
+  /// becomes the featured image only when a person approves it.
+  comparison
 }
 
 enum AIImageJobStatus {
@@ -2537,8 +2548,22 @@ model AIImageJob {
   policyVersion          String           @db.VarChar(32)
   provider               String           @db.VarChar(32)
   model                  String           @db.VarChar(64)
+  /// The provider-native size sent (for example 1536x1024), or the resolution tier where the provider takes one.
   size                   String           @db.VarChar(16)
   quality                String           @db.VarChar(16)
+  /// The provider-neutral request (P1): aspect ratio and resolution tier.
+  aspectRatio            String?          @db.VarChar(8)
+  resolution             String?          @db.VarChar(8)
+  /// The provider's own id for the request, where it supplies one (AI-IMAGE-PROVIDER-03).
+  providerRequestId      String?          @db.VarChar(128)
+  /// The model the provider reports having served, where it reports one (AI-PROVIDER-13).
+  servedModel            String?          @db.VarChar(64)
+  /// Wall-clock time of the provider call, for the provider comparison.
+  latencyMs              Int?
+  /// What the provider said it billed (micro-units, rounded up), where it reports it (xAI cost_in_usd_ticks).
+  reportedCostMicros     Int?
+  /// Groups the results of one controlled provider comparison (slot "comparison"); null otherwise.
+  comparisonRunId        String?          @db.VarChar(36)
   mediaAssetId           String?          @unique
   checksum               String?          @db.Char(64)
   width                  Int?
@@ -2565,6 +2590,7 @@ model AIImageJob {
   approvedBy             AdminUser?       @relation("AIImageApprover", fields: [approvedByAdminId], references: [id], onDelete: SetNull)
 
   @@unique([itemId, slot, imageVersion])
+  @@index([comparisonRunId])
   @@index([requestedByAdminId])
   @@index([approvedByAdminId])
   @@map("ai_image_jobs")

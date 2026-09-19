@@ -231,7 +231,7 @@ export function ReviewsPage() {
         {dialogError && <Alert type="error" showIcon role="alert" message={dialogError} style={{ marginBottom: 12 }} />}
         <Form form={decisionForm} layout="vertical" requiredMark={false}>
           <Form.Item label="Reason (recorded in the audit log)" name="reason" rules={pending && DECISION_LABELS[pending.decision].reasonRequired ? [{ required: true, message: 'A reason is required' }] : undefined}>
-            <Input.TextArea rows={3} maxLength={500} />
+            <Input.TextArea placeholder="Why, for the audit log" rows={3} maxLength={500} />
           </Form.Item>
         </Form>
       </Modal>
@@ -240,7 +240,7 @@ export function ReviewsPage() {
         {dialogError && <Alert type="error" showIcon role="alert" message={dialogError} style={{ marginBottom: 12 }} />}
         <Form form={redactForm} layout="vertical" requiredMark={false}>
           <Form.Item label="Published text" name="publicText">
-            <Input.TextArea rows={5} maxLength={3000} />
+            <Input.TextArea placeholder="The text readers will see" rows={5} maxLength={3000} />
           </Form.Item>
           <Form.Item label="Reason" name="reason" rules={[{ required: true, min: 5, message: 'Give at least 5 characters' }]}>
             <Input maxLength={500} placeholder="e.g. Names a staff member" />

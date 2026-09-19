@@ -109,7 +109,7 @@ export function AuditLogPage() {
     />
   );
   const dateControl = (
-    <DatePicker.RangePicker
+    <DatePicker.RangePicker placeholder={["From", "To"]}
       aria-label={`Limit to a date range, Adelaide time (${offset})`}
       value={range}
       format="DD MMM YYYY"

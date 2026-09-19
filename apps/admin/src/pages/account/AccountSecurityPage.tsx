@@ -62,10 +62,10 @@ export function AccountSecurityPage() {
             style={{ maxWidth: 420 }}
           >
             <Form.Item label="Current password" name="currentPassword" rules={[{ required: true, message: 'Enter your current password' }]}>
-              <Input.Password autoComplete="current-password" maxLength={256} />
+              <Input.Password placeholder="Your current password" autoComplete="current-password" maxLength={256} />
             </Form.Item>
             <Form.Item label="New password" name="newPassword" extra="At least 12 characters." rules={[{ required: true, min: 12, max: 256, message: '12–256 characters' }]}>
-              <Input.Password autoComplete="new-password" maxLength={256} />
+              <Input.Password placeholder="Choose a new password" autoComplete="new-password" maxLength={256} />
             </Form.Item>
             <Button type="primary" htmlType="submit">Change password</Button>
           </Form>
@@ -93,11 +93,11 @@ export function AccountSecurityPage() {
                 style={{ maxWidth: 420 }}
               >
                 <Form.Item label="Authenticator or recovery code" name="code" rules={[{ required: true, message: 'Enter a code' }]}>
-                  <Input inputMode="numeric" autoComplete="one-time-code" maxLength={20} />
+                  <Input placeholder="123456 or a recovery code" inputMode="numeric" autoComplete="one-time-code" maxLength={20} />
                 </Form.Item>
                 {needsPassword && (
                   <Form.Item label="Current password" name="currentPassword" rules={[{ required: true, message: 'Enter your current password' }]}>
-                    <Input.Password autoComplete="current-password" maxLength={256} />
+                    <Input.Password placeholder="Your current password" autoComplete="current-password" maxLength={256} />
                   </Form.Item>
                 )}
                 <Button danger htmlType="submit">Disable two-factor</Button>
@@ -124,7 +124,7 @@ export function AccountSecurityPage() {
               >
                 {needsPassword && (
                   <Form.Item label="Current password" name="currentPassword" rules={[{ required: true, message: 'Enter your current password' }]}>
-                    <Input.Password autoComplete="current-password" maxLength={256} />
+                    <Input.Password placeholder="Your current password" autoComplete="current-password" maxLength={256} />
                   </Form.Item>
                 )}
                 <Button type="primary" htmlType="submit">Set up two-factor</Button>
@@ -155,7 +155,7 @@ export function AccountSecurityPage() {
                 }}
               >
                 <Form.Item label="6-digit code" name="code" rules={[{ required: true, pattern: /^\d{6}$/, message: 'Enter the 6-digit code' }]}>
-                  <Input inputMode="numeric" autoComplete="one-time-code" maxLength={6} style={{ width: 140 }} />
+                  <Input placeholder="123456" inputMode="numeric" autoComplete="one-time-code" maxLength={6} style={{ width: 140 }} />
                 </Form.Item>
                 <Form.Item>
                   <Button type="primary" htmlType="submit">Confirm</Button>

@@ -79,6 +79,12 @@ describe('Phase 1A topic invariants', () => {
       publicationMode: 'review_required',
       // Owner image decisions (Phase 1E): hybrid, prompt-only unless a person asks; no image budget until one is set.
       imageMode: 'hybrid',
+      // Provider amendment 01 (P1): the same request as 1E, now provider-neutral.
+      imageProvider: 'openai',
+      imageModel: 'gpt-image-2.5-flare',
+      imageAspectRatio: '3:2',
+      imageResolution: '1k',
+      imageQuality: 'medium',
       featuredImageRequired: true,
       imageDailyLimitMinor: 0,
       imageMonthlyLimitMinor: 0,
@@ -109,6 +115,12 @@ describe('Phase 1A topic invariants', () => {
     expect(validateGroupPayload(group, { publicationMode: 'auto_publish' }, defaults).errors).toEqual({ publicationMode: expect.stringMatching(/not approved/) });
     // Automatic image generation is not approved: saving it is refused, not stored for later.
     expect(validateGroupPayload(group, { imageMode: 'automatic' }, defaults).errors).toEqual({ imageMode: expect.stringMatching(/not approved/) });
+    // Only a listed model of the chosen provider, and only a request that model supports (P1).
+    expect(validateGroupPayload(group, { imageModel: 'dall-e-3' }, defaults).errors).toEqual({ imageModel: expect.stringMatching(/listed model/) });
+    expect(validateGroupPayload(group, { imageModel: 'gpt-image-2.5-flare-2027' }, defaults).errors).toEqual({ imageModel: expect.stringMatching(/listed model/) });
+    expect(validateGroupPayload(group, { imageQuality: 'auto' }, defaults).errors).toEqual({ imageQuality: expect.stringMatching(/supports low, medium, high/) });
+    expect(validateGroupPayload(group, { imageAspectRatio: '1:1', imageResolution: '2k' }, defaults).errors).toEqual({ imageAspectRatio: expect.stringMatching(/does not support 1:1 at 2k/) });
+    expect(validateGroupPayload(group, { imageAspectRatio: '16:9', imageResolution: '2k' }, defaults).errors).toEqual({});
     const errors = validateGroupPayload(
       group,
       {

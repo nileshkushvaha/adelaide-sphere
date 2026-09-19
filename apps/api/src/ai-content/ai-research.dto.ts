@@ -39,6 +39,11 @@ export class ResearchActionDto {
   @ApiPropertyOptional({ description: 'Approve a topic that overlaps existing content only as a follow-up of this article.' })
   @IsOptional() @IsString() @Matches(ID) followUpOfPostId?: string;
   @ApiPropertyOptional({ maxLength: 500 }) @IsOptional() @IsString() @MaxLength(500) followUpReason?: string;
+  @ApiPropertyOptional({ maxLength: 400, description: 'Approve as a correction of a topic a person cancelled, when that is the only overlap: why it was replaced.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(400)
+  correctionReason?: string;
 }
 
 export class ResolveClaimDto {

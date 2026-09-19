@@ -292,25 +292,25 @@ export function GeneralSettingsPage() {
                     <Input />
                   </Form.Item>
                   <Form.Item label="Plan name" name={['pricing', 'plans', index, 'name']} rules={[{ required: true, min: 2, message: 'Give the plan a name of at least 2 characters' }]}>
-                    <Input maxLength={40} />
+                    <Input placeholder="e.g. Standard listing" maxLength={40} />
                   </Form.Item>
                   <Row gutter={12}>
                     <Col span={12}>
                       <Form.Item label="Price (inc. GST)" name={['pricing', 'plans', index, 'price']} rules={[{ required: true, message: 'Enter a price' }]}>
-                        <InputNumber min={0} max={10000} precision={2} prefix="$" style={{ width: '100%' }} />
+                        <InputNumber placeholder="0.00" min={0} max={10000} precision={2} prefix="$" style={{ width: '100%' }} />
                       </Form.Item>
                     </Col>
                     <Col span={12}>
                       <Form.Item label="Billed" name={['pricing', 'plans', index, 'period']}>
-                        <Select options={[{ value: 'one_time', label: 'One time' }, { value: 'year', label: 'Per year' }]} />
+                        <Select placeholder="Choose how it is billed" options={[{ value: 'one_time', label: 'One time' }, { value: 'year', label: 'Per year' }]} />
                       </Form.Item>
                     </Col>
                   </Row>
                   <Form.Item label="Summary" name={['pricing', 'plans', index, 'summary']}>
-                    <Input maxLength={140} />
+                    <Input placeholder="One line about the plan" maxLength={140} />
                   </Form.Item>
                   <Form.Item label="What is included" name={['pricing', 'plans', index, 'featuresText']} extra="One point per line, up to 6." style={{ marginBottom: 0 }}>
-                    <Input.TextArea rows={4} />
+                    <Input.TextArea placeholder="What the plan includes" rows={4} />
                   </Form.Item>
                 </Card>
               </Col>

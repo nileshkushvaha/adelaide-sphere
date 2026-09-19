@@ -101,7 +101,7 @@ export function PermalinkField({ base, value = '', placeholder, disabled = false
   return (
     <div className="as-permalink" style={{ marginBottom: 20 }}>
       <Space.Compact style={{ width: '100%', maxWidth: 520 }}>
-        <Input
+        <Input placeholder="page-address"
           addonBefore={`${base}/`}
           value={draft}
           autoFocus

@@ -191,7 +191,7 @@ export function AuthorEditorPage() {
                       <Row key={field.key} gutter={8} align="middle" style={{ marginBottom: 8 }}>
                         <Col xs={24} md={6}>
                           <Form.Item name={[field.name, 'kind']} rules={[{ required: true, message: 'Choose a network' }]} style={{ marginBottom: 0 }}>
-                            <FormSelect optionLabelProp="title" options={LINK_KINDS.map((kind) => ({ value: kind, title: brandLabel(kind), label: <BrandOptionLabel kind={kind} /> }))} aria-label="Network" />
+                            <FormSelect placeholder="Choose a network" optionLabelProp="title" options={LINK_KINDS.map((kind) => ({ value: kind, title: brandLabel(kind), label: <BrandOptionLabel kind={kind} /> }))} aria-label="Network" />
                           </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>

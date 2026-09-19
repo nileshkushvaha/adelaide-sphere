@@ -142,7 +142,7 @@ export function SecuritySettingsPage() {
         },
       ]}
     >
-      <InputNumber
+      <InputNumber placeholder="Enter a number"
         min={setting.bounds.min}
         max={setting.bounds.max}
         disabled={!mayUpdate}

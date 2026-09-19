@@ -160,7 +160,7 @@ export function SeoSettingsPage() {
           description="What you set replaces the page's own text. Empty fields keep it."
         >
           <Form.Item label="Page" style={{ maxWidth: 520 }}>
-            <Select
+            <Select placeholder="Choose a page"
               value={routeKey}
               onChange={setRouteKey}
               aria-label="Page to edit"
@@ -207,7 +207,7 @@ export function SeoSettingsPage() {
                 </Col>
                 <Col xs={24} lg={12}>
                   <Form.Item label="Search engines" name={['routes', entry.key, 'robots']} extra="Hiding removes it from search results, not from the site.">
-                    <Select options={ROBOTS_DIRECTIVES.map((value) => ({ value, label: ROBOTS_LABELS[value] }))} />
+                    <Select placeholder="Choose how search engines treat it" options={ROBOTS_DIRECTIVES.map((value) => ({ value, label: ROBOTS_LABELS[value] }))} />
                   </Form.Item>
                 </Col>
               </Row>
@@ -256,7 +256,7 @@ export function SeoSettingsPage() {
 
         <SectionCard title="Sharing" description="How every page looks when it is shared, unless the page sets its own image above.">
           <Form.Item label="Card style" name="twitterCard" style={{ maxWidth: 380 }} extra="Used by X and honoured by several other platforms.">
-            <Select options={CARD_TYPES} />
+            <Select placeholder="Choose a card style" options={CARD_TYPES} />
           </Form.Item>
         </SectionCard>
 

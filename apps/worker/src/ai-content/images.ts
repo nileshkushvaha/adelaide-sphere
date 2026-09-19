@@ -59,18 +59,20 @@ export async function runImage(db: DatabaseClient, lease: OperationLease, deps: 
 
   // The call can outlast one lease; keep it while waiting so recovery does not mistake a slow call for a lost worker.
   const heartbeat = setInterval(() => void extendLease(db, lease).catch(() => undefined), deps.heartbeatMs ?? 20_000);
+  const started = Date.now();
   let outcome;
   try {
     outcome = await provider.generate(begun.request);
   } finally {
     clearInterval(heartbeat);
   }
+  const latencyMs = Date.now() - started;
   if (outcome.kind === 'rejected') return `rejected:${outcome.errorClass}:${await recordImageRejected(db, lease, outcome)}`;
   if (outcome.kind === 'unknown') {
     await recordImageUnknown(db, lease, outcome.errorClass);
     return `outcome_unknown:${outcome.errorClass}`;
   }
-  const reported = { usage: outcome.usage, reportedSize: outcome.size, reportedQuality: outcome.quality };
+  const reported = { usage: outcome.usage, images: outcome.images, servedModel: outcome.servedModel, providerRequestId: outcome.providerRequestId, mismatch: outcome.mismatch, reportedCostMicros: outcome.reportedCostMicros, latencyMs };
   if (!outcome.bytes) return completeImage(db, lease, { kind: 'unusable', code: 'no_image_returned', ...reported });
   const facts = await inspect(outcome.bytes);
   if ('problem' in facts) return completeImage(db, lease, { kind: 'unusable', code: facts.problem, ...reported });

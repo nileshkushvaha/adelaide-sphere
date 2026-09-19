@@ -74,7 +74,7 @@ export function MenuLocationsTab({ menus, readOnly, onChanged }: Props) {
             title: 'Assigned menu',
             width: 280,
             render: (_: unknown, row) => (
-              <Select
+              <Select placeholder="No menu"
                 aria-label={`Menu for ${row.label}`}
                 style={{ width: '100%' }}
                 disabled={readOnly || busy}

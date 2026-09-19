@@ -319,13 +319,13 @@ function MenuItemCard({ item, index, handle, expanded, onToggle, readOnly, error
               field(
                 'titleAttribute',
                 'Title attribute',
-                <Input id={fieldId('titleAttribute')} value={item.titleAttribute ?? ''} maxLength={MENU_LIMITS.titleAttribute} disabled={readOnly} onChange={(event) => onUpdate({ titleAttribute: event.target.value })} />,
+                <Input placeholder="Tooltip text (optional)" id={fieldId('titleAttribute')} value={item.titleAttribute ?? ''} maxLength={MENU_LIMITS.titleAttribute} disabled={readOnly} onChange={(event) => onUpdate({ titleAttribute: event.target.value })} />,
                 'Shown as a tooltip on hover. Optional.',
               )}
             {field(
               'description',
               'Description',
-              <Input.TextArea
+              <Input.TextArea placeholder="Short description (optional)"
                 id={fieldId('description')}
                 value={item.description ?? ''}
                 maxLength={MENU_LIMITS.description}

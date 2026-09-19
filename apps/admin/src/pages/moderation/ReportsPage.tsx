@@ -169,10 +169,10 @@ export function ReportsPage() {
         {dialogError && <Alert type="error" showIcon role="alert" message={dialogError} style={{ marginBottom: 12 }} />}
         <Form form={form} layout="vertical" requiredMark={false} initialValues={{ outcome: 'retain' }}>
           <Form.Item label="Outcome" name="outcome" rules={[{ required: true, message: 'Choose an outcome' }]}>
-            <FormSelect options={OUTCOMES} />
+            <FormSelect placeholder="Choose an outcome" options={OUTCOMES} />
           </Form.Item>
           <Form.Item label="Note (recorded in the audit log)" name="note">
-            <Input.TextArea rows={3} maxLength={1000} />
+            <Input.TextArea placeholder="Note for the audit log" rows={3} maxLength={1000} />
           </Form.Item>
         </Form>
       </Modal>

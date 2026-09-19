@@ -12,7 +12,6 @@ import {
   Select,
   Space,
   Table,
-  Tag,
   Typography,
 } from "antd";
 import { Link } from "react-router";
@@ -27,7 +26,7 @@ import {
   type SourceTier,
 } from "@/api/ai-content";
 import { isApiError } from "@/api/errors";
-import { ErrorState, PageLoader } from "@/components/ui";
+import { ErrorState, PageLoader, StatusTag } from "@/components/ui";
 import { errorMessage, fieldErrors, useAsync } from "@/shared/useAsync";
 
 const when = (value: string | null) =>
@@ -35,7 +34,6 @@ const when = (value: string | null) =>
     ? new Intl.DateTimeFormat("en-AU", { timeZone: "Australia/Adelaide", dateStyle: "medium", timeStyle: "short" }).format(new Date(value))
     : "—";
 const words = (value: string) => value.replace(/_/g, " ");
-const CLAIM_COLOURS: Record<Claim["status"], string> = { verified: "green", unresolved: "gold", conflicting: "red", stale: "orange", excluded: "default" };
 const PACKET_LABELS = { collecting: "Collecting evidence", verified: "Verified", needs_fact_review: "Needs fact review", failed: "Research failed" } as const;
 const TIER_OPTIONS = (Object.keys(SOURCE_TIER_LABELS) as SourceTier[]).filter((t) => t !== "unclassified").map((value) => ({ value, label: SOURCE_TIER_LABELS[value] }));
 
@@ -45,7 +43,7 @@ export function NoveltyCard({ topic, canReview, onChange }: { topic: AiTopic; ca
   const [busy, setBusy] = useState(false);
   const matches = topic.noveltyDetail ?? [];
   return (
-    <Card title="Overlap with existing content" style={{ marginTop: 16 }}>
+    <Card title={<h2 className="as-ai-card-heading">Overlap with existing content</h2>} style={{ marginTop: 16 }}>
       <Typography.Paragraph>
         Result: <strong>{topic.noveltyStatus === "unchecked" ? "Not checked" : words(topic.noveltyStatus)}</strong>
         {topic.noveltyCheckedAt ? ` (checked ${when(topic.noveltyCheckedAt)})` : ""}. Compared locally with articles, including drafts, topics and rejected ideas.
@@ -61,7 +59,7 @@ export function NoveltyCard({ topic, canReview, onChange }: { topic: AiTopic; ca
             { title: "Existing", dataIndex: "title", render: (title: string, m) => (m.kind === "post" ? <Link to={`/posts/${m.id}`}>{title}</Link> : <Link to={`/ai-content/topics/${m.id}`}>{title}</Link>) },
             { title: "Type", render: (_: unknown, m) => `${m.kind === "post" ? "Article" : "Topic"}, ${words(m.status)}` },
             { title: "Why", render: (_: unknown, m) => words(m.reason) },
-            { title: "Verdict", dataIndex: "verdict", render: (v: string) => <Tag color={v === "duplicate" ? "red" : "gold"}>{v}</Tag> },
+            { title: "Verdict", dataIndex: "verdict", render: (v: string) => <StatusTag status={v} /> },
           ]}
         />
       )}
@@ -94,7 +92,7 @@ export function SourcesCard({ topic, canReview, onChange }: { topic: AiTopic; ca
   const [saving, setSaving] = useState(false);
   const editable = canReview && ["queued", "paused", "failed", "researching", "needs_fact_review"].includes(topic.status);
   return (
-    <Card title="Research sources" style={{ marginTop: 16 }}>
+    <Card title={<h2 className="as-ai-card-heading">Research sources</h2>} style={{ marginTop: 16 }}>
       <Typography.Paragraph type="secondary">Public https pages only. Official pages establish first-party facts.</Typography.Paragraph>
       <Form
         form={form}
@@ -222,19 +220,19 @@ function AddClaim({ packetId, evidence, onDone }: { packetId: string; evidence: 
           }}
         >
           <Form.Item name="evidenceId" label="Evidence" rules={[{ required: true }]}>
-            <Select options={usable.map((e) => ({ value: e.id, label: `${e.host}: ${e.title ?? e.url}` }))} />
+            <Select placeholder="Choose the retrieved page" options={usable.map((e) => ({ value: e.id, label: `${e.host}: ${e.title ?? e.url}` }))} />
           </Form.Item>
           <Form.Item name="kind" label="Type of fact" rules={[{ required: true, message: "Choose a type" }]}>
-            <Select options={CLAIM_KINDS.map((k) => ({ value: k, label: words(k) }))} />
+            <Select placeholder="Choose the type of fact" options={CLAIM_KINDS.map((k) => ({ value: k, label: words(k) }))} />
           </Form.Item>
           <Form.Item name="subject" label="About (place, business or event)" rules={[{ required: true, message: "Enter what this is about" }]}>
-            <Input maxLength={200} />
+            <Input placeholder="e.g. Adelaide Central Market" maxLength={200} />
           </Form.Item>
           <Form.Item name="value" label="Value, exactly as the source states it" rules={[{ required: true, message: "Enter the value" }]}>
-            <Input maxLength={1000} />
+            <Input placeholder="Exactly as the source states it" maxLength={1000} />
           </Form.Item>
           <Form.Item name="excerpt" label="Excerpt copied from the source" extra="It must appear in the retrieved text and state the value." rules={[{ required: true, message: "Paste the supporting text" }]}>
-            <Input.TextArea rows={3} maxLength={1000} />
+            <Input.TextArea placeholder="Paste the exact words from the page" rows={3} maxLength={1000} />
           </Form.Item>
           <Form.Item name="material" valuePropName="checked">
             <Checkbox>The article will state this as fact</Checkbox>
@@ -257,6 +255,9 @@ export function ResearchCard({ topic, canReview, onChange }: { topic: AiTopic; c
   const [followUpReason, setFollowUpReason] = useState("");
   const [problem, setProblem] = useState<string[] | null>(null);
   const postMatches = (topic.noveltyDetail ?? []).filter((m) => m.kind === "post");
+  // A topic that overlaps only topics a person cancelled may be approved as their correction, with a reason.
+  const cancelledOnly = (topic.noveltyDetail ?? []).length > 0 && (topic.noveltyDetail ?? []).every((m) => m.kind === "item" && m.status === "cancelled");
+  const [correctionReason, setCorrectionReason] = useState("");
   const canApprove = canReview && (topic.status === "queued" || topic.status === "failed");
   const waitingForSlot = topic.status === "queued" && Boolean(topic.awaitingSlotSince);
   const packet = state.status === "ready" ? state.data.packet : null;
@@ -266,7 +267,8 @@ export function ResearchCard({ topic, canReview, onChange }: { topic: AiTopic; c
     setBusy(true);
     setProblem(null);
     try {
-      const followUp = action !== "refresh" && followUpPostId ? { followUpOfPostId: followUpPostId, followUpReason } : undefined;
+      const followUp =
+        action === "refresh" ? undefined : followUpPostId ? { followUpOfPostId: followUpPostId, followUpReason } : correctionReason.trim() ? { correctionReason: correctionReason.trim() } : undefined;
       onChange(await aiContentApi.researchAction(topic, action, followUp));
       message.success(action === "approve" ? "Approved for research" : action === "approve_for_slot" ? "Approved for the daily slot" : "Research refreshed");
     } catch (error) {
@@ -278,7 +280,7 @@ export function ResearchCard({ topic, canReview, onChange }: { topic: AiTopic; c
   };
 
   return (
-    <Card title="Research and fact review" style={{ marginTop: 16 }}>
+    <Card title={<h2 className="as-ai-card-heading">Research and fact review</h2>} style={{ marginTop: 16 }}>
       {problem && <Alert type="error" showIcon message={problem[0]} description={problem.slice(1).map((p) => <div key={p}>{p}</div>)} style={{ marginBottom: 12 }} role="alert" />}
       {canApprove && (
         <Space direction="vertical" style={{ width: "100%", marginBottom: 16 }}>
@@ -295,6 +297,19 @@ export function ResearchCard({ topic, canReview, onChange }: { topic: AiTopic; c
                 style={{ maxWidth: 420 }}
               />
               {followUpPostId && <Input.TextArea aria-label="Why this follow-up is a different, useful article" rows={2} maxLength={500} value={followUpReason} onChange={(e) => setFollowUpReason(e.target.value)} placeholder="Why this is a different, useful article" />}
+            </>
+          )}
+          {topic.noveltyStatus === "review" && cancelledOnly && (
+            <>
+              <Typography.Text>This topic overlaps only a cancelled topic. Approve it as that topic's correction.</Typography.Text>
+              <Input.TextArea
+                aria-label="What was wrong with the cancelled topic"
+                rows={2}
+                maxLength={400}
+                value={correctionReason}
+                onChange={(e) => setCorrectionReason(e.target.value)}
+                placeholder="What was wrong with the cancelled topic"
+              />
             </>
           )}
           {waitingForSlot && <Alert type="info" showIcon message="Waiting for the daily slot. Its research starts when a slot takes it." />}
@@ -346,7 +361,7 @@ export function ResearchCard({ topic, canReview, onChange }: { topic: AiTopic; c
             columns={[
               { title: "Fact", render: (_: unknown, c: Claim) => <><strong>{words(c.kind)}</strong> of {c.subject}{c.material ? "" : " (minor)"}</> },
               { title: "Value", dataIndex: "value" },
-              { title: "Status", render: (_: unknown, c: Claim) => <><Tag color={CLAIM_COLOURS[c.status]}>{c.status}</Tag><div><Typography.Text type="secondary">{c.reason}</Typography.Text></div></> },
+              { title: "Status", render: (_: unknown, c: Claim) => <><StatusTag status={c.status} /><div><Typography.Text type="secondary">{c.reason}</Typography.Text></div></> },
               { title: "Evidence", render: (_: unknown, c: Claim) => c.sources.map((s) => <div key={s.evidenceId}><Typography.Text code>{s.excerpt}</Typography.Text></div>) },
               ...(canReview ? [{ title: "Decision", render: (_: unknown, c: Claim) => <ClaimActions claim={c} onDone={() => { reload(); void aiContentApi.detail(topic.id).then(onChange); }} /> }] : []),
             ]}

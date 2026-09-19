@@ -224,14 +224,87 @@ export interface PriceSchedule {
   cachedInputMicrosPerMTok: number;
   outputMicrosPerMTok: number;
   longContextThresholdTokens: number;
-  /** Image models only. */
+  /** Image models only: the resolution tier (stored as imageSize) and quality covered, and how the provider bills. */
   imageSize?: string | null;
   imageQuality?: string | null;
+  pricingUnit?: "token" | "image";
   maxOutputTokens?: number | null;
+  perImageMicros?: number | null;
+  textOutputMicrosPerMTok?: number | null;
+  maxTextOutputTokens?: number | null;
   sourceUrl: string;
   effectiveFrom: string;
   status: "proposed" | "approved" | "retired";
   approvedAt: string | null;
+}
+/** A reviewed image model and what it supports (AI-IMAGE-PROVIDER-03). */
+export interface ImageModelInfo {
+  provider: string;
+  model: string;
+  label: string;
+  aspectRatios: string[];
+  resolutions: string[];
+  qualities: string[];
+  priceUnit: "token" | "image";
+  billsTextOutput: boolean;
+  reportsServedModel: boolean;
+  suppliesRequestId: boolean;
+  /** Each result states what was billed; it must match the approved price for its configuration. */
+  reportsCost: boolean;
+  reconciliation: string;
+  processingLocation: string;
+  retention: string;
+  source: string;
+}
+export interface ComparisonCandidate {
+  provider: string;
+  model: string;
+  resolution: string;
+  quality: string;
+}
+export interface ComparisonQuote {
+  prompt: string;
+  aspectRatio: string;
+  currency: string;
+  totalMicros: number;
+  candidates: (ComparisonCandidate & { maxMicros: number; priceVersion: string; priceUnit: "token" | "image"; processingLocation: string; retention: string })[];
+}
+/** One generated image as pilot evidence: recorded facts only, no score. */
+export interface ImageEvidence {
+  jobId: string;
+  itemId: string;
+  topic: string;
+  slot: "featured" | "comparison";
+  comparisonRunId: string | null;
+  imageVersion: number;
+  status: ImageJobStatus;
+  provider: string;
+  model: string;
+  servedModel: string | null;
+  policyVersion: string;
+  promptHash: string;
+  prompt: string;
+  aspectRatio: string | null;
+  resolution: string | null;
+  quality: string;
+  size: string;
+  latencyMs: number | null;
+  currency: string | null;
+  priceVersion: string | null;
+  reservedMicros: number;
+  settledMicros: number | null;
+  /** What the provider said it billed, where it reports it (xAI). */
+  reportedCostMicros: number | null;
+  costState: CostState;
+  operationState: string;
+  errorClass: string | null;
+  providerRequestId: string | null;
+  mediaAssetId: string | null;
+  checksum: string | null;
+  mediaStatus: string | null;
+  failureCode: string | null;
+  regeneration: boolean;
+  createdAt: string;
 }
 /** What needs an operator; the same figures the alert rules read (Phase 1G). */
 export interface AiAttention {
@@ -273,12 +346,22 @@ export interface ScheduleStatus {
 export type ImageJobStatus = "requested" | "stored" | "approved" | "rejected" | "failed" | "outcome_unknown" | "superseded";
 export interface ImageJob {
   id: string;
+  /** "comparison" results never replace the featured versions; approving one replaces the rest of its comparison. */
+  slot: "featured" | "comparison";
+  comparisonRunId: string | null;
+  provider: string;
   imageVersion: number;
   status: ImageJobStatus;
   prompt: string;
   model: string;
   size: string;
+  aspectRatio: string | null;
+  resolution: string | null;
   quality: string;
+  servedModel: string | null;
+  providerRequestId: string | null;
+  latencyMs: number | null;
+  reportedCostMicros: number | null;
   width: number | null;
   height: number | null;
   disclosureText: string;
@@ -295,7 +378,10 @@ export interface TopicImages {
   globalMode: "manual" | "hybrid";
   override: "manual" | "hybrid" | null;
   brief: { prompt: string; altDraft: string } | null;
-  size: string;
+  provider: string;
+  model: string;
+  aspectRatio: string;
+  resolution: string;
   quality: string;
   disclosureText: string;
   post: { id: string; version: number; coverMediaId: string | null; coverAlt: string | null } | null;
@@ -393,7 +479,7 @@ export const aiContentApi = {
   researchAction: (
     topic: AiTopic,
     action: "approve" | "approve_for_slot" | "refresh",
-    followUp?: { followUpOfPostId: string; followUpReason: string },
+    followUp?: { followUpOfPostId: string; followUpReason: string } | { correctionReason: string },
   ) =>
     httpClient
       .request<{ data: AiTopic }>(`/admin/ai-content/topics/${topic.id}/research`, {
@@ -497,7 +583,20 @@ export const aiContentApi = {
   resumePaidCalls: (note: string) =>
     httpClient.request<{ data: BudgetStatus }>("/admin/ai-content/budget/resume", { method: "POST", body: { note } }).then((r) => r.data.data),
   prices: () => httpClient.request<{ data: PriceSchedule[] }>("/admin/ai-content/prices").then((r) => r.data.data),
-  proposePrice: (input: Omit<PriceSchedule, "id" | "serviceTier" | "status" | "approvedAt">) =>
+  quoteImageComparison: (topicId: string, input: { prompt?: string; aspectRatio: string; candidates: ComparisonCandidate[] }) =>
+    httpClient.request<{ data: ComparisonQuote }>(`/admin/ai-content/topics/${topicId}/image-comparisons/quote`, { method: "POST", body: input }).then((r) => r.data.data),
+  requestImageComparison: (topic: AiTopic, requestKey: string, input: { prompt?: string; aspectRatio: string; candidates: ComparisonCandidate[]; expectedTotalMicros: number }) =>
+    httpClient
+      .request<{ data: { comparisonRunId: string; totalMicros: number; created: boolean } }>(`/admin/ai-content/topics/${topic.id}/image-comparisons`, {
+        method: "POST",
+        headers: { "Idempotency-Key": requestKey },
+        body: { ...input, expectedVersion: topic.version },
+      })
+      .then((r) => r.data.data),
+  imageEvidence: (query: { page?: number; pageSize?: number; slot?: "featured" | "comparison"; itemId?: string }) =>
+    httpClient.request<{ data: ImageEvidence[]; meta: { total: number; page: number; pageSize: number } }>("/admin/ai-content/image-evidence", { query }).then((r) => r.data),
+  imageModels: () => httpClient.request<{ data: ImageModelInfo[] }>("/admin/ai-content/image-models").then((r) => r.data.data),
+  proposePrice: (input: Omit<PriceSchedule, "id" | "serviceTier" | "status" | "approvedAt" | "imageSize"> & { imageResolution?: string }) =>
     httpClient.request<{ data: PriceSchedule }>("/admin/ai-content/prices", { method: "POST", body: input }).then((r) => r.data.data),
   approvePrice: (id: string) =>
     httpClient.request<{ data: PriceSchedule }>(`/admin/ai-content/prices/${id}/approve`, { method: "POST", body: {} }).then((r) => r.data.data),

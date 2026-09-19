@@ -147,12 +147,15 @@ export class AiResearchService {
     const followUp = input.followUpOfPostId ? { postId: input.followUpOfPostId, reason: input.followUpReason?.trim() ?? '' } : null;
     if (input.action !== 'refresh' && followUp && followUp.reason.length < 10) invalid('followUpReason', 'Explain in a sentence why this follow-up is a different, useful article');
     if (input.action === 'refresh' && followUp) invalid('followUpOfPostId', 'Only approval takes a follow-up');
+    const correction = input.correctionReason !== undefined ? { reason: input.correctionReason.trim() } : null;
+    if (correction && input.action === 'refresh') invalid('correctionReason', 'Only approval takes a correction');
+    if (correction && correction.reason.length < 10) invalid('correctionReason', 'Say in a sentence what was wrong with the cancelled topic');
     const db = await this.database.client();
     try {
       await retryTransaction(() =>
         db.$transaction((tx) =>
           input.action !== 'refresh'
-            ? admitTopic(tx, { itemId, expectedVersion: input.expectedVersion, adminId: actor.id, requestId: ctx.requestId, followUp, forSlot: input.action === 'approve_for_slot' })
+            ? admitTopic(tx, { itemId, expectedVersion: input.expectedVersion, adminId: actor.id, requestId: ctx.requestId, followUp, correction, forSlot: input.action === 'approve_for_slot' })
             : refreshResearch(tx, { itemId, expectedVersion: input.expectedVersion, adminId: actor.id, requestId: ctx.requestId }),
         ),
       );

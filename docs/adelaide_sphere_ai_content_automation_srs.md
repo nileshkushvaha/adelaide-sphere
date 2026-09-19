@@ -539,3 +539,67 @@ Exact schema must be adapted to the existing project after audit. Names below de
 ---
 
 > **Final product principle:** Build the smallest production-grade core that is useful for Adelaide Sphere today, but keep configuration, provider boundaries, idempotency, auditability and data ownership strong enough that the engine can later become a sellable product without a rewrite.
+
+---
+
+## Amendment 01 — Provider-neutral OpenAI, Google Gemini and xAI (owner-directed, 19 September 2026)
+
+> **Status: proposed; awaiting owner approval.** This amendment is additive: nothing above it is changed, and every earlier requirement keeps its meaning and traceability. It extends §20 (Provider Abstraction), §12 (Image Workflow) and §19 (Cost Controls). Evidence, current prices and the full rationale: `docs/planning/ai-provider-amendment-01.md`.
+
+### A1. Providers
+
+* **AI-PROVIDER-01:** Text generation uses a provider-neutral boundary, `TextGenerationProvider`, with OpenAI and Google Gemini as candidate adapters. Selection is by configuration from an approved allowlist, with no change to content-domain logic.
+* **AI-PROVIDER-02:** Image generation uses a provider-neutral boundary, `ImageGenerationProvider`, with **OpenAI, Google Gemini (native image generation) and xAI (Grok Imagine)** as candidate adapters. No provider-specific behaviour enters the reusable domain. Model ids, capabilities and prices are verified against official documentation before activation and are never permanent product requirements.
+* **AI-PROVIDER-03:** A Google Workspace Gemini entitlement is not Gemini API entitlement. Server-side generation uses the Gemini Developer API or Vertex AI through a paid, separately billed project. Unpaid (free-tier) API use is never permitted for this application.
+* **AI-PROVIDER-04:** Each provider/model capability record declares at least: provider; model id; text generation; structured output; image generation; supported sizes and aspect ratios; input/output limits; grounding capability and its state; idempotency and reconciliation capability; pricing version; approval state.
+* **AI-PROVIDER-05:** Changing a provider never weakens research verification, claim and evidence requirements, fact confirmation, approval, human-edit protection, publication gates, budget controls, idempotency or audit.
+* **AI-PROVIDER-06:** Fallback is explicit, configured and budgeted, and is never invoked after an unresolved or unknown outcome. The default is no fallback.
+* **AI-PROVIDER-07:** Provider credentials stay server-side. They are never stored in ordinary settings, sent to the browser, placed in prompts or logged.
+* **AI-PROVIDER-08:** Provider grounding or search is disabled in generation requests and is never factual evidence. Facts come only from the research, evidence, claim-verification and fact-confirmation pipeline (`ResearchProvider` → verified packet).
+* **AI-PROVIDER-09:** A request definitely not processed is retried no sooner than the provider allows, with bounded backoff where the provider documents no delay. A timeout, lost connection or server error on a paid call is an unknown outcome, never retried automatically.
+* **AI-PROVIDER-10:** A controlled provider comparison is supported (see AI-IMAGE-PROVIDER-12). It is budgeted, and its results are proposals only, never published automatically.
+* **AI-PROVIDER-11:** Every provider price is recorded as a versioned schedule that stays **proposed** until an administrator explicitly approves it. With no approved price, or a price that cannot bound the call, no paid call is made.
+* **AI-PROVIDER-12:** A consumer plan of any provider (for example a Grok Free or paid consumer plan, or Google Workspace with Gemini) is never treated as API entitlement. API use is a separately billed, separately budgeted account.
+* **AI-PROVIDER-13:** The model is pinned. If a provider reports a different model than the one requested, or a retired model is served by another model or setting, the result is treated as a pricing discrepancy (paid calls halt). A model the provider has announced as retiring is removed from the allowlist before its date.
+* **AI-PROVIDER-14:** Each approved provider/model records where requests may be processed and how long the provider retains them. Activation requires the owner's acceptance of that processing location and retention.
+
+### A2. Images
+
+* **AI-IMAGE-PROVIDER-01:** Image policy (unchanged):
+  * hybrid globally, prompt-only by default;
+  * paid generation only through an explicit, authorised Generate image action;
+  * automatic background generation off;
+  * at most one generated featured image per article, supporting AI images off;
+  * a separate image budget.
+* **AI-IMAGE-PROVIDER-02:** An administrator selects an approved image provider and model from the server-side allowlist. An unsupported model, size, aspect ratio or quality fails before any paid request.
+* **AI-IMAGE-PROVIDER-03:** Each image request records: provider; model; prompt, prompt hash and policy version; requested size and aspect ratio; provider request id where available; estimated maximum cost; actual or reconciled usage; result checksum; MediaAsset id; time; approval state and version.
+* **AI-IMAGE-PROVIDER-04:** Every provider result passes through quarantine → MediaAsset → processing → human approval → guarded attachment. A provider URL never appears in a post or becomes canonical media.
+* **AI-IMAGE-PROVIDER-05:** Generated imagery of real places or businesses is never presented as documentary evidence. Provider grounding does not change this. Provider watermarks are preserved and do not replace the reader disclosure.
+* **AI-IMAGE-PROVIDER-06:** Every generated image is reviewed by a person. The actual image is reviewed before its final alt text, caption and disclosure are set. Approval is bound to the image's hash, alt text and disclosure. Regeneration is an explicit, separately budgeted action, and it supersedes the earlier approval.
+* **AI-IMAGE-PROVIDER-07:** An image price bounds everything the provider bills for one image: image output, input, and any text or thinking output. What cannot be bounded fails closed.
+* **AI-IMAGE-PROVIDER-08:** The reader disclosure for AI-generated images is configurable. It is initially proposed as "Illustrative image created with AI.", recorded with each image, and shown with an approved AI featured image, never as a photographer credit.
+* **AI-IMAGE-PROVIDER-09:** An unknown provider outcome never triggers automatic paid regeneration, with any provider.
+* **AI-IMAGE-PROVIDER-10:** Image prices may be per generated image (fixed by model, resolution and quality) or per token. The price schedule states its unit, and the reservation uses the unit's worst case.
+* **AI-IMAGE-PROVIDER-11:** Image results are requested as inline data (base64). A provider-hosted result URL is never requested where the provider offers inline data. If one is ever received, it is fetched once, server-side, into quarantine, and never stored or shown.
+* **AI-IMAGE-PROVIDER-12:** **Controlled provider comparison.**
+  * An administrator may generate the same approved prompt once through each selected approved provider (OpenAI, Gemini, xAI).
+  * Each generation is a separate, separately budgeted and reserved operation, after a confirmation that states every provider's maximum cost and the total.
+  * It never runs automatically and is not available to the daily slot.
+  * Results go through the normal quarantine and processing and are shown side by side; none is attached unless a person approves one through the normal image approval.
+  * An unknown outcome from one provider holds that provider's result only and triggers nothing else.
+* **AI-IMAGE-PROVIDER-13** (added 19 September 2026, owner-directed after the xAI pricing recheck): **Configuration-dependent prices and provider-reported cost.**
+  * Where a provider's per-image price depends on the configuration (for example xAI `grok-imagine-image-2.0` by resolution and quality), each configuration has its own approved price.
+  * A quality whose billed price is decided by the provider at generation time (for example xAI `auto`) is not offered.
+  * The reservation uses the most expensive approved configuration of the model.
+  * Where the provider reports what it actually billed (for example xAI `usage.cost_in_usd_ticks`), settlement uses that amount. It must agree with the approved price for the requested configuration; if it does not, the call settles as uncertain (never below its reservation) and paid calls halt until reconciled.
+  * Where no cost is reported, the approved price settles the call.
+
+### A3. Phase 1E structure
+
+Phase 1E is structured as:
+
+* **1E.1:** the provider-neutral image foundation: MediaAsset integration, image budgets, provenance, approval, idempotency and publication gates.
+* **1E.2:** the first approved image provider.
+* **1E.3:** an optional second provider.
+
+The choice of the 1E.2 provider is the owner's, made after the controlled comparison (AI-IMAGE-PROVIDER-12). No provider is assumed first.

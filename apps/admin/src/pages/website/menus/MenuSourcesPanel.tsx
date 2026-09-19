@@ -238,7 +238,7 @@ function CustomLinkForm({ onAdd, disabled }: { onAdd: (items: EditorItem[]) => v
         <label htmlFor="menu-custom-text" style={{ display: 'block', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
           {heading ? 'Heading text' : 'Link text'}
         </label>
-        <Input
+        <Input placeholder="Link text"
           id="menu-custom-text"
           value={text}
           maxLength={MENU_LIMITS.label}

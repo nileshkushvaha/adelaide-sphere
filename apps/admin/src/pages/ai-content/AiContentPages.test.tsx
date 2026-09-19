@@ -51,6 +51,10 @@ vi.mock("@/api/ai-content", async (importOriginal) => ({
     budget: vi.fn(),
     resumePaidCalls: vi.fn(),
     prices: vi.fn(),
+    imageModels: vi.fn(),
+    imageEvidence: vi.fn(),
+    quoteImageComparison: vi.fn(),
+    requestImageComparison: vi.fn(),
     proposePrice: vi.fn(),
     approvePrice: vi.fn(),
     images: vi.fn(),
@@ -123,15 +127,24 @@ const budget = {
 const options = { authProvider: providerWithPermissions(permissions) };
 const quiet = { outcomeUnknownOperations: 0, paidCallsHalted: false, paidHaltReason: null, budgetUsed: { textDay: 0, textMonth: 0, imageDay: 0, imageMonth: 0 }, budgetWarningPercent: 70, factReviewItems: 0, factReviewOldestSeconds: 0, failedItems: 0, missedSlotsUnreviewed: 0, oldestOpenOperationSeconds: 0 };
 const imagePost = { id: "cmpostabcdefghijklmnopqr", version: 4, coverMediaId: null, coverAlt: null };
-const noImages = { globalMode: "hybrid" as const, override: null, brief: null, size: "1536x1024", quality: "medium", disclosureText: "Illustrative image created with AI.", post: null, jobs: [] };
+const noImages = { globalMode: "hybrid" as const, override: null, brief: null, provider: "openai", model: "gpt-image-2.5-flare", aspectRatio: "3:2", resolution: "1k", quality: "medium", disclosureText: "Illustrative image created with AI.", post: null, jobs: [] };
 const storedImage = {
   id: "cmimagejobabcdefghijklmn",
+  slot: "featured" as const,
+  comparisonRunId: null,
+  provider: "openai",
   imageVersion: 1,
   status: "stored" as const,
   prompt: "A generic café counter",
   model: "gpt-image-2.5-flare",
   size: "1536x1024",
+  aspectRatio: "3:2",
+  resolution: "1k",
   quality: "medium",
+  servedModel: null,
+  providerRequestId: "req_123",
+  latencyMs: 41_200,
+  reportedCostMicros: null,
   width: 1536,
   height: 1024,
   disclosureText: "Illustrative image created with AI.",
@@ -144,12 +157,32 @@ const storedImage = {
   media: { id: "cmmediaabcdefghijklmnopq", status: "ready" as const, rejectionReason: null, previewUrl: "http://127.0.0.1:9020/adelaide-sphere-media/media/x/card.webp" },
   isFeatured: false,
 };
+const openaiImageModel = {
+  provider: "openai",
+  model: "gpt-image-2.5-flare",
+  label: "OpenAI gpt-image-2.5-flare",
+  aspectRatios: ["3:2", "1:1", "2:3", "16:9"],
+  resolutions: ["1k", "2k"],
+  qualities: ["low", "medium", "high"],
+  priceUnit: "token" as const,
+  billsTextOutput: false,
+  reportsServedModel: false,
+  suppliesRequestId: false,
+  reportsCost: false,
+  reconciliation: "none",
+  processingLocation: "Global",
+  retention: "30 days",
+  source: "https://developers.openai.com/api/docs/pricing",
+};
+const xaiImageModel = { ...openaiImageModel, provider: "xai", model: "grok-imagine-image-2.0", label: "xAI grok-imagine-image-2.0", qualities: ["low", "medium"], priceUnit: "image" as const, processingLocation: "United States" };
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(aiContentApi.research).mockResolvedValue({ packets: [], packet: null });
   vi.mocked(aiContentApi.generation).mockResolvedValue({ runs: [], operations: [], approvals: [], post: null, factReview: null });
   vi.mocked(aiContentApi.budget).mockResolvedValue(budget);
   vi.mocked(aiContentApi.images).mockResolvedValue(noImages);
+  vi.mocked(aiContentApi.imageModels).mockResolvedValue([openaiImageModel]);
+  vi.mocked(aiContentApi.imageEvidence).mockResolvedValue({ data: [], meta: { total: 0, page: 1, pageSize: 20 } });
   vi.mocked(aiContentApi.list).mockResolvedValue({
     data: [topic],
     meta: { total: 1, page: 1, pageSize: 20 },
@@ -181,10 +214,10 @@ beforeEach(() => {
 });
 it("shows disabled defaults and real queue counts without generation or cost statistics", async () => {
   renderWithProviders(<AiOverviewPage />, options);
-  expect(await screen.findByText("Disabled")).toBeInTheDocument();
-  expect(screen.getByText("Inactive")).toBeInTheDocument();
+  expect(await screen.findByText("disabled")).toBeInTheDocument();
+  expect(screen.getByText("inactive")).toBeInTheDocument();
   expect(screen.getByText(/never publish without approval/)).toBeInTheDocument();
-  expect(screen.getByText("Not available")).toBeInTheDocument();
+  expect(screen.getByText("Setup required")).toBeInTheDocument();
   expect(screen.queryByText(/tokens used/i)).not.toBeInTheDocument();
 });
 it("creates a manual topic and retains the same request key/input on an ambiguous response retry", async () => {
@@ -198,6 +231,7 @@ it("creates a manual topic and retains the same request key/input on an ambiguou
     }),
   );
   renderWithProviders(<AiTopicQueuePage />, options);
+  await ue.click(await screen.findByText("Add a manual topic"));
   await ue.type(
     await screen.findByLabelText("Title / topic"),
     "A new city guide",
@@ -227,12 +261,12 @@ it("reprioritizes with expected version and keeps new input through a conflict",
     }),
   );
   renderWithProviders(<AiTopicQueuePage />, options);
-  await ue.click(await screen.findByRole("button", { name: "Reprioritize" }));
+  await ue.click(await screen.findByRole("button", { name: "Change priority" }));
   const dialog = await screen.findByRole("dialog");
   await ue.clear(within(dialog).getByLabelText("New priority"));
   await ue.type(within(dialog).getByLabelText("New priority"), "20");
   await ue.click(
-    within(dialog).getByRole("button", { name: "Confirm change" }),
+    within(dialog).getByRole("button", { name: "Save priority" }),
   );
   expect(await screen.findByText("Topic changed")).toBeInTheDocument();
   expect(within(dialog).getByLabelText("New priority")).toHaveValue("20");
@@ -243,11 +277,11 @@ it("reprioritizes with expected version and keeps new input through a conflict",
   );
   await waitFor(() =>
     expect(
-      within(dialog).getByRole("button", { name: "Confirm change" }),
+      within(dialog).getByRole("button", { name: "Save priority" }),
     ).toBeEnabled(),
   );
   await ue.click(
-    within(dialog).getByRole("button", { name: "Confirm change" }),
+    within(dialog).getByRole("button", { name: "Save priority" }),
   );
   await waitFor(() =>
     expect(aiContentApi.priority).toHaveBeenLastCalledWith(
@@ -260,9 +294,10 @@ it("pauses only through an explicit confirmed action", async () => {
   const ue = user();
   renderWithProviders(<AiTopicQueuePage />, options);
   await ue.click(await screen.findByRole("button", { name: "Pause" }));
+  expect(await screen.findByRole("dialog", { name: "Pause topic" })).toBeInTheDocument();
   await ue.click(
     within(await screen.findByRole("dialog")).getByRole("button", {
-      name: "Confirm change",
+      name: "Pause topic",
     }),
   );
   await waitFor(() =>
@@ -276,13 +311,13 @@ it("requires a reason and confirmation to cancel", async () => {
   await ue.click(await screen.findByRole("button", { name: "Cancel" }));
   const dialog = await screen.findByRole("dialog");
   await ue.click(
-    within(dialog).getByRole("button", { name: "Confirm change" }),
+    within(dialog).getByRole("button", { name: "Cancel topic" }),
   );
   await screen.findByText(/Please enter Reason/i);
   expect(aiContentApi.action).not.toHaveBeenCalled();
   await ue.type(within(dialog).getByLabelText("Reason"), "Not needed");
   await ue.click(
-    within(dialog).getByRole("button", { name: "Confirm change" }),
+    within(dialog).getByRole("button", { name: "Cancel topic" }),
   );
   await waitFor(() =>
     expect(aiContentApi.action).toHaveBeenLastCalledWith(
@@ -376,6 +411,40 @@ it("saves owned settings with the loaded version and retains unsaved changes aft
     enabled: true,
   });
 });
+it("approves a topic that overlaps only a cancelled topic as its correction, with the reason", async () => {
+  const ue = user();
+  const corrected = { ...topic, status: "queued" as const, version: 3, noveltyStatus: "review" as const, noveltyDetail: [{ kind: "item" as const, id: "cmcancelledabcdefghijklm", title: topic.title, status: "cancelled", score: 1, reason: "previously_rejected", verdict: "review" as const }] };
+  vi.mocked(aiContentApi.detail).mockResolvedValue(corrected as never);
+  vi.mocked(aiContentApi.researchAction).mockResolvedValue({ ...corrected, status: "researching", version: 4 } as never);
+  renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  expect(await screen.findByText("This topic overlaps only a cancelled topic. Approve it as that topic's correction.")).toBeInTheDocument();
+  expect(screen.queryByLabelText("Article this topic follows up")).not.toBeInTheDocument();
+  await ue.type(screen.getByLabelText("What was wrong with the cancelled topic"), "The brief named the wrong city");
+  await ue.click(screen.getByRole("button", { name: "Approve topic for research now" }));
+  await waitFor(() => expect(aiContentApi.researchAction).toHaveBeenCalledWith(expect.objectContaining({ version: 3 }), "approve", { correctionReason: "The brief named the wrong city" }));
+});
+it("labels image providers by product name and offers only the chosen provider's listed image models", async () => {
+  const declaration = (key: string, label: string, type: "enum" | "string", bounds: Record<string, unknown>) => ({
+    key, label, description: "d", type, default: "", bounds, visibility: "private", effect: "runtime", viewPermission: "ai_content.configure", updatePermission: "ai_content.configure", invalidates: [], unit: null, limitNote: null, consequence: null,
+  });
+  vi.mocked(settingsGroupsApi.registry).mockResolvedValue([
+    {
+      key: "ai_content", label: "AI Content", description: "", owner: "AiContentModule", viewPermission: "ai_content.configure", updatePermission: "ai_content.configure", note: null,
+      settings: [declaration("imageProvider", "Image provider", "enum", { values: ["openai", "xai", "google"] }), declaration("imageModel", "Image model", "string", { min: 1, max: 64 }), declaration("imageResolution", "Generated image resolution", "enum", { values: ["1k", "2k"] })],
+    },
+  ] as never);
+  vi.mocked(settingsGroupsApi.values).mockResolvedValue({ group: "ai_content", values: { imageProvider: "xai", imageModel: "grok-imagine-image-2.0", imageResolution: "1k" }, version: 2, updatedAt: topic.createdAt, updatedByAdminId: null });
+  vi.mocked(aiContentApi.imageModels).mockResolvedValue([openaiImageModel, xaiImageModel]);
+  renderWithProviders(<AiSettingsPage />, options);
+  expect(await screen.findByText("xAI grok-imagine-image-2.0")).toBeInTheDocument();
+  expect(screen.getByText("xAI")).toBeInTheDocument();
+  expect(screen.getByText("1K")).toBeInTheDocument();
+  expect(screen.queryByText("Xai")).not.toBeInTheDocument();
+  const ue = user();
+  await ue.click(screen.getByRole("combobox", { name: "Image model" }));
+  expect(await screen.findByRole("option", { name: "xAI grok-imagine-image-2.0" })).toBeInTheDocument();
+  expect(screen.queryByRole("option", { name: "OpenAI gpt-image-2.5-flare" })).not.toBeInTheDocument();
+});
 it("shows a linked article, sticky human-edit protection and a failure stage on topic detail", async () => {
   vi.mocked(aiContentApi.detail).mockResolvedValue({
     ...topic,
@@ -391,7 +460,7 @@ it("shows a linked article, sticky human-edit protection and a failure stage on 
     initialEntries: [`/admin/ai-content/topics/${topic.id}`],
     routePath: "/ai-content/topics/:id",
   });
-  expect(await screen.findByText("Failed")).toBeInTheDocument();
+  expect((await screen.findAllByText("Failed")).length).toBeGreaterThan(0);
   expect(
     screen.getByRole("link", { name: "Open the article" }),
   ).toHaveAttribute("href", "/admin/posts/cmpostabcdefghijklmnopqr");
@@ -504,7 +573,8 @@ it("adds a research source and shows the server's validation on the field", asyn
   vi.mocked(aiContentApi.sources).mockResolvedValue([]);
   vi.mocked(aiContentApi.createSource).mockRejectedValue(new ApiError({ kind: "validation", status: 400, code: "VALIDATION_ERROR", userMessage: "Some fields are invalid", fields: { host: ["Enter a public host name such as example.org"] } }));
   renderWithProviders(<ResearchSourcesPage />, options);
-  await ue.type(await screen.findByLabelText("Host"), "localhost");
+  await ue.click(await screen.findByText("Add a research source"));
+  await ue.type(await screen.findByLabelText("Website domain"), "localhost");
   await ue.type(screen.getByLabelText("Name"), "Local");
   await ue.click(screen.getByLabelText("Kind of source"));
   await ue.click(await screen.findByText("Official: business, venue or organiser"));
@@ -596,6 +666,8 @@ it("approves the actual image only with alt text written from it, for the articl
   renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
   expect(await screen.findByAltText("Generated image 1, awaiting description")).toBeInTheDocument();
   expect(screen.getByText("USD 0.05 (settled)")).toBeInTheDocument();
+  expect(screen.getByText("req_123")).toBeInTheDocument();
+  expect(screen.getByText("41.2 s")).toBeInTheDocument();
   const approve = screen.getByText("Approve and use as featured image").closest("button")!;
   expect(approve).toBeDisabled();
   await ue.type(screen.getByLabelText("Alt text for image 1"), "Illustration of a café counter with a coffee machine and pastries");
@@ -623,7 +695,7 @@ it("lists what needs attention on the dashboard, each with where to act, and not
 });
 it("hides the attention card when nothing needs attention", async () => {
   renderWithProviders(<AiOverviewPage />, options);
-  expect(await screen.findByText(/Automation configured/)).toBeInTheDocument();
+  expect(await screen.findByText("Workspace status")).toBeInTheDocument();
   expect(screen.queryByText("Needs attention")).not.toBeInTheDocument();
 });
 it("offers Retry draft for a topic whose first draft failed", async () => {
@@ -637,8 +709,89 @@ it("shows a paid-call halt with its reason and the over-threshold warning", asyn
   renderWithProviders(<PricingPage />, options);
   expect(await screen.findByText("Paid calls are halted")).toBeInTheDocument();
   expect(screen.getByText(/gpt-5.6-sol/)).toBeInTheDocument();
-  expect(screen.getByText("over 70%")).toBeInTheDocument();
+  expect(screen.getByText("At least 70% committed")).toBeInTheDocument();
+  // A zero image budget allows no spending; it is never an over-threshold warning.
+  expect(screen.getAllByText(/No spending allowed/)).toHaveLength(2);
+  expect(screen.getAllByText(/At least 70% committed/)).toHaveLength(1);
   expect(screen.getByRole("button", { name: "Resume after reconciling" })).toBeInTheDocument();
+});
+it("runs a provider comparison only after showing each maximum and the total, with one request key", async () => {
+  const ue = user();
+  vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, status: "ready_for_review", postId: imagePost.id, version: 9 });
+  vi.mocked(aiContentApi.images).mockResolvedValue({ ...noImages, brief: { prompt: "A generic café counter with pastries", altDraft: "" }, post: imagePost });
+  vi.mocked(aiContentApi.imageModels).mockResolvedValue([openaiImageModel, xaiImageModel]);
+  vi.mocked(aiContentApi.quoteImageComparison).mockResolvedValue({
+    prompt: "p",
+    aspectRatio: "16:9",
+    currency: "USD",
+    totalMicros: 102_000,
+    candidates: [
+      { provider: "openai", model: "gpt-image-2.5-flare", resolution: "1k", quality: "medium", maxMicros: 62_000, priceVersion: "o", priceUnit: "token", processingLocation: "Global", retention: "30 days" },
+      { provider: "xai", model: "grok-imagine-image-2.0", resolution: "1k", quality: "medium", maxMicros: 40_000, priceVersion: "x", priceUnit: "image", processingLocation: "United States", retention: "30 days" },
+    ],
+  });
+  vi.mocked(aiContentApi.requestImageComparison).mockResolvedValue({ comparisonRunId: "r", totalMicros: 102_000, created: true });
+  renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  await ue.click(await screen.findByRole("button", { name: "Compare providers" }));
+  const dialog = await screen.findByRole("dialog");
+  // Nothing can run before the cost is shown, and a comparison needs two settings.
+  expect(within(dialog).getByRole("button", { name: "Run comparison" })).toBeDisabled();
+  expect(within(dialog).getByRole("button", { name: "Show maximum cost" })).toBeDisabled();
+  await ue.click(await within(dialog).findByRole("checkbox", { name: "OpenAI gpt-image-2.5-flare" }));
+  await ue.click(within(dialog).getByRole("checkbox", { name: "xAI grok-imagine-image-2.0" }));
+  await ue.click(within(dialog).getByRole("button", { name: "Show maximum cost" }));
+  expect(await within(dialog).findByText("USD 0.11")).toBeInTheDocument();
+  expect(within(dialog).getByText("United States")).toBeInTheDocument();
+  expect(aiContentApi.quoteImageComparison).toHaveBeenCalledWith(topic.id, {
+    aspectRatio: "16:9",
+    candidates: [
+      { provider: "openai", model: "gpt-image-2.5-flare", resolution: "1k", quality: "medium" },
+      { provider: "xai", model: "grok-imagine-image-2.0", resolution: "1k", quality: "medium" },
+    ],
+  });
+  expect(aiContentApi.requestImageComparison).not.toHaveBeenCalled();
+  await ue.click(within(dialog).getByRole("button", { name: "Run comparison (up to USD 0.11)" }));
+  await waitFor(() => expect(aiContentApi.requestImageComparison).toHaveBeenCalledWith(expect.objectContaining({ version: 9 }), expect.stringMatching(/^[0-9a-f-]{36}$/), expect.objectContaining({ expectedTotalMicros: 102_000 })));
+});
+it("shows comparison results side by side, each approved only through the normal image approval", async () => {
+  const ue = user();
+  vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, status: "ready_for_review", postId: imagePost.id, version: 9 });
+  const result = (provider: string, model: string, n: number) => ({ ...storedImage, id: `cmcomparejob${n}abcdefghijk`, slot: "comparison" as const, comparisonRunId: "run-1", provider, model, imageVersion: n });
+  vi.mocked(aiContentApi.images).mockResolvedValue({ ...noImages, post: imagePost, jobs: [result("openai", "gpt-image-2.5-flare", 1), result("xai", "grok-imagine-image-2.0", 2)] });
+  vi.mocked(aiContentApi.approveImage).mockResolvedValue({ postId: imagePost.id, postVersion: 5 });
+  renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  const group = await screen.findByRole("region", { name: "Provider comparison" });
+  expect(within(group).getByText("xai · grok-imagine-image-2.0")).toBeInTheDocument();
+  expect(within(group).getByAltText("Generated xai result, awaiting description")).toBeInTheDocument();
+  await ue.type(within(group).getByLabelText("Alt text for the xai result"), "Illustration of a café counter with pastries");
+  const cards = within(group).getAllByText("Approve and use as featured image");
+  expect(cards[1]!.closest("button")).toBeDisabled();
+  await ue.click(within(group).getAllByRole("checkbox")[1]!);
+  await ue.click(cards[1]!.closest("button")!);
+  await ue.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Approve and use" }));
+  await waitFor(() => expect(aiContentApi.approveImage).toHaveBeenCalledWith("cmcomparejob2abcdefghijk", imagePost.version, "Illustration of a café counter with pastries"));
+});
+it("offers no provider comparison without the configure permission", async () => {
+  vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, status: "ready_for_review", postId: imagePost.id, version: 9 });
+  vi.mocked(aiContentApi.images).mockResolvedValue({ ...noImages, brief: { prompt: "A generic café counter", altDraft: "" }, post: imagePost });
+  renderWithProviders(<AiTopicDetailPage />, { authProvider: providerWithPermissions(permissions.filter((p) => p !== "ai_content.configure")), initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  expect(await screen.findByRole("button", { name: "Generate image" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Compare providers" })).not.toBeInTheDocument();
+});
+it("lists image pilot evidence as recorded facts", async () => {
+  vi.mocked(aiContentApi.prices).mockResolvedValue([]);
+  vi.mocked(aiContentApi.imageEvidence).mockResolvedValue({
+    data: [
+      { jobId: "j1", itemId: topic.id, topic: "Adelaide cafe guide", slot: "comparison", comparisonRunId: "r", imageVersion: 1, status: "stored", provider: "xai", model: "grok-imagine-image-2.0", servedModel: "grok-imagine-image-2.0", policyVersion: "image-policy-1", promptHash: "a".repeat(64), prompt: "p", aspectRatio: "16:9", resolution: "1k", quality: "medium", size: "1k", latencyMs: 8_400, currency: "USD", priceVersion: "x", reservedMicros: 80_000, settledMicros: 60_000, reportedCostMicros: 60_000, costState: "settled", operationState: "succeeded", errorClass: null, providerRequestId: null, mediaAssetId: "cmmedia", checksum: "b".repeat(64), mediaStatus: "ready", failureCode: null, regeneration: false, createdAt: "2026-09-19T01:00:00.000Z" },
+    ],
+    meta: { total: 1, page: 1, pageSize: 20 },
+  });
+  renderWithProviders(<PricingPage />, options);
+  expect(await screen.findByText("xai grok-imagine-image-2.0")).toBeInTheDocument();
+  expect(screen.getByText("16:9 · 1K · medium")).toBeInTheDocument();
+  expect(screen.getByText("8.4 s")).toBeInTheDocument();
+  expect(screen.getByText("USD 0.08 / USD 0.06 · provider billed USD 0.06")).toBeInTheDocument();
+  expect(screen.getByText(`cmmedia · ${"b".repeat(12)}…`)).toBeInTheDocument();
 });
 it("approves a proposed price only after confirmation", async () => {
   const ue = user();
@@ -649,6 +802,6 @@ it("approves a proposed price only after confirmation", async () => {
   await ue.click(screen.getByRole("button", { name: "Approve" }));
   expect(aiContentApi.approvePrice).not.toHaveBeenCalled();
   const dialog = await screen.findByRole("dialog");
-  await ue.click(within(dialog).getByRole("button", { name: "OK" }));
+  await ue.click(within(dialog).getByRole("button", { name: "Approve price version" }));
   await waitFor(() => expect(aiContentApi.approvePrice).toHaveBeenCalledWith("cmpriceabcdefghijklmnopq"));
 });

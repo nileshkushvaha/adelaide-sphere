@@ -57,12 +57,13 @@ export {
   type ResearchUrl,
 } from './research.js';
 export { MAX_DISCOVERY_CANDIDATES, recordDiscoveryCandidates, requestDiscovery, type DiscoveryResult, type DiscoverySignal } from './discovery.js';
-export { APPROVED_IMAGE_MODEL, APPROVED_TEXT_MODELS, IMAGE_PROVIDER_CAPABILITIES, TEXT_PROVIDER_CAPABILITIES, capabilityProblem, imageCapabilityProblem, type CapabilityProblem, type ImageModelCapability, type ModelCapability } from './providers.js';
+export { APPROVED_TEXT_MODELS, IMAGE_MODELS, TEXT_PROVIDER_CAPABILITIES, capabilityProblem, imageCapabilityProblem, imageModelCapability, nativeImageSize, type CapabilityProblem, type ImageCapabilityProblem, type ImageModelCapability, type ImageProviderId, type ModelCapability } from './providers.js';
 export {
   BudgetRefusal,
   approvedPrice,
   budgetStatus,
   haltPaidCalls,
+  imagePriceOf,
   paidCallsHalt,
   readBudgetLimits,
   releaseReservation,
@@ -95,13 +96,19 @@ export {
   completeImage,
   featuredBrief,
   loadImageRequest,
+  MAX_COMPARISON_CANDIDATES,
+  modelSubstituted,
+  quoteImageComparison,
   readImageSettings,
   recordImageRejected,
   recordImageUnknown,
   rejectImage,
   requestImage,
+  requestImageComparison,
+  type ComparisonCandidate,
   type ImageRequest,
   type ImageResult,
+  type ImageResultCommon,
   type ImageSettings,
 } from './images.js';
 export { SLOT_STRATEGY, planSlots, readScheduleSettings, reviewMissedSlot, scheduleStatus, type PlanResult, type ScheduleSettings } from './schedule.js';

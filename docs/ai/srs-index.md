@@ -50,3 +50,5 @@ Per-phase acceptance criteria are written in `docs/setup-progress.md` from these
 Sections 25–26 were added at revision 1.2 and extend the earlier sections; the obligations of sections 10, 16, 17, 18 and 19 apply to every module specified there. The Logimart reference comparison that informed them is `docs/reference/logimart-comparison.md` — a behavioural reference only, never an architecture or security reference.
 
 Line ranges after the change-log table are approximate: rows 1.13–1.17 (15 Sep 2026) lengthened the table near the top of the file, so sections sit roughly 5–10 lines lower than the ranges shown. Search for the exact heading.
+
+**AI provider amendment 01 (proposed):** appended at the end of the master AI SRS as `## Amendment 01` (OpenAI, Gemini and xAI; AI-PROVIDER-01–14, AI-IMAGE-PROVIDER-01–12, and the 1E.1/1E.2/1E.3 structure). The earlier SRS text and heading positions are unchanged. Evidence and rationale: `docs/planning/ai-provider-amendment-01.md`.

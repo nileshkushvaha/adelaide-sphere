@@ -54,7 +54,7 @@ export function DuplicatePageDialog({ source, onCancel, onDuplicated }: Props) {
       <Typography.Paragraph>The copy is a draft with the same sections, layout and search settings. Nothing about the original changes.</Typography.Paragraph>
       <Form layout="vertical" component={false}>
         <Form.Item label="Title of the copy" htmlFor="duplicate-page-title" validateStatus={errors.title ? 'error' : undefined} help={errors.title}>
-          <Input
+          <Input placeholder="Title of the copy"
             id="duplicate-page-title"
             value={title}
             maxLength={180}
@@ -69,7 +69,7 @@ export function DuplicatePageDialog({ source, onCancel, onDuplicated }: Props) {
           />
         </Form.Item>
         <Form.Item label="Address of the copy" htmlFor="duplicate-page-slug" validateStatus={errors.slug ? 'error' : undefined} help={errors.slug ?? 'Lower-case letters, numbers and single hyphens.'}>
-          <Input id="duplicate-page-slug" addonBefore="/" value={slug} maxLength={64} onChange={(event) => setSlug(event.target.value)} />
+          <Input placeholder="address-of-the-copy" id="duplicate-page-slug" addonBefore="/" value={slug} maxLength={64} onChange={(event) => setSlug(event.target.value)} />
         </Form.Item>
       </Form>
       {errors.form && <Typography.Paragraph type="danger">{errors.form}</Typography.Paragraph>}

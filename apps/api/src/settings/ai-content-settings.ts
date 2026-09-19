@@ -1,3 +1,4 @@
+import { IMAGE_MODELS, imageCapabilityProblem, imageModelCapability } from '@adelaide-sphere/database/automation';
 import type {
   SettingDeclaration,
   SettingGroupDeclaration,
@@ -27,6 +28,18 @@ const declaration = (
   consequence:
     'While enabled: free public research, budgeted drafts from verified research, and featured images generated only when a person asks. Everything needs human approval; no cadence or auto-publishing.',
 });
+/** The saved aspect ratio, resolution and quality must be one request the chosen model supports. */
+function imageRequestProblem(values: Record<string, unknown>): Record<string, string> {
+  const [provider, model] = [String(values.imageProvider ?? 'openai'), String(values.imageModel ?? '')];
+  const cap = imageModelCapability(provider, model);
+  if (!cap) return {};
+  const problem = imageCapabilityProblem(provider, model, String(values.imageAspectRatio), String(values.imageResolution), String(values.imageQuality), 0);
+  if (problem === 'unsupported_quality') return { imageQuality: `${cap.label} supports ${cap.qualities.join(', ')}` };
+  if (problem === 'unsupported_resolution') return { imageResolution: `${cap.label} supports ${cap.resolutions.join(', ')}` };
+  if (problem) return { imageAspectRatio: `${cap.label} does not support ${String(values.imageAspectRatio)} at ${String(values.imageResolution)}` };
+  return {};
+}
+
 export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
   key: 'ai_content',
   label: 'AI Content',
@@ -40,6 +53,11 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
     ...(values.timezone === 'Australia/Adelaide' ? {} : { timezone: 'This deployment uses Australia/Adelaide' }),
     // Owner decision (Phase 1E): paid images only through an explicit Generate image action.
     ...(values.imageMode === 'automatic' ? { imageMode: 'Automatic image generation is not approved. Use hybrid or manual.' } : {}),
+    // Only a listed model of the chosen provider (provider amendment 01, P1); never free text.
+    ...(values.imageModel === undefined || imageModelCapability(String(values.imageProvider ?? 'openai'), String(values.imageModel))
+      ? {}
+      : { imageModel: `Choose a listed model for ${String(values.imageProvider ?? 'openai')}: ${IMAGE_MODELS.filter((m) => m.provider === (values.imageProvider ?? 'openai')).map((m) => m.model).join(', ') || 'none listed yet'}` }),
+    ...imageRequestProblem(values),
     // Owner decision (Phase 1G): hardening only; every AI article needs a person's fact confirmation and approval.
     ...(values.publicationMode === 'auto_publish' ? { publicationMode: 'Auto-publishing is not approved: every AI article needs a person to confirm its facts and approve it.' } : {}),
     ...(values.slotTime === undefined || /^([01]\d|2[0-3]):[0-5]\d$/.test(String(values.slotTime)) ? {} : { slotTime: 'Use HH:MM, for example 07:00' }),
@@ -52,11 +70,11 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
   settings: [
     declaration(
       'enabled',
-      'Automation configured enabled',
+      'AI automation enabled',
       'boolean',
       false,
       {},
-      'While off, no research, discovery or other external request starts, and scheduled AI articles are held.',
+      'Master switch. While off, nothing AI starts and scheduled AI articles are held. While on, only the modes below apply.',
     ),
     declaration(
       'titleMode',
@@ -156,11 +174,11 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
     ),
     declaration(
       'budgetEnabled',
-      'Budget controls configured enabled',
+      'Budget controls enabled',
       'boolean',
       true,
       {},
-      'No spending occurs in this release. Future execution must implement budget enforcement first.',
+      'Each paid call first reserves its worst case against the limits below. While off, no paid call is approved.',
     ),
     declaration(
       'budgetCurrency',
@@ -168,7 +186,7 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
       'enum',
       'USD',
       { values: ['AUD', 'USD', 'EUR', 'GBP'] },
-      'Currency of the intended limit; no currency conversion or billing is performed.',
+      'Limits and prices use this currency; a price in another is refused. Nothing is converted.',
     ),
     declaration(
       'warningThreshold',
@@ -176,7 +194,7 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
       'integer',
       70,
       { min: 1, max: 100 },
-      'Configured percentage for future budget warnings; no usage statistics exist yet.',
+      'Warn, and record it, when spend plus reservations reach this share of a limit.',
     ),
     declaration(
       'hardMonthlyLimitMinor',
@@ -243,20 +261,44 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
       'A ready featured image with alt text is needed before an AI article publishes. It can be uploaded or chosen from the library.',
     ),
     declaration(
-      'imageSize',
-      'Generated image size',
+      'imageProvider',
+      'Image provider',
       'enum',
-      '1536x1024',
-      { values: ['1536x1024', '1024x1024', '1024x1536'] },
-      'Landscape suits a featured image. The approved price must cover this size.',
+      'openai',
+      { values: ['openai', 'xai', 'google'] },
+      'Only providers with a listed model, an approved price and a server key can generate.',
+    ),
+    declaration(
+      'imageModel',
+      'Image model',
+      'string',
+      'gpt-image-2.5-flare',
+      { min: 1, max: 64 },
+      'One of the provider\'s listed models. It changes only by choosing another listed model.',
+    ),
+    declaration(
+      'imageAspectRatio',
+      'Generated image aspect ratio',
+      'enum',
+      '3:2',
+      { values: ['3:2', '16:9', '1:1', '2:3'] },
+      'Landscape suits a featured image. The model must support it.',
+    ),
+    declaration(
+      'imageResolution',
+      'Generated image resolution',
+      'enum',
+      '1k',
+      { values: ['1k', '2k'] },
+      'The approved price must cover this resolution.',
     ),
     declaration(
       'imageQuality',
       'Generated image quality',
       'enum',
       'medium',
-      { values: ['low', 'medium', 'high'] },
-      'Higher quality costs more. The approved price must cover this quality.',
+      { values: ['low', 'medium', 'high', 'auto'] },
+      'Higher quality costs more. The model must support it and the approved price must cover it.',
     ),
     declaration(
       'imageDailyLimitMinor',

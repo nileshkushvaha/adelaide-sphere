@@ -223,3 +223,25 @@ Evidence:
 Details: [Phase 1G completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1g-completion.md).
 
 **Phase 1 is implemented but not accepted**: pilot evidence and owner acceptance are open. AI-379, AI-384 and AI-386 are only partly met, by owner decision. Not migrated on dev (1 behind), not deployed, not enabled. Phase 2 has not started.
+
+## AI provider amendment 01 (Google Gemini) — proposed 19 September 2026
+
+Planning only. 17 additive requirements are proposed: AI-PROVIDER-01 to 10 and AI-IMAGE-PROVIDER-01 to 07. The master SRS is unchanged. Status is mapped in the requirement matrix. Proposed follow-on workstreams P1–P4 (provider selection; Gemini image; Gemini text; comparative pilot) await owner review. No code, schema or provider call. Details: [Provider amendment 01](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-provider-amendment-01.md).
+
+**Update (19 Sep 2026):**
+
+- xAI/Grok is added as a third candidate image provider. Added AI-PROVIDER-12–14 and AI-IMAGE-PROVIDER-10–12; amended AI-PROVIDER-02 and 10 (both in the SRS Amendment 01 section and the matrix).
+- **19 Sep 2026: implemented (owner-approved scope):** P1 provider-neutral image groundwork, the xAI and Gemini image adapters, the controlled provider comparison and pilot evidence. AI-PROVIDER-02/04/08/09/10/13/14 and AI-IMAGE-PROVIDER-01/02/03/07/10/11/12 are now met or recorded for images (matrix). Verified with fakes and fixtures on `adelaide_sphere_test`: images spec 13/13, integration 408/408 + 5/5, all unit suites, e2e 20/20. Migrations `20260919200000_ai_image_providers_p1` and `20260919210000_ai_image_comparison` are not on dev. Nothing is committed and no live call was made. 1E.2 is not selected; the pilot awaits approval ([amendment §22–§23](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-provider-amendment-01.md)).
+- **19 Sep 2026: xAI pricing correction (owner recheck):** prices are per configuration; `auto` quality is not offered; the reservation uses the highest approved configuration; settlement uses the reported `usage.cost_in_usd_ticks`, which must match the approved price or the call is uncertain and paid calls halt (new AI-IMAGE-PROVIDER-13 in the SRS amendment). Tests prove the pilot configuration is manual-only. Images spec 14/14, integration 409/409 + 5/5. Pilot ceiling corrected to USD 3.50 for images ([amendment §24](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-provider-amendment-01.md)).
+- **19 Sep 2026: correction override and rehearsal.** SRS §7 duplicate history is kept. A topic whose only overlap is a *cancelled* topic may be approved as its recorded correction; rejected ideas, active topics and articles still decide. The pilot ceiling was corrected to USD 3.75 after the isolated rehearsal ([amendment §24.7](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-provider-amendment-01.md)).
+- Recorded from official docs:
+  - the three-way comparison;
+  - monthly-cost examples;
+  - contract gaps (token-only pricing, the OpenAI-shaped size field, no model-identity check, no provider request id);
+  - a proposed controlled comparison mode.
+- Documentation only.
+
+
+### AI admin presentation — 19 September 2026
+
+AI SRS §14 and ADM 002: all AI content routes now use shared section navigation; queue status filters survive URL navigation; fact review is a dedicated decision queue; settings are grouped and cost inputs show currency units. Shared statuses/headings support admin design consistency. Existing server gates, permissions, version checks and idempotency remain authoritative. Evidence: `docs/audits/ai-content-ui-refresh.md`. Type-check and lint verified; no suites run; full responsive/dark-theme acceptance remains pending.

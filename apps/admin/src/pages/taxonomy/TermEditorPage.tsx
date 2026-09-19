@@ -116,7 +116,7 @@ export function TermEditorPage({ config }: { config: TermsPageConfig }) {
           {field.input === 'textarea' ? (
             <Input.TextArea rows={4} maxLength={field.max} showCount placeholder={field.placeholder} />
           ) : field.input === 'number' ? (
-            <InputNumber min={0} max={10_000} style={{ width: 160 }} />
+            <InputNumber placeholder="0" min={0} max={10_000} style={{ width: 160 }} />
           ) : field.input === 'tags' ? (
             <Select mode="tags" tokenSeparators={[',']} placeholder="Add synonyms" />
           ) : field.input === 'parent' ? (

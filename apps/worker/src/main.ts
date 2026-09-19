@@ -9,6 +9,8 @@ import { SmtpEnquiryMailer } from './mailer/smtp-mailer.js';
 import { randomBytes } from 'node:crypto';
 import { AI_OPERATION_JOB, AI_QUEUE_NAME, CACHE_INVALIDATE_JOB, ENQUIRY_EMAIL_JOB, MEDIA_PROCESS_JOB, QUEUE_NAME, SCHEDULED_TASK_JOB, buildEnquiryMail, redisConnectionFromUrl } from '@adelaide-sphere/domain';
 import { OpenAiImageProvider } from './ai-content/openai-image-provider.js';
+import { GeminiImageProvider } from './ai-content/gemini-image-provider.js';
+import { XaiImageProvider } from './ai-content/xai-image-provider.js';
 import type { ImageProvider } from './ai-content/image-provider.js';
 import { OpenAiTextProvider } from './ai-content/openai-provider.js';
 import type { TextProvider } from './ai-content/text-provider.js';
@@ -55,6 +57,8 @@ async function main(): Promise<void> {
   // The same server-side credential serves images; without it no image request is ever sent.
   const imageProviders: Record<string, ImageProvider> = {};
   if (config.aiText.openaiApiKey) imageProviders.openai = new OpenAiImageProvider(config.aiText.openaiApiKey);
+  if (config.aiImage.xaiApiKey) imageProviders.xai = new XaiImageProvider(config.aiImage.xaiApiKey);
+  if (config.aiImage.geminiApiKey) imageProviders.google = new GeminiImageProvider(config.aiImage.geminiApiKey);
   const aiDeps = { textProviders, imageProviders, storage };
   const worker = new Worker<DeliveryJobData & MediaJobData & CacheInvalidationJobData & ScheduledTaskJobData>(
     QUEUE_NAME,

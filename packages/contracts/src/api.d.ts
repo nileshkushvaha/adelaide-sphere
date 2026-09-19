@@ -356,6 +356,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/ai-content/topics/{id}/image-comparisons/quote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AiGenerationController_quoteImageComparison"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/topics/{id}/image-comparisons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AiGenerationController_requestImageComparison"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/image-evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AiGenerationController_imageEvidence"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/ai-content/images/{id}/approve": {
         parameters: {
             query?: never;
@@ -478,6 +526,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["AiGenerationController_resume"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/ai-content/image-models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AiGenerationController_imageModels"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -4182,6 +4246,8 @@ export interface components {
             /** @description Approve a topic that overlaps existing content only as a follow-up of this article. */
             followUpOfPostId?: string;
             followUpReason?: string;
+            /** @description Approve as a correction of a topic a person cancelled, when that is the only overlap: why it was replaced. */
+            correctionReason?: string;
         };
         ResolveClaimDto: {
             expectedVersion: number;
@@ -4256,6 +4322,33 @@ export interface components {
             /** @description A generic scene; names of places, businesses or events are refused. Defaults to the draft's image brief. */
             prompt?: string;
         };
+        ComparisonCandidateDto: {
+            /** @enum {string} */
+            provider: "openai" | "xai" | "google";
+            /** @description A listed image model of the provider. */
+            model: string;
+            /** @enum {string} */
+            resolution: "1k" | "2k";
+            /** @enum {string} */
+            quality: "low" | "medium" | "high" | "auto";
+        };
+        QuoteImageComparisonDto: {
+            /** @description A generic scene; defaults to the draft's image brief. The same screened prompt goes to every provider. */
+            prompt?: string;
+            /** @enum {string} */
+            aspectRatio: "3:2" | "16:9" | "1:1" | "2:3";
+            candidates: components["schemas"]["ComparisonCandidateDto"][];
+        };
+        RequestImageComparisonDto: {
+            /** @description A generic scene; defaults to the draft's image brief. The same screened prompt goes to every provider. */
+            prompt?: string;
+            /** @enum {string} */
+            aspectRatio: "3:2" | "16:9" | "1:1" | "2:3";
+            candidates: components["schemas"]["ComparisonCandidateDto"][];
+            expectedVersion: number;
+            /** @description The total maximum shown by the quote; refused if the prices changed since. */
+            expectedTotalMicros: number;
+        };
         ApproveImageDto: {
             /** @description The article version the reviewer is looking at. */
             expectedPostVersion: number;
@@ -4289,29 +4382,41 @@ export interface components {
         ProposePriceDto: {
             version: string;
             /** @enum {string} */
-            provider: "openai";
-            /** @enum {string} */
-            model: "gpt-5.6-terra" | "gpt-5.6-luna" | "gpt-image-2.5-flare";
+            provider: "openai" | "xai" | "google";
+            /** @description A listed text or image model of the provider. */
+            model: string;
             /** @enum {string} */
             currency: "USD" | "AUD" | "EUR" | "GBP";
-            /** @description Millionths of the currency per million input tokens (USD 2.00 = 2000000). */
+            /** @description Millionths of the currency per million input tokens (USD 2.00 = 2000000); zero only for a per-image price that bills no input. */
             inputMicrosPerMTok: number;
             cachedInputMicrosPerMTok: number;
+            /** @description Per million output tokens; zero only for a per-image price, which has no token output rate. */
             outputMicrosPerMTok: number;
             /** @description Input tokens above which a different price applies; such calls are refused. */
             longContextThresholdTokens: number;
             /**
-             * @description Image models only: the size this price covers.
+             * @description Image models only: the resolution tier this price covers.
              * @enum {string}
              */
-            imageSize?: "1536x1024" | "1024x1024" | "1024x1536";
+            imageResolution?: "0.5k" | "1k" | "2k" | "4k";
             /**
              * @description Image models only: the quality this price covers.
              * @enum {string}
              */
-            imageQuality?: "low" | "medium" | "high";
-            /** @description Image models only: the most output tokens one image at this size and quality may use. A call is bounded by it; usage above it halts paid calls. */
+            imageQuality?: "low" | "medium" | "high" | "auto";
+            /**
+             * @description Image models only: how the provider bills, which must match the model.
+             * @enum {string}
+             */
+            pricingUnit?: "token" | "image";
+            /** @description Token unit: the most image output tokens one image may use. Usage above it halts paid calls. */
             maxOutputTokens?: number;
+            /** @description Image unit: millionths of the currency per generated image (USD 0.04 = 40000). */
+            perImageMicros?: number;
+            /** @description Text or thinking output billed with an image, per million tokens (only for models that bill it). */
+            textOutputMicrosPerMTok?: number;
+            /** @description The most text or thinking tokens one image may use. */
+            maxTextOutputTokens?: number;
             sourceUrl: string;
             effectiveFrom: string;
         };
@@ -8171,6 +8276,78 @@ export interface operations {
             };
         };
     };
+    AiGenerationController_quoteImageComparison: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuoteImageComparisonDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiGenerationController_requestImageComparison: {
+        parameters: {
+            query?: never;
+            header: {
+                "Idempotency-Key": string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestImageComparisonDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiGenerationController_imageEvidence: {
+        parameters: {
+            query?: {
+                page?: components["schemas"]["Object"];
+                pageSize?: components["schemas"]["Object"];
+                order?: "asc" | "desc";
+                slot?: "featured" | "comparison";
+                /** @description One topic only. */
+                itemId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     AiGenerationController_approveImage: {
         parameters: {
             query?: never;
@@ -8332,6 +8509,23 @@ export interface operations {
                 "application/json": components["schemas"]["ResumePaidCallsDto"];
             };
         };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AiGenerationController_imageModels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {

@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Header, Headers, HttpCode, Param, Post, Put, Req } from '@nestjs/common';
+import { Body, Controller, Get, Header, Headers, HttpCode, Param, Post, Put, Query, Req } from '@nestjs/common';
 import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { CurrentAdmin, RequirePermissions, type AuthenticatedRequest } from '../auth/decorators.js';
 import { getRequestId } from '../common/request-id.js';
 import type { AdminPrincipal } from '../identity/identity.service.js';
-import { ApplyProposalDto, ApproveContentDto, ApproveImageDto, ReviewSlotDto, ConfirmFactsDto, GenerateDto, GenerateImageDto, RejectImageDto, ProposePriceDto, ResolveOperationDto, ResumePaidCallsDto, TopicArticleSettingsDto, TopicVersionOnlyDto } from './ai-generation.dto.js';
+import { ApplyProposalDto, ApproveContentDto, ApproveImageDto, ReviewSlotDto, ConfirmFactsDto, GenerateDto, GenerateImageDto, ImageEvidenceQueryDto, QuoteImageComparisonDto, RejectImageDto, RequestImageComparisonDto, ProposePriceDto, ResolveOperationDto, ResumePaidCallsDto, TopicArticleSettingsDto, TopicVersionOnlyDto } from './ai-generation.dto.js';
 import { AiGenerationService } from './ai-generation.service.js';
 
 const context = (req: AuthenticatedRequest) => ({ ip: req.ip ?? 'unknown', userAgent: req.headers['user-agent'], requestId: getRequestId(req) });
@@ -70,6 +70,32 @@ export class AiGenerationController {
   @RequirePermissions('ai_content.view', 'ai_content.generate')
   async generateImage(@Param('id') id: string, @Body() body: GenerateImageDto, @Headers('idempotency-key') key: string | undefined, @CurrentAdmin() admin: AdminPrincipal, @Req() req: AuthenticatedRequest) {
     return { data: await this.service.generateImage(id, body, key, admin, context(req)) };
+  }
+
+  /** What a controlled provider comparison would reserve (amendment 01): creates nothing. */
+  @Header('Cache-Control', 'no-store')
+  @Post('topics/:id/image-comparisons/quote')
+  @HttpCode(200)
+  @RequirePermissions('ai_content.view', 'ai_content.generate', 'ai_content.configure')
+  async quoteImageComparison(@Param('id') id: string, @Body() body: QuoteImageComparisonDto) {
+    return { data: await this.service.quoteImageComparison(id, body) };
+  }
+
+  /** Runs a confirmed comparison: one budgeted request per chosen provider setting, nothing attached. */
+  @Header('Cache-Control', 'no-store')
+  @Post('topics/:id/image-comparisons')
+  @ApiHeader({ name: 'Idempotency-Key', required: true })
+  @RequirePermissions('ai_content.view', 'ai_content.generate', 'ai_content.configure')
+  async requestImageComparison(@Param('id') id: string, @Body() body: RequestImageComparisonDto, @Headers('idempotency-key') key: string | undefined, @CurrentAdmin() admin: AdminPrincipal, @Req() req: AuthenticatedRequest) {
+    return { data: await this.service.requestImageComparison(id, body, key, admin, context(req)) };
+  }
+
+  /** Pilot evidence: every generated image with its provider, settings, timing, cost and media (no scoring). */
+  @Header('Cache-Control', 'no-store')
+  @Get('image-evidence')
+  @RequirePermissions('ai_content.view', 'ai_content.configure')
+  async imageEvidence(@Query() query: ImageEvidenceQueryDto) {
+    return this.service.imageEvidence(query);
   }
 
   @Header('Cache-Control', 'no-store')
@@ -139,6 +165,14 @@ export class AiGenerationController {
   @RequirePermissions('ai_content.configure')
   async resume(@Body() body: ResumePaidCallsDto, @CurrentAdmin() admin: AdminPrincipal, @Req() req: AuthenticatedRequest) {
     return { data: await this.service.resume(body.note, admin, context(req)) };
+  }
+
+  /** The reviewed image models and what each supports, for the price and settings forms (AI-IMAGE-PROVIDER-03). */
+  @Header('Cache-Control', 'no-store')
+  @Get('image-models')
+  @RequirePermissions('ai_content.configure')
+  imageModels() {
+    return { data: this.service.imageModels() };
   }
 
   @Header('Cache-Control', 'no-store')

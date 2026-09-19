@@ -49,37 +49,184 @@ export function capabilityProblem(provider: string, model: string, role: ModelCa
 }
 
 /**
- * The approved image model and its declared capabilities (Phase 1E). Source:
- * the provider's official model and API reference pages, checked 19 September
- * 2026 (https://developers.openai.com/api/docs/models/gpt-image-2.5-flare and
- * .../api-reference/images/create): POST /v1/images/generations, base64
- * output only, sizes 1024x1024 / 1536x1024 / 1024x1536 among others, quality
- * low to max, png/jpeg/webp, usage reported in tokens, no idempotency key and
- * no background mode. Only what this site uses is declared.
+ * Image providers and models (Phase 1E; provider amendment 01, P1). The
+ * adapter/capability layer: everything provider-specific about an image model
+ * is declared here and nowhere in the reusable domain. A model is usable only
+ * when it is listed here (reviewed code) **and** an administrator has approved
+ * a price for it; the owner picks among listed models in AI Settings.
  */
-export const APPROVED_IMAGE_MODEL = { provider: 'openai', model: 'gpt-image-2.5-flare' } as const;
+export type ImageProviderId = 'openai' | 'xai' | 'google';
 
 export interface ImageModelCapability {
-  sizes: readonly string[];
+  provider: ImageProviderId;
+  model: string;
+  label: string;
+  /** Provider-neutral request values the model accepts. */
+  aspectRatios: readonly string[];
+  resolutions: readonly string[];
   qualities: readonly string[];
-  outputFormat: 'png';
+  /**
+   * Where the provider takes an exact pixel size rather than a tier (OpenAI),
+   * the size sent for each supported aspect ratio and resolution. A pair not
+   * listed is unsupported.
+   */
+  nativeSizes?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /** How the provider bills: per token or per generated image (AI-IMAGE-PROVIDER-10). */
+  priceUnit: 'token' | 'image';
+  /** Whether text or thinking output is always billed with the image (AI-IMAGE-PROVIDER-07). */
+  billsTextOutput: boolean;
+  /** Inline bytes are the only accepted result (AI-IMAGE-PROVIDER-11): always, or only when requested. */
+  inlineBytes: 'always' | 'on_request';
+  /** Whether a result names the model that actually served it (AI-PROVIDER-13). */
+  reportsServedModel: boolean;
+  /** Whether the provider returns an id for the request. */
+  suppliesRequestId: boolean;
+  /**
+   * Whether each response states what was actually billed (xAI: usage.cost_in_usd_ticks). Such a result
+   * settles at the reported cost and must agree with the approved price for its configuration.
+   */
+  reportsCost: boolean;
+  /** Whether a lost response can be looked up; "none" means an unknown outcome can only be abandoned. */
+  reconciliation: 'none' | 'retrieve_by_id';
+  /** Always "hold": an unknown outcome is never retried or regenerated automatically (AI-IMAGE-PROVIDER-09). */
+  unknownOutcome: 'hold';
+  /** Provider search/grounding: absent, or present and always disabled in requests (AI-PROVIDER-08). */
+  grounding: 'none' | 'disabled';
+  /** Where requests may be processed and how long the provider keeps them (AI-PROVIDER-14), from official docs. */
+  processingLocation: string;
+  retention: string;
   maxPromptChars: number;
+  /** Official sources and the date they were checked. */
+  source: string;
 }
 
-export const IMAGE_PROVIDER_CAPABILITIES: Readonly<Record<string, Readonly<Record<string, ImageModelCapability>>>> = {
-  openai: {
-    'gpt-image-2.5-flare': { sizes: ['1536x1024', '1024x1024', '1024x1536'], qualities: ['low', 'medium', 'high'], outputFormat: 'png', maxPromptChars: 32_000 },
+export const IMAGE_MODELS: readonly ImageModelCapability[] = [
+  {
+    provider: 'openai',
+    model: 'gpt-image-2.5-flare',
+    label: 'OpenAI gpt-image-2.5-flare',
+    aspectRatios: ['3:2', '1:1', '2:3', '16:9'],
+    resolutions: ['1k', '2k'],
+    qualities: ['low', 'medium', 'high'],
+    // Documented sizes, and 16:9 as a custom size: multiples of 16, within 1:3–3:1, not above 2560x1440.
+    nativeSizes: { '3:2': { '1k': '1536x1024' }, '1:1': { '1k': '1024x1024' }, '2:3': { '1k': '1024x1536' }, '16:9': { '1k': '1536x864', '2k': '2048x1152' } },
+    priceUnit: 'token',
+    billsTextOutput: false,
+    inlineBytes: 'always',
+    reportsServedModel: false,
+    suppliesRequestId: false,
+    reportsCost: false,
+    reconciliation: 'none',
+    unknownOutcome: 'hold',
+    grounding: 'none',
+    processingLocation: 'Provider default; Australian regional storage available through OpenAI data residency (not configured).',
+    retention: 'Not used for training by default; abuse-monitoring logs up to 30 days.',
+    maxPromptChars: 32_000,
+    source: 'developers.openai.com: models/gpt-image-2.5-flare, api-reference/images/create, guides/image-generation, guides/your-data (checked 19 Sep 2026)',
   },
-};
+  {
+    provider: 'xai',
+    model: 'grok-imagine-image-2.0',
+    label: 'xAI grok-imagine-image-2.0',
+    // Documented: 1:1 … 21:9 and "auto"; only the ratios this site uses are listed, never "auto".
+    aspectRatios: ['3:2', '16:9', '1:1', '2:3'],
+    resolutions: ['1k', '2k'],
+    // Billed at the quality served; "auto" currently serves "low" for generation, so its price is not known
+    // in advance. Only an explicit, separately priced quality is allowed.
+    qualities: ['low', 'medium'],
+    // Per image, priced by configuration (resolution and quality): each configuration needs its own approved price.
+    priceUnit: 'image',
+    billsTextOutput: false,
+    // The default response is a temporary hosted URL: the adapter always asks for b64_json.
+    inlineBytes: 'on_request',
+    // The response carries the model as metadata; a retired model is silently redirected, so it is checked.
+    reportsServedModel: true,
+    suppliesRequestId: false,
+    // usage.cost_in_usd_ticks: the exact amount billed (1 USD = 10^10 ticks).
+    reportsCost: true,
+    reconciliation: 'none',
+    unknownOutcome: 'hold',
+    grounding: 'none',
+    processingLocation: 'United States (us-east-1, us-west-2); the global endpoint does not guarantee a region. No Australian region.',
+    retention: 'Requests and responses kept 30 days for abuse auditing; not trained on without permission; Zero Data Retention optional.',
+    // No prompt limit is documented: a conservative bound well above the 1E prompt and policy suffix.
+    maxPromptChars: 8_000,
+    source:
+      'docs.x.ai: model-capabilities/images/generation, rest-api-reference/inference/images, cost-tracking, release-notes (auto quality, cost_in_usd_ticks), models/grok-imagine-image-2.0, pricing; x.ai/legal enterprise terms (checked 19 Sep 2026; configuration-dependent prices per owner recheck)',
+  },
+  {
+    provider: 'google',
+    model: 'gemini-3.1-flash-image',
+    label: 'Google gemini-3.1-flash-image',
+    aspectRatios: ['3:2', '16:9', '1:1', '2:3'],
+    resolutions: ['1k', '2k'],
+    // No quality setting exists: the one value is "auto", and a price covers it.
+    qualities: ['auto'],
+    // Published per image at each resolution tier; prompt input and text/thinking output are billed per token on top.
+    priceUnit: 'image',
+    billsTextOutput: true,
+    inlineBytes: 'always',
+    reportsServedModel: true,
+    suppliesRequestId: true,
+    reportsCost: false,
+    // Sent with store=false (not persisted), so a lost response cannot be retrieved: an unknown outcome is held.
+    reconciliation: 'none',
+    unknownOutcome: 'hold',
+    // Google Search grounding exists for image models; no tools are ever sent.
+    grounding: 'disabled',
+    processingLocation: 'Not documented for the Gemini Developer API (no region selection verified).',
+    retention: 'Paid tier: not used to improve products. Interactions are sent with store=false (the default would keep them 55 days). SynthID watermark on every image.',
+    maxPromptChars: 8_000,
+    source: 'ai.google.dev: gemini-api/docs/image-generation, api/interactions-api, gemini-api/docs/interactions, pricing, gemini-api/terms (checked 19 Sep 2026)',
+  },
+  {
+    provider: 'google',
+    model: 'gemini-3.1-flash-lite-image',
+    label: 'Google gemini-3.1-flash-lite-image (low-cost reference)',
+    aspectRatios: ['3:2', '16:9', '1:1', '2:3'],
+    resolutions: ['1k'],
+    // No quality setting exists: the one value is "auto", and a price covers it.
+    qualities: ['auto'],
+    // Published per image at each resolution tier; prompt input and text/thinking output are billed per token on top.
+    priceUnit: 'image',
+    billsTextOutput: true,
+    inlineBytes: 'always',
+    reportsServedModel: true,
+    suppliesRequestId: true,
+    reportsCost: false,
+    // Sent with store=false (not persisted), so a lost response cannot be retrieved: an unknown outcome is held.
+    reconciliation: 'none',
+    unknownOutcome: 'hold',
+    // Google Search grounding exists for image models; no tools are ever sent.
+    grounding: 'disabled',
+    processingLocation: 'Not documented for the Gemini Developer API (no region selection verified).',
+    retention: 'Paid tier: not used to improve products. Interactions are sent with store=false (the default would keep them 55 days). SynthID watermark on every image.',
+    maxPromptChars: 8_000,
+    source: 'ai.google.dev: gemini-api/docs/image-generation, api/interactions-api, gemini-api/docs/interactions, pricing, gemini-api/terms (checked 19 Sep 2026)',
+  },
+];
 
-/** Null when the image model can serve this size, quality and prompt; otherwise why not (checked before any reservation). */
-export function imageCapabilityProblem(provider: string, model: string, size: string, quality: string, promptChars: number): 'unknown_provider' | 'unknown_model' | 'unsupported_size' | 'unsupported_quality' | 'prompt_too_long' | null {
-  const models = IMAGE_PROVIDER_CAPABILITIES[provider];
-  if (!models) return 'unknown_provider';
-  const cap = models[model];
+export function imageModelCapability(provider: string, model: string): ImageModelCapability | undefined {
+  return IMAGE_MODELS.find((m) => m.provider === provider && m.model === model);
+}
+
+/** What is sent as the size: the provider-native pixel size where it takes one, otherwise the resolution tier. */
+export function nativeImageSize(cap: ImageModelCapability, aspectRatio: string, resolution: string): string | null {
+  if (!cap.nativeSizes) return resolution;
+  return cap.nativeSizes[aspectRatio]?.[resolution] ?? null;
+}
+
+export type ImageCapabilityProblem = 'unknown_provider' | 'unknown_model' | 'unsupported_aspect_ratio' | 'unsupported_resolution' | 'unsupported_quality' | 'unsupported_size' | 'prompt_too_long';
+
+/** Null when the listed model can serve this request; otherwise why not (checked before any reservation). */
+export function imageCapabilityProblem(provider: string, model: string, aspectRatio: string, resolution: string, quality: string, promptChars: number): ImageCapabilityProblem | null {
+  if (!IMAGE_MODELS.some((m) => m.provider === provider)) return 'unknown_provider';
+  const cap = imageModelCapability(provider, model);
   if (!cap) return 'unknown_model';
-  if (!cap.sizes.includes(size)) return 'unsupported_size';
+  if (!cap.aspectRatios.includes(aspectRatio)) return 'unsupported_aspect_ratio';
+  if (!cap.resolutions.includes(resolution)) return 'unsupported_resolution';
   if (!cap.qualities.includes(quality)) return 'unsupported_quality';
+  if (nativeImageSize(cap, aspectRatio, resolution) === null) return 'unsupported_size';
   if (promptChars > cap.maxPromptChars) return 'prompt_too_long';
   return null;
 }

@@ -1,15 +1,14 @@
-import { Alert, App, Button, Card, Descriptions, Input, Table, Tag, Typography } from "antd";
+import { Alert, App, Button, Card, Descriptions, Input, Table, Typography } from "antd";
 import { Link } from "react-router";
 import { aiContentApi, type ScheduleSlot, type ScheduleStatus } from "@/api/ai-content";
 import { useCapabilities } from "@/auth/access-control";
 import { PERMISSION } from "@/auth/permissions";
-import { ErrorState, PageHeader, PageLoader, TableCard } from "@/components/ui";
+import { ErrorState, PageHeader, PageLoader, TableCard, StatusTag } from "@/components/ui";
 import { errorMessage, useAsync } from "@/shared/useAsync";
 import { useDocumentTitle } from "@/shared/useDocumentTitle";
 
 const localTime = (iso: string, timeZone: string) => new Intl.DateTimeFormat("en-AU", { timeZone, dateStyle: "full", timeStyle: "short" }).format(new Date(iso));
 const words = (value: string | null) => (value ?? "").replace(/_/g, " ").replace(":", ": ");
-const STATE_COLOR: Record<ScheduleSlot["state"], string> = { filled: "green", missed: "volcano", reviewed: "default" };
 
 /**
  * The daily AI slot (Phase 1F): when it runs, what waits for it, and every
@@ -28,7 +27,7 @@ export function SchedulePage() {
     let note = "";
     modal.confirm({
       title: `Mark the missed slot of ${slot.localDate} as reviewed?`,
-      content: <Input.TextArea aria-label="What you checked or decided" rows={3} maxLength={500} onChange={(e) => (note = e.target.value)} />,
+      content: <Input.TextArea placeholder="What you checked or decided" aria-label="What you checked or decided" rows={3} maxLength={500} onChange={(e) => (note = e.target.value)} />,
       okText: "Mark reviewed",
       onOk: async () => {
         try {
@@ -45,7 +44,7 @@ export function SchedulePage() {
       <PageHeader title="AI schedule" description="One daily slot starts research for the next topic a person approved. It never publishes." crumbs={[{ label: "AI Content", href: "/ai-content" }]} />
       {!s.active && <Alert type="info" showIcon style={{ marginBottom: 16 }} message="The daily slot is off" description="Turn on automation and the daily slot in AI Settings to use it." />}
       {s.missedAwaitingReview > 0 && <Alert type="warning" showIcon style={{ marginBottom: 16 }} message={`${s.missedAwaitingReview} missed slot${s.missedAwaitingReview === 1 ? "" : "s"} to review`} />}
-      <Card title="Slot" style={{ marginBottom: 16 }}>
+      <Card title={<h2 className="as-ai-card-heading">Daily research window</h2>} style={{ marginBottom: 16 }}>
         <Descriptions
           size="small"
           column={1}
@@ -77,11 +76,11 @@ export function SchedulePage() {
           rowKey="id"
           dataSource={s.slots}
           pagination={false}
-          scroll={{ x: true }}
+          scroll={{ x: 850 }}
           locale={{ emptyText: "No slots yet" }}
           columns={[
             { title: "Date", dataIndex: "localDate" },
-            { title: "State", render: (_: unknown, slot: ScheduleSlot) => <Tag color={STATE_COLOR[slot.state]}>{slot.state}</Tag> },
+            { title: "State", render: (_: unknown, slot: ScheduleSlot) => <StatusTag status={slot.state} /> },
             { title: "Topic", render: (_: unknown, slot: ScheduleSlot) => (slot.item ? <Link to={`/ai-content/topics/${slot.item.id}`}>{slot.item.title}</Link> : "—") },
             { title: "Reason", render: (_: unknown, slot: ScheduleSlot) => words(slot.reason) || "—" },
             { title: "Review", render: (_: unknown, slot: ScheduleSlot) => slot.resolutionNote ?? "—" },

@@ -4,6 +4,7 @@ import {
   App,
   Button,
   Card,
+  Collapse,
   Descriptions,
   Form,
   Input,
@@ -14,7 +15,7 @@ import {
   Table,
   Typography,
 } from "antd";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useSearchParams } from "react-router";
 import {
   aiContentApi,
   type AiAttention,
@@ -27,7 +28,7 @@ import {
 import { isApiError } from "@/api/errors";
 import { useCapabilities } from "@/auth/access-control";
 import { PERMISSION } from "@/auth/permissions";
-import { ErrorState, PageHeader, PageLoader, TableCard } from "@/components/ui";
+import { ErrorState, PageHeader, PageLoader, TableCard, StatCard, StatusTag } from "@/components/ui";
 import { errorMessage, fieldErrors, useAsync } from "@/shared/useAsync";
 import { useUnsavedChanges } from "@/shared/useUnsavedChanges";
 import { useDocumentTitle } from "@/shared/useDocumentTitle";
@@ -60,7 +61,8 @@ export function AiOverviewPage() {
     <>
       <PageHeader
         title="AI Content"
-        description="Topics, free public research and fact review."
+        description="Plan topics, verify evidence and prepare articles for human approval."
+        actions={<Button type="primary" href="/admin/ai-content/topics">Open topic queue</Button>}
       />
       <AutomationNotice />
       {state.status === "loading" ? (
@@ -68,21 +70,26 @@ export function AiOverviewPage() {
       ) : state.status === "error" ? (
         <ErrorState message={state.message} onRetry={reload} />
       ) : (
-        <Card>
-          <Typography.Paragraph>
-            Automation configured:{" "}
-            <strong>{state.data.enabled ? "Enabled" : "Disabled"}</strong>.
-            Research: <strong>{state.data.executionActive ? "Active" : "Inactive"}</strong>. Article generation:{" "}
-            <strong>{state.data.generationAvailable ? "Available (budgeted, reviewed)" : "Not available"}</strong>.
-          </Typography.Paragraph>
-          <Descriptions
-            items={TOPIC_STATUSES.map((key) => ({
-              key,
-              label: TOPIC_STATUS_LABELS[key],
-              children: state.data.counts[key] ?? 0,
-            }))}
-          />
-        </Card>
+        <>
+          <div className="as-ai-stats">
+            {(["queued", "researching", "ready_for_review", "needs_fact_review", "scheduled", "failed"] as const).map((key) => (
+              <StatCard key={key} label={key === "researching" ? "Processing" : TOPIC_STATUS_LABELS[key]} value={key === "researching" ? (state.data.counts.researching ?? 0) + (state.data.counts.generating ?? 0) : state.data.counts[key] ?? 0}
+                hint={key === "researching" ? "Researching or generating" : "View topics"}
+                tone={key === "failed" ? "critical" : key === "needs_fact_review" ? "attention" : "neutral"}
+                href={key === "needs_fact_review" ? "/ai-content/fact-review" : `/ai-content/topics?status=${key === "researching" ? "all" : key}`} />
+            ))}
+          </div>
+          <Collapse style={{ marginBottom: 20 }} items={[{ key: "counts", label: "All workflow statuses", children:
+            <Descriptions column={{ xs: 1, sm: 2, lg: 3 }} items={TOPIC_STATUSES.map((key) => ({ key, label: TOPIC_STATUS_LABELS[key], children: <Link to={`/ai-content/topics?status=${key}`}>{state.data.counts[key] ?? 0} topics</Link> }))} />,
+          }]} />
+          <Card title={<h2 className="as-ai-card-heading">Workspace status</h2>}>
+            <Descriptions column={{ xs: 1, sm: 2, lg: 3 }} items={[
+              { key: "enabled", label: "Automation", children: <StatusTag status={state.data.enabled ? "active" : "disabled"} /> },
+              { key: "research", label: "Research", children: <StatusTag status={state.data.executionActive ? "active" : "inactive"} /> },
+              { key: "generation", label: "Article generation", children: state.data.generationAvailable ? "Available within budget" : "Setup required" },
+            ]} />
+          </Card>
+        </>
       )}
       {state.status === "ready" && <AttentionCard attention={state.data.attention} />}
       {state.status === "ready" && <BudgetCard />}
@@ -102,6 +109,7 @@ const hours = (seconds: number) => (seconds < 3600 ? `${Math.floor(seconds / 60)
  * each with where to act. Nothing is shown when nothing needs attention.
  */
 function AttentionCard({ attention: a }: { attention: AiAttention }) {
+  const { can } = useCapabilities();
   const warn = a.budgetWarningPercent / 100;
   const over = (["textDay", "textMonth", "imageDay", "imageMonth"] as const).filter((k) => a.budgetUsed[k] >= warn);
   const items = [
@@ -109,16 +117,16 @@ function AttentionCard({ attention: a }: { attention: AiAttention }) {
     a.outcomeUnknownOperations > 0 && { key: "unknown", type: "error" as const, text: `${a.outcomeUnknownOperations} AI request${a.outcomeUnknownOperations === 1 ? "" : "s"} with an unknown outcome. They are never sent again automatically.`, link: "/ai-content/topics", action: "Resolve on the topic" },
     a.factReviewItems > 0 && { key: "facts", type: "warning" as const, text: `${a.factReviewItems} article${a.factReviewItems === 1 ? "" : "s"} in fact review; the oldest has waited ${hours(a.factReviewOldestSeconds)}.`, link: "/ai-content/fact-review", action: "Open Fact Review" },
     a.missedSlotsUnreviewed > 0 && { key: "slots", type: "warning" as const, text: `${a.missedSlotsUnreviewed} missed daily slot${a.missedSlotsUnreviewed === 1 ? "" : "s"} to review.`, link: "/ai-content/schedule", action: "Open AI Schedule" },
-    a.failedItems > 0 && { key: "failed", type: "warning" as const, text: `${a.failedItems} topic${a.failedItems === 1 ? "" : "s"} failed.`, link: "/ai-content/topics", action: "See failed topics" },
+    a.failedItems > 0 && { key: "failed", type: "warning" as const, text: `${a.failedItems} topic${a.failedItems === 1 ? "" : "s"} failed.`, link: "/ai-content/topics?status=failed", action: "See failed topics" },
     a.oldestOpenOperationSeconds > 1800 && { key: "stuck", type: "warning" as const, text: `AI work has been waiting ${hours(a.oldestOpenOperationSeconds)}. Check that the worker is running.`, link: "/system/queues", action: "Open Queue Monitor" },
     over.length > 0 && { key: "budget", type: "info" as const, text: `AI budget over ${a.budgetWarningPercent}% (${over.map((k) => k.replace(/([A-Z])/g, " $1").toLowerCase()).join(", ")}).`, link: "/ai-content/pricing", action: "See the budget" },
   ].filter(Boolean) as { key: string; type: "error" | "warning" | "info"; text: string; link: string; action: string }[];
   if (items.length === 0) return null;
   return (
-    <Card title="Needs attention" style={{ marginTop: 16 }}>
+    <Card title={<h2 className="as-ai-card-heading">Needs attention</h2>} style={{ marginTop: 16 }}>
       <Space direction="vertical" style={{ width: "100%" }}>
         {items.map((i) => (
-          <Alert key={i.key} type={i.type} showIcon message={i.text} action={<Link to={i.link}>{i.action}</Link>} />
+          <Alert key={i.key} type={i.type} showIcon message={i.text} action={(i.link !== "/ai-content/pricing" || can(PERMISSION.aiContentConfigure)) && (i.link !== "/system/queues" || can(PERMISSION.systemQueuesView)) ? <Link to={i.link}>{i.action}</Link> : undefined} />
         ))}
       </Space>
     </Card>
@@ -134,7 +142,9 @@ export function AiTopicDetailPage() {
   return (
     <>
       <PageHeader
-        title="Topic detail"
+        title={state.status === "ready" ? state.data.title : "Topic detail"}
+        description="Work through the evidence, article and image checks before approval."
+        meta={state.status === "ready" ? <StatusTag status={state.data.status} label={TOPIC_STATUS_LABELS[state.data.status]} /> : undefined}
         crumbs={[{ label: "Topic Queue", href: "/ai-content/topics" }]}
       />
       <AutomationNotice />
@@ -144,17 +154,17 @@ export function AiTopicDetailPage() {
         <ErrorState message={state.message} onRetry={reload} />
       ) : (
         <Card>
-          <Typography.Title level={2}>{state.data.title}</Typography.Title>
+          <Typography.Title level={2} style={{ fontSize: 16, marginTop: 0 }}>Editorial brief</Typography.Title>
           <Typography.Paragraph style={{ whiteSpace: "pre-wrap" }}>
             {state.data.brief || "No editorial brief."}
           </Typography.Paragraph>
           <Descriptions
-            column={1}
+            column={{ xs: 1, md: 2 }}
             items={[
               {
                 key: "status",
                 label: "Status",
-                children: TOPIC_STATUS_LABELS[state.data.status],
+                children: <StatusTag status={state.data.status} label={TOPIC_STATUS_LABELS[state.data.status]} />,
               },
               {
                 key: "article",
@@ -188,15 +198,9 @@ export function AiTopicDetailPage() {
                 label: "Priority",
                 children: state.data.priority,
               },
-              { key: "source", label: "Source", children: state.data.source },
+              { key: "source", label: "Source", children: state.data.source === "manual" ? "Added by an editor" : "Public feed discovery" },
               ...(state.data.selectionReason ? [{ key: "why", label: "Why selected", children: state.data.selectionReason }] : []),
               ...(state.data.followUpReason ? [{ key: "followup", label: "Follow-up justification", children: state.data.followUpReason }] : []),
-              {
-                key: "creator",
-                label: "Created by administrator ID",
-                children:
-                  state.data.createdByAdminId ?? "Removed administrator",
-              },
               {
                 key: "created",
                 label: "Created (Adelaide time)",
@@ -223,11 +227,16 @@ export function AiTopicDetailPage() {
       )}
       {state.status === "ready" && (
         <>
+          <nav className="as-ai-stage-nav" aria-label="Topic review stages"><a href="#topic-research">1. Research & facts</a><a href="#topic-article">2. Article & approval</a>{state.data.postId && <a href="#topic-image">3. Featured image</a>}</nav>
+          <section id="topic-research" className="as-ai-section" aria-label="Research and facts">
           <NoveltyCard topic={state.data} canReview={canReview} onChange={() => reload()} />
           <SourcesCard key={`${state.data.id}-${state.data.version}`} topic={state.data} canReview={canReview} onChange={() => reload()} />
           <ResearchCard topic={state.data} canReview={canReview} onChange={() => reload()} />
+          </section>
+          <section id="topic-article" className="as-ai-section" aria-label="Article and approval">
           <ArticleCard topic={state.data} onChange={() => reload()} />
-          {state.data.postId && <FeaturedImageCard topic={state.data} onChange={() => reload()} />}
+          </section>
+          {state.data.postId && <section id="topic-image" className="as-ai-section" aria-label="Featured image"><FeaturedImageCard topic={state.data} onChange={() => reload()} /></section>}
         </>
       )}
     </>
@@ -244,8 +253,12 @@ export function AiTopicQueuePage({ initialStatus = "queued", heading = "Topic Qu
   const manage = can(PERMISSION.aiContentManageTopics);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [status, setStatus] = useState<TopicStatus | undefined>(initialStatus);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedStatus = searchParams.get("status");
+  const status = requestedStatus === "all" ? undefined : TOPIC_STATUSES.includes(requestedStatus as TopicStatus) ? requestedStatus as TopicStatus : initialStatus;
+  const setStatus = (value: TopicStatus | undefined) => setSearchParams((previous) => { previous.set("status", value ?? "all"); return previous; });
   const review = can(PERMISSION.aiContentReview);
+  const [discovering, setDiscovering] = useState(false);
   const [discovery, setDiscovery] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [state, reload] = useAsync(
@@ -345,16 +358,20 @@ export function AiTopicQueuePage({ initialStatus = "queued", heading = "Topic Qu
       />
       <AutomationNotice />
       {review && heading === "Topic Queue" && (
-        <Card title="Topic ideas from public feeds" style={{ marginBottom: 20 }}>
+        <Card title={<h2 className="as-ai-card-heading">Topic ideas from public feeds</h2>} style={{ marginBottom: 20 }}>
           <Typography.Paragraph>Reads the configured feeds for recent, in-niche items. Ideas still need approval.</Typography.Paragraph>
           <Space wrap>
             <Button
+              loading={discovering}
               onClick={async () => {
+                setDiscovering(true);
                 try {
                   const run = await aiContentApi.discover(crypto.randomUUID());
-                  setDiscovery(`Discovery requested (${run.state}). New ideas appear in the queue when it finishes.`);
+                  setDiscovery(`Discovery ${run.state.replaceAll("_", " ")}. Refresh the queue after it finishes to see new ideas.`);
                 } catch (error) {
                   setDiscovery(isApiError(error) ? error.userMessage : "Discovery could not start.");
+                } finally {
+                  setDiscovering(false);
                 }
               }}
             >
@@ -364,8 +381,8 @@ export function AiTopicQueuePage({ initialStatus = "queued", heading = "Topic Qu
           </Space>
         </Card>
       )}
-      {manage && (
-        <Card title="Add manual topic" style={{ marginBottom: 20 }}>
+      {manage && heading === "Topic Queue" && (
+        <Collapse style={{ marginBottom: 20 }} items={[{ key: "create", label: "Add a manual topic", children: <div>
           {error && <ErrorState message={error} />}
           <Form
             name="ai-topic-create"
@@ -381,21 +398,21 @@ export function AiTopicQueuePage({ initialStatus = "queued", heading = "Topic Qu
               label="Title / topic"
               rules={[{ required: true, whitespace: true, min: 3, max: 180 }]}
             >
-              <Input maxLength={180} />
+              <Input placeholder={"e.g. A first-timer's guide to the East End"} maxLength={180} />
             </Form.Item>
             <Form.Item
               name="brief"
               label="Editorial brief (optional)"
               rules={[{ max: 2000 }]}
             >
-              <Input.TextArea rows={3} maxLength={2000} showCount />
+              <Input.TextArea placeholder="Audience, angle and what the article must cover" rows={3} maxLength={2000} showCount />
             </Form.Item>
             <Form.Item
               name="priority"
               label="Priority (0–1000)"
               rules={[{ required: true, type: "integer", min: 0, max: 1000 }]}
             >
-              <InputNumber min={0} max={1000} />
+              <InputNumber placeholder="0" min={0} max={1000} />
             </Form.Item>
             <Space wrap>
               <Button type="primary" htmlType="submit" loading={saving}>
@@ -421,12 +438,12 @@ export function AiTopicQueuePage({ initialStatus = "queued", heading = "Topic Qu
               )}
             </Space>
           </Form>
-        </Card>
+        </div> }]} />
       )}
       <TableCard
         toolbar={
           <>
-            <Select
+            <Select placeholder="All statuses"
               aria-label="Topic status"
               value={status ?? "all"}
               onChange={(v) => {
@@ -487,7 +504,7 @@ export function AiTopicQueuePage({ initialStatus = "queued", heading = "Topic Qu
               {
                 title: "Status",
                 dataIndex: "status",
-                render: (value: TopicStatus) => TOPIC_STATUS_LABELS[value],
+                render: (value: TopicStatus) => <StatusTag status={value} label={TOPIC_STATUS_LABELS[value]} />,
               },
               { title: "Priority", dataIndex: "priority" },
               {
@@ -499,7 +516,7 @@ export function AiTopicQueuePage({ initialStatus = "queued", heading = "Topic Qu
                         size="small"
                         onClick={() => openAction(row, "priority")}
                       >
-                        Reprioritize
+                        Change priority
                       </Button>
                       <Button
                         size="small"
@@ -538,7 +555,7 @@ export function AiTopicQueuePage({ initialStatus = "queued", heading = "Topic Qu
         open={Boolean(selected)}
         title={
           selected
-            ? `${selected.action === "priority" ? "Reprioritize" : selected.action} topic`
+            ? `${{ priority: "Change priority", pause: "Pause", resume: "Resume", cancel: "Cancel", reject: "Reject" }[selected.action]} topic`
             : "Topic action"
         }
         onCancel={() => !saving && setSelected(null)}
@@ -548,7 +565,7 @@ export function AiTopicQueuePage({ initialStatus = "queued", heading = "Topic Qu
         {selected && (
           <Typography.Paragraph>
             {selected.topic.title} · version {selected.topic.version} ·{" "}
-            {selected.topic.status}
+            {TOPIC_STATUS_LABELS[selected.topic.status]}
           </Typography.Paragraph>
         )}
         {actionError && <ErrorState message={actionError} />}
@@ -585,7 +602,7 @@ export function AiTopicQueuePage({ initialStatus = "queued", heading = "Topic Qu
               label="New priority"
               rules={[{ required: true, type: "integer", min: 0, max: 1000 }]}
             >
-              <InputNumber min={0} max={1000} />
+              <InputNumber placeholder="0–1000" min={0} max={1000} />
             </Form.Item>
           )}
           {(selected?.action === "cancel" || selected?.action === "reject") && (
@@ -594,7 +611,7 @@ export function AiTopicQueuePage({ initialStatus = "queued", heading = "Topic Qu
               label="Reason"
               rules={[{ required: true, whitespace: true, max: 500 }]}
             >
-              <Input.TextArea rows={3} maxLength={500} />
+              <Input.TextArea placeholder="Why this change is needed" rows={3} maxLength={500} />
             </Form.Item>
           )}
           <Button
@@ -603,7 +620,7 @@ export function AiTopicQueuePage({ initialStatus = "queued", heading = "Topic Qu
             loading={saving}
             disabled={conflict}
           >
-            Confirm change
+            {selected ? { priority: "Save priority", pause: "Pause topic", resume: "Resume topic", cancel: "Cancel topic", reject: "Reject topic" }[selected.action] : "Save change"}
           </Button>
         </Form>
       </Modal>

@@ -844,6 +844,158 @@
         ]
       }
     },
+    "/api/v1/admin/ai-content/topics/{id}/image-comparisons/quote": {
+      "post": {
+        "operationId": "AiGenerationController_quoteImageComparison",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteImageComparisonDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/topics/{id}/image-comparisons": {
+      "post": {
+        "operationId": "AiGenerationController_requestImageComparison",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestImageComparisonDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/image-evidence": {
+      "get": {
+        "operationId": "AiGenerationController_imageEvidence",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "order",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "asc",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "slot",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "featured",
+                "comparison"
+              ]
+            }
+          },
+          {
+            "name": "itemId",
+            "required": false,
+            "in": "query",
+            "description": "One topic only.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
     "/api/v1/admin/ai-content/images/{id}/approve": {
       "post": {
         "operationId": "AiGenerationController_approveImage",
@@ -1051,6 +1203,20 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "admin-ai-content"
+        ]
+      }
+    },
+    "/api/v1/admin/ai-content/image-models": {
+      "get": {
+        "operationId": "AiGenerationController_imageModels",
+        "parameters": [],
         "responses": {
           "200": {
             "description": ""
@@ -12061,6 +12227,11 @@
           "followUpReason": {
             "type": "string",
             "maxLength": 500
+          },
+          "correctionReason": {
+            "type": "string",
+            "maxLength": 400,
+            "description": "Approve as a correction of a topic a person cancelled, when that is the only overlap: why it was replaced."
           }
         },
         "required": [
@@ -12335,6 +12506,118 @@
           "expectedVersion"
         ]
       },
+      "ComparisonCandidateDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "xai",
+              "google"
+            ]
+          },
+          "model": {
+            "type": "string",
+            "description": "A listed image model of the provider."
+          },
+          "resolution": {
+            "type": "string",
+            "enum": [
+              "1k",
+              "2k"
+            ]
+          },
+          "quality": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "auto"
+            ]
+          }
+        },
+        "required": [
+          "provider",
+          "model",
+          "resolution",
+          "quality"
+        ]
+      },
+      "QuoteImageComparisonDto": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "A generic scene; defaults to the draft's image brief. The same screened prompt goes to every provider."
+          },
+          "aspectRatio": {
+            "type": "string",
+            "enum": [
+              "3:2",
+              "16:9",
+              "1:1",
+              "2:3"
+            ]
+          },
+          "candidates": {
+            "minItems": 2,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComparisonCandidateDto"
+            }
+          }
+        },
+        "required": [
+          "aspectRatio",
+          "candidates"
+        ]
+      },
+      "RequestImageComparisonDto": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "A generic scene; defaults to the draft's image brief. The same screened prompt goes to every provider."
+          },
+          "aspectRatio": {
+            "type": "string",
+            "enum": [
+              "3:2",
+              "16:9",
+              "1:1",
+              "2:3"
+            ]
+          },
+          "candidates": {
+            "minItems": 2,
+            "maxItems": 4,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComparisonCandidateDto"
+            }
+          },
+          "expectedVersion": {
+            "type": "number",
+            "minimum": 1
+          },
+          "expectedTotalMicros": {
+            "type": "number",
+            "minimum": 1,
+            "description": "The total maximum shown by the quote; refused if the prices changed since."
+          }
+        },
+        "required": [
+          "aspectRatio",
+          "candidates",
+          "expectedVersion",
+          "expectedTotalMicros"
+        ]
+      },
       "ApproveImageDto": {
         "type": "object",
         "properties": {
@@ -12449,16 +12732,14 @@
           "provider": {
             "type": "string",
             "enum": [
-              "openai"
+              "openai",
+              "xai",
+              "google"
             ]
           },
           "model": {
             "type": "string",
-            "enum": [
-              "gpt-5.6-terra",
-              "gpt-5.6-luna",
-              "gpt-image-2.5-flare"
-            ]
+            "description": "A listed text or image model of the provider."
           },
           "currency": {
             "type": "string",
@@ -12471,41 +12752,68 @@
           },
           "inputMicrosPerMTok": {
             "type": "number",
-            "description": "Millionths of the currency per million input tokens (USD 2.00 = 2000000)."
+            "description": "Millionths of the currency per million input tokens (USD 2.00 = 2000000); zero only for a per-image price that bills no input."
           },
           "cachedInputMicrosPerMTok": {
             "type": "number"
           },
           "outputMicrosPerMTok": {
-            "type": "number"
+            "type": "number",
+            "description": "Per million output tokens; zero only for a per-image price, which has no token output rate."
           },
           "longContextThresholdTokens": {
             "type": "number",
             "description": "Input tokens above which a different price applies; such calls are refused."
           },
-          "imageSize": {
+          "imageResolution": {
             "type": "string",
             "enum": [
-              "1536x1024",
-              "1024x1024",
-              "1024x1536"
+              "0.5k",
+              "1k",
+              "2k",
+              "4k"
             ],
-            "description": "Image models only: the size this price covers."
+            "description": "Image models only: the resolution tier this price covers."
           },
           "imageQuality": {
             "type": "string",
             "enum": [
               "low",
               "medium",
-              "high"
+              "high",
+              "auto"
             ],
             "description": "Image models only: the quality this price covers."
+          },
+          "pricingUnit": {
+            "type": "string",
+            "enum": [
+              "token",
+              "image"
+            ],
+            "description": "Image models only: how the provider bills, which must match the model."
           },
           "maxOutputTokens": {
             "type": "number",
             "minimum": 1,
             "maximum": 100000,
-            "description": "Image models only: the most output tokens one image at this size and quality may use. A call is bounded by it; usage above it halts paid calls."
+            "description": "Token unit: the most image output tokens one image may use. Usage above it halts paid calls."
+          },
+          "perImageMicros": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Image unit: millionths of the currency per generated image (USD 0.04 = 40000)."
+          },
+          "textOutputMicrosPerMTok": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Text or thinking output billed with an image, per million tokens (only for models that bill it)."
+          },
+          "maxTextOutputTokens": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The most text or thinking tokens one image may use."
           },
           "sourceUrl": {
             "type": "string",

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Alert, App, Button, Card, Descriptions, Input, Select, Space, Table, Tag, Typography } from "antd";
+import { Alert, App, Button, Card, Descriptions, Input, Progress, Select, Space, Table, Typography } from "antd";
 import { Link } from "react-router";
 import {
   aiContentApi,
@@ -12,7 +12,7 @@ import {
 import { blogApi } from "@/api/blog";
 import { useCapabilities } from "@/auth/access-control";
 import { PERMISSION } from "@/auth/permissions";
-import { ErrorState, PageLoader } from "@/components/ui";
+import { ErrorState, PageLoader, StatusTag } from "@/components/ui";
 import { errorMessage, fieldErrors, useAsync } from "@/shared/useAsync";
 
 const when = (value: string | null) =>
@@ -60,7 +60,7 @@ export function ArticleCard({ topic, onChange }: { topic: AiTopic; onChange: () 
   const post = history.status === "ready" ? history.data.post : null;
   const editable = !["published", "cancelled", "rejected", "scheduled", "approved"].includes(topic.status);
   return (
-    <Card title="Article" style={{ marginTop: 16 }}>
+    <Card title={<h2 className="as-ai-card-heading">Article</h2>} style={{ marginTop: 16 }}>
       {Boolean(problem) && <Problem error={problem} />}
       <Space direction="vertical" style={{ width: "100%" }}>
         <Space wrap align="center">
@@ -74,7 +74,7 @@ export function ArticleCard({ topic, onChange }: { topic: AiTopic; onChange: () 
             loading={categories.status === "loading"}
             options={categories.status === "ready" ? categories.data.map((c) => ({ value: c.id, label: c.name })) : []}
             onChange={(value) => void act(() => aiContentApi.setArticleSettings(topic, { categoryId: value ?? null }), "Category saved")}
-            style={{ minWidth: 240 }}
+            style={{ width: 240, maxWidth: "100%" }}
           />
         </Space>
         {can(PERMISSION.aiContentGenerate) && (
@@ -173,7 +173,7 @@ function History({ data, topic, onChange }: { data: Awaited<ReturnType<typeof ai
     let note = "";
     modal.confirm({
       title: action === "abandon" ? "Abandon this request and count its full reservation as spent?" : "Look the result up again by its provider id?",
-      content: <Input.TextArea aria-label="What you checked" rows={3} maxLength={500} onChange={(e) => (note = e.target.value)} />,
+      content: <Input.TextArea placeholder="What you checked with the provider" aria-label="What you checked" rows={3} maxLength={500} onChange={(e) => (note = e.target.value)} />,
       okText: action === "abandon" ? "Abandon" : "Look up again",
       onOk: async () => {
         try {
@@ -241,7 +241,7 @@ function History({ data, topic, onChange }: { data: Awaited<ReturnType<typeof ai
         );
       })}
       {latest?.imageBriefs && latest.imageBriefs.length > 0 && (
-        <Card size="small" title="Image briefs (for a person to source or create)" style={{ marginTop: 16 }}>
+        <Card size="small" title={<h2 className="as-ai-card-heading">Image briefs (for a person to source or create)</h2>} style={{ marginTop: 16 }}>
           {latest.imageBriefs.map((b, i) => (
             <Descriptions key={i} size="small" column={1} items={[{ key: "p", label: `${b.placement} (${b.aspectRatio})`, children: b.prompt }, { key: "a", label: "Draft alt text", children: b.altDraft }]} />
           ))}
@@ -260,7 +260,7 @@ function History({ data, topic, onChange }: { data: Awaited<ReturnType<typeof ai
         columns={[
           { title: "When", render: (_: unknown, o: GenerationOperation) => when(o.createdAt) },
           { title: "What", render: (_: unknown, o: GenerationOperation) => `${o.kind === "apply" ? "Apply to article" : `Generate (${o.scope})`}${o.model ? ` · ${o.model}` : ""}` },
-          { title: "State", render: (_: unknown, o: GenerationOperation) => <><Tag color={o.state === "outcome_unknown" ? "orange" : o.state === "failed" ? "red" : o.state === "succeeded" ? "green" : "default"}>{words(o.state)}</Tag><div><Typography.Text type="secondary">{words(o.resultCode ?? o.errorClass)}</Typography.Text></div></> },
+          { title: "State", render: (_: unknown, o: GenerationOperation) => <><StatusTag status={o.state} label={words(o.state)} /><div><Typography.Text type="secondary">{words(o.resultCode ?? o.errorClass)}</Typography.Text></div></> },
           { title: "Cost", render: (_: unknown, o: GenerationOperation) => (o.kind === "apply" ? "—" : <>{`${words(o.costState)}: ${o.costState === "reserved" ? money(o.reservedMicros, o.priceSchedule?.currency) : money(o.settledMicros, o.priceSchedule?.currency)}`}<div><Typography.Text type="secondary">{`max ${money(o.estimatedMaxMicros, o.priceSchedule?.currency)}${o.priceSchedule ? ` · ${o.priceSchedule.version}` : ""}`}</Typography.Text></div></>) },
           { title: "Tokens", render: (_: unknown, o: GenerationOperation) => (o.inputTokens === null ? "—" : `${o.inputTokens} in (${o.cachedInputTokens ?? 0} cached) · ${o.outputTokens} out (${o.reasoningTokens ?? 0} reasoning)`) },
           ...(can(PERMISSION.aiContentConfigure)
@@ -280,6 +280,12 @@ function History({ data, topic, onChange }: { data: Awaited<ReturnType<typeof ai
   );
 }
 
+/** Over the warning threshold, or no budget at all (a zero limit allows no paid call of that kind). */
+function budgetTag(bucket: { limitMicros: number; warning: boolean }, warningPercent: number) {
+  if (bucket.limitMicros === 0) return null;
+  return bucket.warning ? <StatusTag status="review" label={`At least ${warningPercent}% committed`} /> : null;
+}
+
 /** Spend against the owner's caps, with any halt and how to lift it after reconciling (plan §I). */
 export function BudgetCard() {
   const { can } = useCapabilities();
@@ -288,9 +294,9 @@ export function BudgetCard() {
   if (state.status === "loading") return <PageLoader />;
   if (state.status === "error") return <ErrorState message={state.message} onRetry={reload} />;
   const b: BudgetStatus = state.data;
-  const line = (p: BudgetStatus["day"]) => `${money(p.settledMicros, b.currency)} spent + ${money(p.reservedMicros, b.currency)} reserved of ${money(p.limitMicros, b.currency)}`;
+
   return (
-    <Card title="AI budget" style={{ marginTop: 16 }}>
+    <Card title={<h2 className="as-ai-card-heading">AI budget</h2>} style={{ marginTop: 16 }}>
       {b.paidCallsHaltedAt && (
         <Alert
           type="error"
@@ -307,7 +313,7 @@ export function BudgetCard() {
                   let note = "";
                   modal.confirm({
                     title: "Resume paid calls?",
-                    content: <Input.TextArea aria-label="How it was reconciled" rows={3} maxLength={500} onChange={(e) => (note = e.target.value)} />,
+                    content: <Input.TextArea placeholder="How the charge was reconciled" aria-label="How it was reconciled" rows={3} maxLength={500} onChange={(e) => (note = e.target.value)} />,
                     onOk: async () => {
                       try {
                         await aiContentApi.resumePaidCalls(note);
@@ -325,16 +331,24 @@ export function BudgetCard() {
           }
         />
       )}
+      <div className="as-ai-budget-grid">
+        {([{ label: "Articles · today", value: b.day }, { label: "Articles · this month", value: b.month },
+          { label: "Images · today", value: b.imageDay }, { label: "Images · this month", value: b.imageMonth }]).map(({ label, value }) => {
+          const percent = value.limitMicros > 0 ? Math.min(100, Math.round((value.settledMicros + value.reservedMicros) / value.limitMicros * 100)) : 0;
+          return <div key={label} className="as-ai-budget-meter">
+            <Typography.Text strong>{label}</Typography.Text>
+            <Typography.Paragraph style={{ margin: "8px 0 0" }}>{money(value.settledMicros, b.currency)} spent · {money(value.reservedMicros, b.currency)} reserved</Typography.Paragraph>
+            <Progress percent={percent} status={percent >= 100 ? "exception" : "normal"} aria-label={`${label}: ${percent}% committed`} />
+            <Typography.Text type="secondary">{value.limitMicros === 0 ? "No spending allowed" : `Limit ${money(value.limitMicros, b.currency)}`} · {value.period}</Typography.Text> {budgetTag(value, b.warningPercent)}
+          </div>;
+        })}
+      </div>
       <Descriptions
         size="small"
         column={1}
         items={[
-          { key: "day", label: `Today (${b.day.period})`, children: <>{line(b.day)} {b.day.warning && <Tag color="orange">over {b.warningPercent}%</Tag>}</> },
-          { key: "month", label: `This month (${b.month.period})`, children: <>{line(b.month)} {b.month.warning && <Tag color="orange">over {b.warningPercent}%</Tag>}</> },
-          { key: "imageDay", label: `Images today`, children: <>{line(b.imageDay)} {b.imageDay.warning && <Tag color="orange">over {b.warningPercent}%</Tag>}</> },
-          { key: "imageMonth", label: `Images this month`, children: <>{line(b.imageMonth)} {b.imageMonth.warning && <Tag color="orange">over {b.warningPercent}%</Tag>}</> },
           { key: "cap", label: "Per article (text and images together)", children: `at most ${money(b.workflowLimitMicros, b.currency)}` },
-          { key: "uncertain", label: "Charged but not priceable", children: `${b.uncertainOperations} (${money(b.uncertainMicros, b.currency)}, counted in full)` },
+          { key: "uncertain", label: "Cost needs reconciliation", children: `${b.uncertainOperations} (${money(b.uncertainMicros, b.currency)}, counted in full)` },
           { key: "unknown", label: "Outcome unknown", children: b.outcomeUnknownOperations },
         ]}
       />

@@ -525,7 +525,7 @@ export function PageEditor({ page, onReload }: Props) {
                 children: (
                   <SectionCard title="Page settings">
                     <Form.Item label="Sidebar" name="layout" extra="Plain-text pages only: where the contents and contact box sit. Other pages use full width.">
-                      <Select
+                      <Select placeholder="Choose a sidebar layout"
                         style={{ maxWidth: 360 }}
                         options={[
                           { value: 'rightSidebar', label: 'Sidebar on the right' },

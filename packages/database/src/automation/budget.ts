@@ -68,8 +68,26 @@ export interface ApprovedPrice extends TokenRates {
   model: string;
   serviceTier: string;
   currency: string;
-  /** Image prices only: the approved bound on output tokens for one image. */
+  /** Image prices only: the approved bound on image output tokens for one image. */
   maxOutputTokens: number | null;
+  /** Image prices only: billing unit, per-image price, and billed text/thinking output with its bound. */
+  pricingUnit: 'token' | 'image';
+  perImageMicros: number | null;
+  textOutputMicrosPerMTok: number | null;
+  maxTextOutputTokens: number | null;
+}
+
+/** The provider-neutral image price used by the domain cost rules. */
+export function imagePriceOf(price: ApprovedPrice) {
+  return {
+    unit: price.pricingUnit,
+    inputMicrosPerMTok: price.inputMicrosPerMTok,
+    outputMicrosPerMTok: price.outputMicrosPerMTok,
+    textOutputMicrosPerMTok: price.textOutputMicrosPerMTok,
+    perImageMicros: price.perImageMicros,
+    maxOutputTokens: price.maxOutputTokens,
+    maxTextOutputTokens: price.maxTextOutputTokens,
+  };
 }
 
 /**
@@ -77,9 +95,10 @@ export interface ApprovedPrice extends TokenRates {
  * closed). An image price also names the size and quality it covers and the
  * approved bound on output tokens for one image.
  */
-export async function approvedPrice(tx: Tx, provider: string, model: string, image?: { size: string; quality: string }): Promise<ApprovedPrice | null> {
+export async function approvedPrice(tx: Tx, provider: string, model: string, image?: { resolution: string; quality: string }): Promise<ApprovedPrice | null> {
   const rows = await tx.aIPriceSchedule.findMany({
-    where: { provider, model, status: 'approved', ...(image ? { imageSize: image.size, imageQuality: image.quality } : { imageSize: null }) },
+    // An image price covers one resolution tier and quality (stored in imageSize / imageQuality).
+    where: { provider, model, status: 'approved', ...(image ? { imageSize: image.resolution, imageQuality: image.quality } : { imageSize: null }) },
     orderBy: { approvedAt: 'desc' },
     take: 2,
   });
@@ -97,6 +116,10 @@ export async function approvedPrice(tx: Tx, provider: string, model: string, ima
     outputMicrosPerMTok: r.outputMicrosPerMTok,
     longContextThresholdTokens: r.longContextThresholdTokens,
     maxOutputTokens: r.maxOutputTokens,
+    pricingUnit: r.pricingUnit === 'image' ? 'image' : 'token',
+    perImageMicros: r.perImageMicros,
+    textOutputMicrosPerMTok: r.textOutputMicrosPerMTok,
+    maxTextOutputTokens: r.maxTextOutputTokens,
   };
 }
 
@@ -193,6 +216,17 @@ export interface SettlementInput {
   reportedModel: string | null;
   reportedServiceTier: string | null;
   reasoningTokens?: number | null;
+  /**
+   * The charge already computed in the price's own unit (images: per image or
+   * per token, text/thinking included); null when it cannot be priced. When
+   * absent, the charge is priced from `usage` at token rates (text generation).
+   */
+  pricedMicros?: number | null;
+  /**
+   * A discrepancy the caller found (for example a provider-reported cost the approved price does not
+   * explain): settled as uncertain, never below the reservation, and paid calls halt.
+   */
+  discrepancy?: string | null;
 }
 
 /**
@@ -209,7 +243,8 @@ export async function settleOperation(tx: Tx, operationId: string, input: Settle
   if (!price) discrepancy = 'no approved price was recorded for this call';
   else if (input.reportedModel !== null && input.reportedModel !== price.model && !input.reportedModel.startsWith(`${price.model}-`)) discrepancy = `provider reported model ${input.reportedModel.slice(0, 64)}, approved ${price.model}`;
   else if (input.reportedServiceTier !== null && input.reportedServiceTier !== price.serviceTier) discrepancy = `provider reported service tier ${input.reportedServiceTier.slice(0, 32)}, approved ${price.serviceTier}`;
-  const priced = price && input.usage ? usageCostMicros(price, input.usage) : null;
+  else if (input.discrepancy) discrepancy = input.discrepancy.slice(0, 200);
+  const priced = input.pricedMicros !== undefined ? (price ? input.pricedMicros : null) : price && input.usage ? usageCostMicros(price, input.usage) : null;
   if (!discrepancy && priced === null) discrepancy = 'the provider did not report priceable usage';
   if (!discrepancy && priced !== null && priced > op.reservedMicros) discrepancy = 'the reported usage cost more than the reserved maximum';
   const uncertain = priced === null || Boolean(discrepancy);
@@ -244,7 +279,7 @@ export async function budgetStatus(tx: Tx, now = new Date()) {
   const view = (b: typeof day, limit: number) => {
     const reserved = b?.reservedMicros ?? 0;
     const settled = b?.settledMicros ?? 0;
-    return { reservedMicros: reserved, settledMicros: settled, limitMicros: limit, warning: reserved + settled >= (limit * limits.warningPercent) / 100 };
+    return { reservedMicros: reserved, settledMicros: settled, limitMicros: limit, warning: limit > 0 && reserved + settled >= (limit * limits.warningPercent) / 100 };
   };
   return {
     enabled: limits.enabled,

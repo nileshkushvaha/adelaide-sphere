@@ -3,7 +3,7 @@
  * 19 September 2026). Browser-safe: no provider, database or network code.
  * Deployment wording (the disclosure) comes from settings, never from here.
  */
-import { namePhrases, type TokenRates, type TokenUsage } from './ai-generation.js';
+import { namePhrases, type TokenUsage } from './ai-generation.js';
 
 export const IMAGE_PROMPT_MAX = 1000;
 export const IMAGE_ALT_MAX = 255;
@@ -68,25 +68,80 @@ export interface ImageUsage {
 const perMillion = (tokens: number, microsPerMTok: number) => Math.ceil((tokens * microsPerMTok) / 1_000_000);
 
 /**
- * Worst case for one image: the prompt's bytes as text tokens (a token is at
- * least one byte) plus the approved bound on output tokens for the configured
- * size and quality. Null when no bound is approved: unknown cost fails closed.
+ * How an approved image price is expressed (AI-IMAGE-PROVIDER-10): per token
+ * (input, image output and, where a provider bills it, text/thinking output)
+ * or per generated image. Provider-neutral: which unit a model uses is declared
+ * in the capability layer, never assumed here.
  */
-export function maxImageCallCostMicros(rates: Pick<TokenRates, 'inputMicrosPerMTok' | 'outputMicrosPerMTok'>, promptBytes: number, maxOutputTokens: number | null): number | null {
-  if (!maxOutputTokens || !Number.isInteger(maxOutputTokens) || maxOutputTokens <= 0 || !Number.isInteger(promptBytes) || promptBytes < 0) return null;
-  return perMillion(promptBytes, rates.inputMicrosPerMTok) + perMillion(maxOutputTokens, rates.outputMicrosPerMTok);
+export type ImagePriceUnit = 'token' | 'image';
+
+export interface ImagePrice {
+  unit: ImagePriceUnit;
+  inputMicrosPerMTok: number;
+  /** Image output tokens (token unit). */
+  outputMicrosPerMTok: number;
+  /** Text or thinking output billed alongside the image, when the provider bills it; null when it never does. */
+  textOutputMicrosPerMTok: number | null;
+  /** Per generated image (image unit). */
+  perImageMicros: number | null;
+  /** Approved bound on image output tokens for one image (token unit). */
+  maxOutputTokens: number | null;
+  /** Approved bound on text/thinking output tokens for one image, required when that output is billed. */
+  maxTextOutputTokens: number | null;
+}
+
+const count = (v: unknown) => typeof v === 'number' && Number.isInteger(v) && v >= 0;
+
+/**
+ * Worst case for one image under the approved price: the prompt's bytes as
+ * input tokens (a token is at least one byte), plus the image (its token bound,
+ * or its per-image price), plus any billed text/thinking output at its bound.
+ * Null whenever any part cannot be bounded: unknown cost fails closed.
+ */
+export function maxImageCallCostMicros(price: ImagePrice, promptBytes: number): number | null {
+  if (!count(promptBytes)) return null;
+  let micros = perMillion(promptBytes, price.inputMicrosPerMTok);
+  if (price.unit === 'token') {
+    if (!price.maxOutputTokens || !count(price.maxOutputTokens)) return null;
+    micros += perMillion(price.maxOutputTokens, price.outputMicrosPerMTok);
+  } else {
+    if (!price.perImageMicros || !count(price.perImageMicros)) return null;
+    micros += price.perImageMicros;
+  }
+  if (price.textOutputMicrosPerMTok !== null) {
+    if (price.maxTextOutputTokens === null || !count(price.maxTextOutputTokens)) return null;
+    micros += perMillion(price.maxTextOutputTokens, price.textOutputMicrosPerMTok);
+  }
+  return micros;
 }
 
 /**
- * Maps reported image usage onto the priced token units: text input and image
- * output. Anything the approved price does not cover (image input, text
- * output) or any invalid count makes the call unpriceable: null, which the
- * settlement records as the full reservation, never as zero.
+ * The actual charge for a finished call, in the price's own unit: per-image
+ * prices multiply the images returned; token prices price the reported usage.
+ * Anything the price does not cover (image input tokens; text output without a
+ * rate; missing usage on a token price; an invalid count) is unpriceable: null,
+ * which settlement records as the full reservation, never as zero.
  */
-export function imageTokenUsage(usage: ImageUsage | null): TokenUsage | null {
+export function imageCallCostMicros(price: ImagePrice, usage: ImageUsage | null, images: number): number | null {
+  if (!count(images)) return null;
+  if (usage) {
+    const values = [usage.textInputTokens, usage.imageInputTokens, usage.imageOutputTokens, usage.textOutputTokens];
+    if (!values.every(count) || usage.imageInputTokens > 0) return null;
+    if (usage.textOutputTokens > 0 && price.textOutputMicrosPerMTok === null) return null;
+  }
+  const text = usage ? perMillion(usage.textInputTokens, price.inputMicrosPerMTok) + (usage.textOutputTokens > 0 ? perMillion(usage.textOutputTokens, price.textOutputMicrosPerMTok!) : 0) : 0;
+  if (price.unit === 'image') {
+    if (!price.perImageMicros) return null;
+    // A per-image price that also bills tokens (prompt input, text or thinking) needs the usage to price them.
+    if (!usage && (price.inputMicrosPerMTok > 0 || price.textOutputMicrosPerMTok !== null)) return null;
+    return images * price.perImageMicros + text;
+  }
   if (!usage) return null;
-  const values = [usage.textInputTokens, usage.imageInputTokens, usage.imageOutputTokens, usage.textOutputTokens];
-  if (values.some((v) => !Number.isInteger(v) || v < 0)) return null;
-  if (usage.imageInputTokens > 0 || usage.textOutputTokens > 0) return null;
-  return { inputTokens: usage.textInputTokens, cachedInputTokens: 0, outputTokens: usage.imageOutputTokens };
+  return text + perMillion(usage.imageOutputTokens, price.outputMicrosPerMTok);
+}
+
+/** Reported usage as the token counts recorded on the operation (never used to price it). */
+export function imageUsageTokens(usage: ImageUsage | null): TokenUsage | null {
+  if (!usage || ![usage.textInputTokens, usage.imageOutputTokens, usage.textOutputTokens].every(count)) return null;
+  return { inputTokens: usage.textInputTokens, cachedInputTokens: 0, outputTokens: usage.imageOutputTokens + usage.textOutputTokens };
 }
