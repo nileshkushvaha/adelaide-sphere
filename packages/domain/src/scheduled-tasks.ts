@@ -162,6 +162,23 @@ export const SCHEDULED_TASKS: ScheduledTaskDefinition[] = [
     safeToOverlap: true,
   },
   {
+    code: 'ai-content.retention',
+    label: 'Remove expired AI working data',
+    description: 'Removes the private working data of AI topics finished longer ago than the retention period (default 180 days): request payloads, retrieved page text, draft output and image prompts. Costs, approvals, claims and the audit trail are kept.',
+    scheduleLabel: 'Daily at 03:40',
+    cron: '40 3 * * *',
+    timezone: 'Australia/Adelaide',
+    missedRunPolicy: 'skip-to-next',
+    timeoutMs: 120_000,
+    retries: 1,
+    manualRunAllowed: true,
+    highImpact: false,
+    // Retention, not correctness: a missed run only keeps data a little longer.
+    requiredForCorrectness: false,
+    // Each item is purged once, under its row lock, so overlapping runs cannot double an effect.
+    safeToOverlap: true,
+  },
+  {
     code: 'schedule.run-retention',
     label: 'Trim scheduled-run history',
     description: 'Removes execution history older than 30 days, which is the retention this history is kept for.',

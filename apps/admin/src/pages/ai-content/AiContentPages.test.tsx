@@ -121,6 +121,7 @@ const budget = {
   paidHaltReason: null as string | null,
 };
 const options = { authProvider: providerWithPermissions(permissions) };
+const quiet = { outcomeUnknownOperations: 0, paidCallsHalted: false, paidHaltReason: null, budgetUsed: { textDay: 0, textMonth: 0, imageDay: 0, imageMonth: 0 }, budgetWarningPercent: 70, factReviewItems: 0, factReviewOldestSeconds: 0, failedItems: 0, missedSlotsUnreviewed: 0, oldestOpenOperationSeconds: 0 };
 const imagePost = { id: "cmpostabcdefghijklmnopqr", version: 4, coverMediaId: null, coverAlt: null };
 const noImages = { globalMode: "hybrid" as const, override: null, brief: null, size: "1536x1024", quality: "medium", disclosureText: "Illustrative image created with AI.", post: null, jobs: [] };
 const storedImage = {
@@ -161,6 +162,7 @@ beforeEach(() => {
     enabled: false,
     executionActive: false,
     generationAvailable: false,
+    attention: quiet,
     counts: {
       queued: 1,
       paused: 0,
@@ -605,6 +607,29 @@ it("approves the actual image only with alt text written from it, for the articl
   expect(within(dialog).getByText(/Facts and approval must be confirmed again/)).toBeInTheDocument();
   await ue.click(within(dialog).getByRole("button", { name: "Approve and use" }));
   await waitFor(() => expect(aiContentApi.approveImage).toHaveBeenCalledWith(storedImage.id, 4, "Illustration of a café counter with a coffee machine and pastries"));
+});
+it("lists what needs attention on the dashboard, each with where to act, and nothing when all is quiet", async () => {
+  vi.mocked(aiContentApi.overview).mockResolvedValue({
+    ...(await aiContentApi.overview()),
+    attention: { ...quiet, outcomeUnknownOperations: 2, paidCallsHalted: true, paidHaltReason: "provider reported model gpt-5.6-sol", factReviewItems: 3, factReviewOldestSeconds: 7200 * 25, missedSlotsUnreviewed: 1, budgetUsed: { ...quiet.budgetUsed, imageMonth: 0.8 } },
+  });
+  renderWithProviders(<AiOverviewPage />, options);
+  expect(await screen.findByText("Needs attention")).toBeInTheDocument();
+  expect(screen.getByText(/Paid AI calls are halted: provider reported model gpt-5.6-sol/)).toBeInTheDocument();
+  expect(screen.getByText(/2 AI requests with an unknown outcome/)).toBeInTheDocument();
+  expect(screen.getByText(/3 articles in fact review; the oldest has waited 50 h/)).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Open AI Schedule" })).toHaveAttribute("href", "/admin/ai-content/schedule");
+  expect(screen.getByText(/AI budget over 70% \(image month\)/)).toBeInTheDocument();
+});
+it("hides the attention card when nothing needs attention", async () => {
+  renderWithProviders(<AiOverviewPage />, options);
+  expect(await screen.findByText(/Automation configured/)).toBeInTheDocument();
+  expect(screen.queryByText("Needs attention")).not.toBeInTheDocument();
+});
+it("offers Retry draft for a topic whose first draft failed", async () => {
+  vi.mocked(aiContentApi.detail).mockResolvedValue({ ...topic, status: "failed", failureStage: "generation", failureCode: "invalid_output", version: 7 });
+  renderWithProviders(<AiTopicDetailPage />, { ...options, initialEntries: [`/admin/ai-content/topics/${topic.id}`], routePath: "/ai-content/topics/:id" });
+  expect(await screen.findByRole("button", { name: "Retry draft" })).toBeInTheDocument();
 });
 it("shows a paid-call halt with its reason and the over-threshold warning", async () => {
   vi.mocked(aiContentApi.budget).mockResolvedValue({ ...budget, paidCallsHaltedAt: "2026-09-18T01:00:00.000Z", paidHaltReason: "provider reported model gpt-5.6-sol, approved gpt-5.6-terra" });

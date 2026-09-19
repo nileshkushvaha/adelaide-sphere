@@ -203,3 +203,23 @@ Evidence:
 Details: [Phase 1F completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1f-completion.md).
 
 Not migrated on any retained database (dev is 1 migration behind), not deployed, not enabled. 1G has not started.
+
+## AI Automation Phase 1G delivery — 19 September 2026
+
+Workstream 1G, hardening only (owner decisions: auto-publish OFF, pilot later, existing alerts plus dashboard, 180-day retention). It adds:
+
+- **Final publication checks:** novelty and internal-link targets, on both paths.
+- **Settings:** `auto_publish` is refused.
+- **Recovery:** retry of a failed first draft.
+- **Signals:** the `as_ai_*` operator gauges with alert rules AI1–AI6, and the dashboard "Needs attention" card.
+- **Retention:** 180-day retention of private working data.
+- **Docs:** the rollout and rollback runbook, and the [Phase 1 acceptance record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1-acceptance.md).
+
+Evidence:
+
+- new 1G spec 6/6; full integration 405/405 plus 5/5; all unit suites; e2e 20/20;
+- four mutation checks, all caught.
+
+Details: [Phase 1G completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1g-completion.md).
+
+**Phase 1 is implemented but not accepted**: pilot evidence and owner acceptance are open. AI-379, AI-384 and AI-386 are only partly met, by owner decision. Not migrated on dev (1 behind), not deployed, not enabled. Phase 2 has not started.

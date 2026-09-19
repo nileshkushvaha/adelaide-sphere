@@ -3,6 +3,14 @@
 Overwrite this file at every phase gate; keep it factual and short. History lives in `docs/setup-progress.md` (and `docs/history/`), requirement status in `docs/requirements-traceability.md`.
 
 ## Phase
+- **Latest (19 Sep 2026, AI Content Phase 1G):** hardening only, with auto-publish OFF (setting refused).
+  - Novelty and internal-link checks at publication; Retry draft.
+  - `as_ai_*` gauges with alert rules AI1–AI6, and "Needs attention" on the dashboard.
+  - 180-day retention (`ai-content.retention`); the runbook `docs/operations/ai-content-runbook.md`.
+  - **Phase 1 implemented, not accepted:** the pilot and owner acceptance are open ([Phase 1 acceptance record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1-acceptance.md)).
+  - Verified on the test DB only: 1G spec 6/6, integration 405/405 + 5/5, all unit suites.
+  - Dev DB migrated (owner-authorised, 19 Sep 2026, after a dump): schema up to date. The dev servers were not running at the end of 1G.
+  - Committed on branch `claude/ai-content-phase-1`. **Phase 2 not started.** See [Phase 1G completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1g-completion.md).
 - **Latest (19 Sep 2026, AI Content Phase 1F):** the daily slot.
   - 07:00 Adelaide, every day, at most 30 a month. It starts free research for the next topic a person approved for it; no generation, spend or publication.
   - Missed slots are held for review with no catch-up. The slot is unique per local date and DST-safe.

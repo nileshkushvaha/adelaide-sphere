@@ -1,3 +1,4 @@
+import { aiAttention } from '@adelaide-sphere/database/automation';
 import {
   ConflictException,
   HttpException,
@@ -91,9 +92,10 @@ export class AiContentService {
 
   async overview() {
     const db = await this.database.client();
-    const [counts, settings] = await Promise.all([
+    const [counts, settings, attention] = await Promise.all([
       db.aIContentItem.groupBy({ by: ['status'], _count: true }),
       this.settings.read('ai_content'),
+      db.$transaction((tx) => aiAttention(tx)),
     ]);
     return {
       enabled: settings.values.enabled,
@@ -101,6 +103,8 @@ export class AiContentService {
       executionActive: settings.values.enabled === true,
       // Drafts need automation on and a chosen byline; price approval and budget are checked per request.
       generationAvailable: settings.values.enabled === true && typeof settings.values.articleAuthorId === 'string' && settings.values.articleAuthorId.length > 0,
+      // The same figures the alert rules use (Phase 1G), so the dashboard and alerts never disagree.
+      attention,
       counts: Object.fromEntries(
         TOPIC_STATUSES.map((status) => [
           status,

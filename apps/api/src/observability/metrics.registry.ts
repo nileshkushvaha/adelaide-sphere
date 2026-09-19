@@ -160,3 +160,54 @@ export const mediaStuckInQuarantine = new Gauge({
   help: 'Assets accepted but not processed for longer than the processing window.',
   registers: [metricsRegistry],
 });
+
+// ---- AI content (Phase 1G): counts and ages only, never titles, URLs or ids ----
+
+export const aiOutcomeUnknown = new Gauge({
+  name: 'as_ai_operations_outcome_unknown',
+  help: 'AI provider requests whose outcome is unknown and wait for an operator (never re-sent automatically).',
+  registers: [metricsRegistry],
+});
+
+export const aiPaidCallsHalted = new Gauge({
+  name: 'as_ai_paid_calls_halted',
+  help: '1 while every paid AI call is halted for a price, model or usage discrepancy; 0 otherwise.',
+  registers: [metricsRegistry],
+});
+
+export const aiBudgetUsedRatio = new Gauge({
+  name: 'as_ai_budget_used_ratio',
+  help: 'Share of each AI cap used (reserved + settled); 0 when the cap is zero.',
+  labelNames: ['category', 'period'] as const, // text | image, day | month
+  registers: [metricsRegistry],
+});
+
+export const aiFactReviewItems = new Gauge({
+  name: 'as_ai_fact_review_items',
+  help: 'AI articles waiting in Needs Fact Review.',
+  registers: [metricsRegistry],
+});
+
+export const aiFactReviewOldestSeconds = new Gauge({
+  name: 'as_ai_fact_review_oldest_seconds',
+  help: 'How long the oldest article has waited in Needs Fact Review.',
+  registers: [metricsRegistry],
+});
+
+export const aiFailedItems = new Gauge({
+  name: 'as_ai_failed_items',
+  help: 'AI topics in the failed state.',
+  registers: [metricsRegistry],
+});
+
+export const aiMissedSlotsUnreviewed = new Gauge({
+  name: 'as_ai_missed_slots_unreviewed',
+  help: 'Daily AI slots recorded as missed and not yet reviewed.',
+  registers: [metricsRegistry],
+});
+
+export const aiOldestOpenOperationSeconds = new Gauge({
+  name: 'as_ai_oldest_open_operation_seconds',
+  help: 'Age of the oldest AI operation that is due or running.',
+  registers: [metricsRegistry],
+});

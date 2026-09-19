@@ -282,6 +282,37 @@ to the backup point — up to 180 days (SRS PRIV 002); the script prints this.
 
 ---
 
+## AI content (Phase 1G)
+
+All AI alerts are warning or informational: the public site is unaffected, and every AI failure mode is fail-closed (nothing publishes, nothing is re-sent). The runbook is `docs/operations/ai-content-runbook.md`.
+
+### AI1 — AI request with an unknown outcome
+`as_ai_operations_outcome_unknown > 0` **for 15m** (warning)
+*Why 15m:* a timed-out request is held immediately; a quarter of an hour gives an operator time to see it on the dashboard first.
+*Action:* AI Content → topic → the operation marked "Outcome unknown". Check the provider dashboard, then **Abandon** (the full reservation is counted as spent) or **Look up again** (text generation with a response id only). Never generate again before resolving: the system refuses anyway.
+
+### AI2 — Paid AI calls halted
+`as_ai_paid_calls_halted == 1` (warning, immediately)
+*Why:* a provider reported a model, tier, size or usage that does not match the approved price. Every paid call is stopped until a person reconciles it.
+*Action:* AI Pricing → halt reason. Compare with the provider's usage page and the official pricing. Approve a corrected price version if the price changed, then **Resume after reconciling** with a note.
+
+### AI3 — AI budget over the warning threshold
+`as_ai_budget_used_ratio >= 0.7` (informational; use the configured warning percentage) and `as_ai_budget_used_ratio >= 1` (warning: hard stop reached)
+*Action:* informational only; paid requests beyond the cap are refused with a clear message. Raise a cap in AI Settings only as a deliberate owner decision.
+
+### AI4 — Fact review backlog
+`as_ai_fact_review_oldest_seconds > 172800` (48 h; informational)
+*Action:* AI Content → Fact Review. Items wait safely; nothing in fact review can publish.
+
+### AI5 — Missed daily slot to review
+`as_ai_missed_slots_unreviewed > 0` **for 1h** (informational)
+*Action:* AI Schedule → the missed slot's reason (empty queue, not started in time, monthly cap, topic overlap). Fix the cause, then **Mark reviewed** with a note. Missed slots are never caught up automatically.
+
+### AI6 — AI work not moving
+`as_ai_oldest_open_operation_seconds > 1800` **for 10m** (warning)
+*Why:* due AI work should start within minutes. Stuck work usually means the worker, or its AI consumer, is not running.
+*Action:* check C4 (worker heartbeat) and `as_queue_jobs{queue="adelaide-sphere-ai"}`. Recovery (`ai-content.recover-operations`, every 5 minutes) redelivers lost jobs from the database; it never re-sends a paid request.
+
 ## Response notes that apply to every alert
 
 * **Nothing is lost while the worker is down.** Jobs wait in Redis. Resist

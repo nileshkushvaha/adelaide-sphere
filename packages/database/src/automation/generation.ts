@@ -250,7 +250,10 @@ export async function requestGeneration(
   if (!control.enabled || !settings.enabled) throw new GenerationCommandError('AUTOMATION_DISABLED', 'AI automation is switched off, so nothing can be generated.');
   const item = await lockItem(tx, input.itemId);
   if (item.version !== input.expectedVersion) throw new GenerationCommandError('STALE_VERSION', 'This topic changed. Reload it before trying again.');
-  if (input.scope === 'full' && !(item.status === 'researching' || item.status === 'ready_for_review')) throw new GenerationCommandError('INVALID_TRANSITION', 'A draft can be generated after research is verified, or regenerated while in review.');
+  // A failed first draft can be retried (SRS §25 "Retry for recoverable failures"): a new, separately budgeted request,
+  // only once nothing is in flight or unresolved (checked below). The research must still be verified and fresh.
+  const retryable = item.status === 'failed' && !item.postId;
+  if (input.scope === 'full' && !(item.status === 'researching' || item.status === 'ready_for_review' || retryable)) throw new GenerationCommandError('INVALID_TRANSITION', 'A draft can be generated after research is verified, regenerated while in review, or retried after a failure.');
   if (input.scope === 'metadata' && (item.status !== 'ready_for_review' || !item.postId)) throw new GenerationCommandError('INVALID_TRANSITION', 'Title and SEO suggestions need an article in review.');
   const inFlight = await tx.aIOperation.count({ where: { itemId: item.id, kind: { in: ['generate', 'apply'] }, state: { in: ['pending', 'running', 'outcome_unknown'] } } });
   if (inFlight > 0) throw new GenerationCommandError('GENERATION_IN_PROGRESS', 'A generation for this topic is still running or needs resolving.');

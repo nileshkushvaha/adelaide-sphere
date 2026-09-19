@@ -100,11 +100,13 @@ describe('Phase 1A topic invariants', () => {
         {
           titleMode: 'hybrid',
           imageMode: 'manual',
-          publicationMode: 'auto_publish',
+          publicationMode: 'review_required',
         },
         defaults,
       ).errors,
     ).toEqual({});
+    // Auto-publishing is not approved (owner decision, Phase 1G): refused, not stored for later.
+    expect(validateGroupPayload(group, { publicationMode: 'auto_publish' }, defaults).errors).toEqual({ publicationMode: expect.stringMatching(/not approved/) });
     // Automatic image generation is not approved: saving it is refused, not stored for later.
     expect(validateGroupPayload(group, { imageMode: 'automatic' }, defaults).errors).toEqual({ imageMode: expect.stringMatching(/not approved/) });
     const errors = validateGroupPayload(

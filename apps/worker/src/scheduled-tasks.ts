@@ -1,6 +1,6 @@
 import type { Queue } from 'bullmq';
 import type { DatabaseClient } from '@adelaide-sphere/database';
-import { planSlots, recoverOperations } from '@adelaide-sphere/database/automation';
+import { planSlots, purgeExpiredAiData, recoverOperations } from '@adelaide-sphere/database/automation';
 import { DUE_SCHEDULED_POST_SELECT, publishDueScheduledPost } from '@adelaide-sphere/database/editorial';
 import {
   CACHE_TAGS,
@@ -269,6 +269,12 @@ export const TASK_IMPLEMENTATIONS: Record<string, (ctx: TaskContext) => Promise<
    * The daily AI slot (Phase 1F; AI SRS §15): free research for the next
    * approved topic, or a missed slot held for review. Unique per local date.
    */
+  /** Retention of private AI working data (Phase 1G; owner: 180 days). Finished topics only. */
+  'ai-content.retention': async ({ db }) => {
+    const { purged } = await purgeExpiredAiData(db);
+    return purged === 0 ? 'Nothing expired' : `Removed private working data of ${purged} finished topic${purged === 1 ? '' : 's'}`;
+  },
+
   'ai-content.plan-slots': async ({ db }) => {
     const { inactive, filled, missed } = await planSlots(db);
     if (inactive) return `Daily slot inactive (${inactive.replace(/_/g, ' ')})`;

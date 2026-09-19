@@ -40,6 +40,8 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
     ...(values.timezone === 'Australia/Adelaide' ? {} : { timezone: 'This deployment uses Australia/Adelaide' }),
     // Owner decision (Phase 1E): paid images only through an explicit Generate image action.
     ...(values.imageMode === 'automatic' ? { imageMode: 'Automatic image generation is not approved. Use hybrid or manual.' } : {}),
+    // Owner decision (Phase 1G): hardening only; every AI article needs a person's fact confirmation and approval.
+    ...(values.publicationMode === 'auto_publish' ? { publicationMode: 'Auto-publishing is not approved: every AI article needs a person to confirm its facts and approve it.' } : {}),
     ...(values.slotTime === undefined || /^([01]\d|2[0-3]):[0-5]\d$/.test(String(values.slotTime)) ? {} : { slotTime: 'Use HH:MM, for example 07:00' }),
     ...(values.slotWeekdays === undefined ||
     (String(values.slotWeekdays).split(',').length > 0 && String(values.slotWeekdays).split(',').every((d) => ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].includes(d.trim().toLowerCase())))
@@ -70,7 +72,7 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
       'enum',
       'review_required',
       { values: ['review_required', 'auto_publish'] },
-      'Configuration only; no articles are created or published.',
+      'Review required: a person confirms the facts and approves every AI article. Auto-publishing is not approved.',
     ),
     declaration(
       'imageMode',
@@ -279,6 +281,14 @@ export const AI_CONTENT_SETTINGS: SettingGroupDeclaration = {
       'Illustrative image created with AI.',
       { min: 1, max: 255 },
       'Shown under an AI-generated featured image; each image records the wording it used.',
+    ),
+    declaration(
+      'aiRetentionDays',
+      'Keep private AI working data (days)',
+      'integer',
+      180,
+      { min: 30, max: 3650 },
+      'After a topic is published, rejected or cancelled. Request payloads, page text, draft output and image prompts are then removed; costs, approvals, claims and audit stay.',
     ),
     declaration(
       'discoveryKeywords',

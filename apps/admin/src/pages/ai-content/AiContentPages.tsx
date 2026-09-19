@@ -17,6 +17,7 @@ import {
 import { Link, useParams } from "react-router";
 import {
   aiContentApi,
+  type AiAttention,
   type AiTopic,
   type TopicInput,
   type TopicStatus,
@@ -83,6 +84,7 @@ export function AiOverviewPage() {
           />
         </Card>
       )}
+      {state.status === "ready" && <AttentionCard attention={state.data.attention} />}
       {state.status === "ready" && <BudgetCard />}
       <Space wrap style={{ marginTop: 16 }}>
         <Link to="/ai-content/topics">Topic Queue</Link>
@@ -93,6 +95,36 @@ export function AiOverviewPage() {
     </>
   );
 }
+const hours = (seconds: number) => (seconds < 3600 ? `${Math.floor(seconds / 60)} min` : `${Math.floor(seconds / 3600)} h`);
+
+/**
+ * What needs an operator now (Phase 1G): the same figures the alert rules use,
+ * each with where to act. Nothing is shown when nothing needs attention.
+ */
+function AttentionCard({ attention: a }: { attention: AiAttention }) {
+  const warn = a.budgetWarningPercent / 100;
+  const over = (["textDay", "textMonth", "imageDay", "imageMonth"] as const).filter((k) => a.budgetUsed[k] >= warn);
+  const items = [
+    a.paidCallsHalted && { key: "halt", type: "error" as const, text: `Paid AI calls are halted: ${a.paidHaltReason ?? "reconciliation required"}.`, link: "/ai-content/pricing", action: "Reconcile on AI Pricing" },
+    a.outcomeUnknownOperations > 0 && { key: "unknown", type: "error" as const, text: `${a.outcomeUnknownOperations} AI request${a.outcomeUnknownOperations === 1 ? "" : "s"} with an unknown outcome. They are never sent again automatically.`, link: "/ai-content/topics", action: "Resolve on the topic" },
+    a.factReviewItems > 0 && { key: "facts", type: "warning" as const, text: `${a.factReviewItems} article${a.factReviewItems === 1 ? "" : "s"} in fact review; the oldest has waited ${hours(a.factReviewOldestSeconds)}.`, link: "/ai-content/fact-review", action: "Open Fact Review" },
+    a.missedSlotsUnreviewed > 0 && { key: "slots", type: "warning" as const, text: `${a.missedSlotsUnreviewed} missed daily slot${a.missedSlotsUnreviewed === 1 ? "" : "s"} to review.`, link: "/ai-content/schedule", action: "Open AI Schedule" },
+    a.failedItems > 0 && { key: "failed", type: "warning" as const, text: `${a.failedItems} topic${a.failedItems === 1 ? "" : "s"} failed.`, link: "/ai-content/topics", action: "See failed topics" },
+    a.oldestOpenOperationSeconds > 1800 && { key: "stuck", type: "warning" as const, text: `AI work has been waiting ${hours(a.oldestOpenOperationSeconds)}. Check that the worker is running.`, link: "/system/queues", action: "Open Queue Monitor" },
+    over.length > 0 && { key: "budget", type: "info" as const, text: `AI budget over ${a.budgetWarningPercent}% (${over.map((k) => k.replace(/([A-Z])/g, " $1").toLowerCase()).join(", ")}).`, link: "/ai-content/pricing", action: "See the budget" },
+  ].filter(Boolean) as { key: string; type: "error" | "warning" | "info"; text: string; link: string; action: string }[];
+  if (items.length === 0) return null;
+  return (
+    <Card title="Needs attention" style={{ marginTop: 16 }}>
+      <Space direction="vertical" style={{ width: "100%" }}>
+        {items.map((i) => (
+          <Alert key={i.key} type={i.type} showIcon message={i.text} action={<Link to={i.link}>{i.action}</Link>} />
+        ))}
+      </Space>
+    </Card>
+  );
+}
+
 export function AiTopicDetailPage() {
   useDocumentTitle("AI topic");
   const { id = "" } = useParams();

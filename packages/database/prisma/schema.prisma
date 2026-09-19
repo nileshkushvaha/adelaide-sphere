@@ -1988,6 +1988,8 @@ model AIContentItem {
   imageMode              AIImageMode?
   /// Set when a person approved the topic for the daily slot (admitted, research not started yet); cleared when a slot takes it.
   awaitingSlotSince      DateTime?          @db.DateTime(3)
+  /// Set when the retention task removed this finished item's bulky private working data (Phase 1G; owner: 180 days).
+  privateDataPurgedAt    DateTime?          @db.DateTime(3)
   createdBy              AdminUser?         @relation("AITopicCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
   humanModifiedBy        AdminUser?         @relation("AITopicHumanEditor", fields: [humanModifiedByAdminId], references: [id], onDelete: SetNull)
   post                   Post?              @relation(fields: [postId], references: [id], onDelete: Restrict)

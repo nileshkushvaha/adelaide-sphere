@@ -233,6 +233,19 @@ export interface PriceSchedule {
   status: "proposed" | "approved" | "retired";
   approvedAt: string | null;
 }
+/** What needs an operator; the same figures the alert rules read (Phase 1G). */
+export interface AiAttention {
+  outcomeUnknownOperations: number;
+  paidCallsHalted: boolean;
+  paidHaltReason: string | null;
+  budgetUsed: { textDay: number; textMonth: number; imageDay: number; imageMonth: number };
+  budgetWarningPercent: number;
+  factReviewItems: number;
+  factReviewOldestSeconds: number;
+  failedItems: number;
+  missedSlotsUnreviewed: number;
+  oldestOpenOperationSeconds: number;
+}
 export interface ScheduleSlot {
   id: string;
   localDate: string;
@@ -309,7 +322,8 @@ export const aiContentApi = {
         data: {
           enabled: boolean;
           executionActive: boolean;
-          generationAvailable: false;
+          generationAvailable: boolean;
+          attention: AiAttention;
           counts: Record<TopicStatus, number>;
         };
       }>("/admin/ai-content/overview")

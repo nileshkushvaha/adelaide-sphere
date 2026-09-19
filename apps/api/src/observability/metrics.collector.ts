@@ -1,11 +1,20 @@
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 import { SCHEDULED_TASKS } from '@adelaide-sphere/domain';
 import { ScheduledRunOutcome } from '@adelaide-sphere/database';
+import { aiAttention } from '@adelaide-sphere/database/automation';
 import { DatabaseService } from '../database/database.service.js';
 import { RedisService } from '../redis/redis.service.js';
 import { QueueMonitorService } from '../queues/queue-monitor.service.js';
 import { WorkerLivenessService } from './worker-liveness.service.js';
 import {
+  aiBudgetUsedRatio,
+  aiFactReviewItems,
+  aiFactReviewOldestSeconds,
+  aiFailedItems,
+  aiMissedSlotsUnreviewed,
+  aiOldestOpenOperationSeconds,
+  aiOutcomeUnknown,
+  aiPaidCallsHalted,
   dependencyFailures,
   dependencyUp,
   oldestUndeliveredEnquirySeconds,
@@ -68,7 +77,9 @@ export class MetricsCollector implements OnModuleInit {
 
   onModuleInit(): void {
     // prom-client calls this on every scrape of the registry.
-    for (const gauge of [queueDepth as { collect?: () => Promise<void> }, workerHeartbeats, dependencyUp]) {
+    // The AI alert gauges refresh on their own read too, so a single scrape never reports a stale halt or backlog.
+    const ai = [aiOutcomeUnknown, aiPaidCallsHalted, aiBudgetUsedRatio, aiFactReviewItems, aiFactReviewOldestSeconds, aiFailedItems, aiMissedSlotsUnreviewed, aiOldestOpenOperationSeconds];
+    for (const gauge of [queueDepth as { collect?: () => Promise<void> }, workerHeartbeats, dependencyUp, ...ai]) {
       (gauge as { collect?: () => Promise<void> }).collect = () => this.refresh();
     }
   }
@@ -99,6 +110,7 @@ export class MetricsCollector implements OnModuleInit {
       }),
       bounded(this.collectEnquiries(), () => this.logger.warn('enquiry metrics timed out')),
       bounded(this.collectMedia(), () => this.logger.warn('media metrics timed out')),
+      bounded(this.collectAi(), () => this.logger.warn('AI content metrics timed out')),
     ]);
   }
 
@@ -162,6 +174,26 @@ export class MetricsCollector implements OnModuleInit {
       oldestUndeliveredEnquirySeconds.set(oldest ? Math.round((Date.now() - oldest.createdAt.getTime()) / 1_000) : 0);
     } catch {
       this.logger.warn('enquiry metrics unavailable');
+    }
+  }
+
+  private async collectAi(): Promise<void> {
+    try {
+      const db = await this.database.client();
+      const a = await db.$transaction((tx) => aiAttention(tx));
+      aiOutcomeUnknown.set(a.outcomeUnknownOperations);
+      aiPaidCallsHalted.set(a.paidCallsHalted ? 1 : 0);
+      aiBudgetUsedRatio.set({ category: 'text', period: 'day' }, a.budgetUsed.textDay);
+      aiBudgetUsedRatio.set({ category: 'text', period: 'month' }, a.budgetUsed.textMonth);
+      aiBudgetUsedRatio.set({ category: 'image', period: 'day' }, a.budgetUsed.imageDay);
+      aiBudgetUsedRatio.set({ category: 'image', period: 'month' }, a.budgetUsed.imageMonth);
+      aiFactReviewItems.set(a.factReviewItems);
+      aiFactReviewOldestSeconds.set(a.factReviewOldestSeconds);
+      aiFailedItems.set(a.failedItems);
+      aiMissedSlotsUnreviewed.set(a.missedSlotsUnreviewed);
+      aiOldestOpenOperationSeconds.set(a.oldestOpenOperationSeconds);
+    } catch {
+      this.logger.warn('AI content metrics unavailable');
     }
   }
 

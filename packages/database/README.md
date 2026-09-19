@@ -141,3 +141,14 @@ The daily slot:
 - missed slots are held for review, never caught up.
 
 The slot is unique per local date (registered task `ai-content.plan-slots`). AI operations run on their own queue, `adelaide-sphere-ai`, with a bounded consumer (`AI_WORKER_CONCURRENCY`, default 1). Migration `20260919140000_ai_content_schedule` has been applied only to the isolated test database. See the [Phase 1F completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1f-completion.md).
+
+## AI Content Phase 1G
+
+Hardening, with auto-publishing not approved:
+
+- final novelty and internal-link checks at publication (both paths);
+- retry of a failed first draft;
+- operator signals (`as_ai_*` gauges, alert rules AI1–AI6, and the dashboard "Needs attention" card);
+- 180-day retention of private AI working data (task `ai-content.retention`).
+
+Operations: `docs/operations/ai-content-runbook.md`. Migration `20260919180000_ai_content_retention` has been applied only to the isolated test database. See the [Phase 1G completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1g-completion.md).

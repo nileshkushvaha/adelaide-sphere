@@ -2,6 +2,7 @@ import { canTransitionAiItem, type AiItemStatus } from '@adelaide-sphere/domain'
 import { imagePublicationReasons } from './ai-image-gate.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { readAutomationControl } from '../automation/control.js';
+import { assessNovelty } from '../automation/novelty.js';
 import { researchFreshnessBlocker } from '../automation/research.js';
 import { readPostMaterial } from './material.js';
 
@@ -59,6 +60,8 @@ const PUBLISHABLE_FROM: Record<'publish' | 'schedule', readonly AiItemStatus[]> 
  *   the current research packet (the automatic screen never certifies alone);
  * - the image policy holds (imagePublicationReasons: a ready featured image
  *   when required, and every AI-generated image approved as it now stands);
+ * - the topic is still new (a human article since admission wins), and every
+ *   internal link leads to a currently published article (Phase 1G);
  * - byline and category must still be active at commit time (F52);
  * - automated (scheduled) publication additionally needs automation enabled:
  *   disabling AI stops automated publication, not a human's own action (F37).
@@ -98,12 +101,37 @@ export async function aiPublicationDecision(tx: Tx, input: { postId: string; act
   if (stale) reasons.push(stale);
   // Images (Phase 1E): a ready featured image, and any AI-generated image approved as it now stands.
   reasons.push(...(await imagePublicationReasons(tx, material.post)));
+  // Final checks (Phase 1G; plan §E step 6, F26): the topic is still new, and every internal link still leads somewhere.
+  reasons.push(...(await noveltyAtPublication(tx, item.id, input.postId)));
+  reasons.push(...(await internalLinkReasons(tx, material.post.sanitizedBody)));
   if (!material.post.author.active) reasons.push('Choose an active author.');
   if (!material.post.category.active) reasons.push('Choose an active category.');
   if (input.path === 'scheduled' && !(await readAutomationControl(tx)).enabled) {
     reasons.push('AI automation is switched off, so scheduled AI articles are held.');
   }
   return { linked: true, item, eligible: reasons.length === 0, reasons };
+}
+
+/**
+ * Novelty is re-checked when the article would publish, not only at admission:
+ * a human article on the same topic published since then wins (plan §E step 6).
+ * A justified follow-up recorded at admission may still overlap.
+ */
+async function noveltyAtPublication(tx: Tx, itemId: string, postId: string): Promise<string[]> {
+  const item = await tx.aIContentItem.findUniqueOrThrow({ where: { id: itemId }, select: { title: true, followUpOfPostId: true } });
+  const novelty = await assessNovelty(tx, { title: item.title, itemId, excludePostId: postId, includeUnadmitted: false });
+  if (novelty.status === 'duplicate') return ['Another article now covers this topic. Review the overlap before publishing.'];
+  if (novelty.status === 'review' && !item.followUpOfPostId) return ['This topic now overlaps another article. Review the overlap before publishing.'];
+  return [];
+}
+
+/** Every link to a site article must lead to a currently published one (F26: a target unpublished or renamed since). */
+async function internalLinkReasons(tx: Tx, sanitizedBody: string): Promise<string[]> {
+  const slugs = [...new Set([...sanitizedBody.matchAll(/href="\/blog\/([a-z0-9-]+)"/g)].map((m) => m[1]!))].slice(0, 50);
+  if (slugs.length === 0) return [];
+  const live = await tx.post.findMany({ where: { slug: { in: slugs }, status: 'published' }, select: { slug: true } });
+  const missing = slugs.filter((slug) => !live.some((p) => p.slug === slug));
+  return missing.length > 0 ? [`Fix the links to articles that are not published: ${missing.map((slug) => `/blog/${slug}`).join(', ')}.`] : [];
 }
 
 /** The newest content approval that has not been invalidated. */

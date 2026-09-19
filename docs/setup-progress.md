@@ -2684,3 +2684,25 @@ Additive migration `20260918210000_ai_content_fact_confirmation` (test DB only).
 - **Next:** 1G not started. Record: [Phase 1F completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1f-completion.md).
 
 - **Update (19 Sep 2026):** owner-authorised: `20260919140000_ai_content_schedule` applied to `adelaide_sphere_dev` after a dump; schema up to date. Dev API health, list, article detail and the web home return 200; the schedule route requires sign-in (401).
+
+## AI Content Phase 1G — 19 September 2026
+
+- **Scope:** plan §O workstream 1G under the owner's decisions: harden only, with auto-publish OFF (the setting is refused); the pilot is left for later; existing alert rules plus the dashboard; 180-day retention.
+- **Migration:** additive `20260919180000_ai_content_retention` (`privateDataPurgedAt`).
+- **Code:**
+  - Publication policy: novelty and internal-link checks.
+  - Recovery: Retry draft.
+  - Signals: `aiAttention` feeding the dashboard and eight `as_ai_*` gauges.
+  - Retention: task `ai-content.retention`.
+- **Docs:**
+  - `docs/operations/ai-content-runbook.md`;
+  - alert rules AI1–AI6 and the metrics list;
+  - [Phase 1 acceptance record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1-acceptance.md).
+- **Checks:**
+  - 1G spec 6/6; `pnpm test:integration` 405/405 + 5/5; `pnpm test` all passed; e2e 20/20;
+  - typecheck, lint, builds, contracts, migration policy;
+  - mutation checks H1–H4 all caught.
+- **Environment:** test DB only; dev is 1 migration behind. **The dev servers (4000/4001/4002) were found not running at the end of this workstream**; they were not stopped or restarted by this work.
+- **Next:** Phase 1 acceptance needs the pilot and the owner's review. Phase 2 needs separate approval. Record: [Phase 1G completion record](/Users/nileshkushvaha/Sites/nodejs/adelaide-sphere/docs/planning/ai-phase-1g-completion.md).
+
+- **Update (19 Sep 2026):** owner-authorised: `20260919180000_ai_content_retention` applied to `adelaide_sphere_dev` after a dump; schema up to date. The dev servers were not running, so no live route check was possible.

@@ -55,7 +55,7 @@ export async function configuredLocation(tx: Tx): Promise<string> {
  * never leaves the database), found by full-text relevance or exact slug, and
  * AI items including rejected/cancelled history.
  */
-async function candidates(tx: Tx, title: string, location: string, excludeItemId: string | null, slug: string | null, includeUnadmitted: boolean): Promise<NoveltyCandidate[]> {
+async function candidates(tx: Tx, title: string, location: string, excludeItemId: string | null, slug: string | null, includeUnadmitted: boolean, excludePostId: string | null = null): Promise<NoveltyCandidate[]> {
   // Full-text search does not stem, so it is queried with the title's own words; similarity uses the stems.
   const locationWordSet = new Set(locationStopwords(location));
   const words = normalizeTopicText(title).split(' ').filter((w) => w.length >= 3 && !locationWordSet.has(w));
@@ -66,7 +66,7 @@ async function candidates(tx: Tx, title: string, location: string, excludeItemId
          LIMIT ${POST_CANDIDATES}`
     : [];
   const slugPost = slug ? await tx.post.findUnique({ where: { slug }, select: { id: true, title: true, slug: true, status: true } }) : null;
-  const allPosts = new Map([...posts, ...(slugPost ? [slugPost] : [])].map((p) => [p.id, p]));
+  const allPosts = new Map([...posts, ...(slugPost ? [slugPost] : [])].filter((p) => p.id !== excludePostId).map((p) => [p.id, p]));
   const locationWords = locationStopwords(location);
   const items = await tx.aIContentItem.findMany({
     where: {
@@ -96,10 +96,10 @@ export interface NoveltyAssessment {
 }
 
 /** Local-only novelty assessment; no network call, no provider. */
-export async function assessNovelty(tx: Tx, input: { title: string; itemId?: string | null; slug?: string | null; includeUnadmitted?: boolean }): Promise<NoveltyAssessment> {
+export async function assessNovelty(tx: Tx, input: { title: string; itemId?: string | null; slug?: string | null; includeUnadmitted?: boolean; /** The item's own article, never a competitor of itself. */ excludePostId?: string | null }): Promise<NoveltyAssessment> {
   const location = await configuredLocation(tx);
   const fingerprint = fingerprintTopic(input.title, location);
-  const result = classifyNovelty({ ...fingerprint.fingerprint, slug: input.slug ?? null }, await candidates(tx, input.title, location, input.itemId ?? null, input.slug ?? null, input.includeUnadmitted ?? true));
+  const result = classifyNovelty({ ...fingerprint.fingerprint, slug: input.slug ?? null }, await candidates(tx, input.title, location, input.itemId ?? null, input.slug ?? null, input.includeUnadmitted ?? true, input.excludePostId ?? null));
   return { ...result, fingerprint };
 }
 

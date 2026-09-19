@@ -105,3 +105,5 @@ export {
   type ImageSettings,
 } from './images.js';
 export { SLOT_STRATEGY, planSlots, readScheduleSettings, reviewMissedSlot, scheduleStatus, type PlanResult, type ScheduleSettings } from './schedule.js';
+export { aiAttention, type AiAttention } from './attention.js';
+export { DEFAULT_RETENTION_DAYS, PURGED_MARKER, purgeExpiredAiData, readRetentionDays, type RetentionResult } from './retention.js';

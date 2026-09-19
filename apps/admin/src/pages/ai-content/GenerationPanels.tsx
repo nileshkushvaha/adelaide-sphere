@@ -79,9 +79,9 @@ export function ArticleCard({ topic, onChange }: { topic: AiTopic; onChange: () 
         </Space>
         {can(PERMISSION.aiContentGenerate) && (
           <Space wrap>
-            {(topic.status === "researching" || topic.status === "ready_for_review") && (
+            {(topic.status === "researching" || topic.status === "ready_for_review" || (topic.status === "failed" && !topic.postId)) && (
               <Button type="primary" loading={busy} onClick={() => void act(() => aiContentApi.generate(topic, "full", requestKey.current), "Draft requested", true)}>
-                {topic.postId ? "Regenerate draft" : "Generate draft"}
+                {topic.status === "failed" ? "Retry draft" : topic.postId ? "Regenerate draft" : "Generate draft"}
               </Button>
             )}
             {topic.status === "ready_for_review" && topic.postId && (

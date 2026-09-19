@@ -125,6 +125,23 @@ select a tier**; see C10. With `BACKUP_STATE_DIR` unset the gauges are not
 registered at all, because an always-zero series reads as "nothing is failing"
 when the truth is "nothing is measured".
 
+### AI content (Phase 1G)
+
+Read from the database by the API collector on scrape (refreshed at most every 5 s). **Counts and ages only**: no titles, ids or URLs. The same figures appear on the AI Content dashboard under "Needs attention", so the two never disagree.
+
+| Metric | Type | Labels | Reads as |
+| --- | --- | --- | --- |
+| `as_ai_operations_outcome_unknown` | gauge | — | AI1: paid requests whose outcome is unknown (never re-sent automatically) |
+| `as_ai_paid_calls_halted` | gauge | — | AI2: 1 while every paid AI call is halted for a price, model or usage discrepancy |
+| `as_ai_budget_used_ratio` | gauge | `category` (`text｜image`), `period` (`day｜month`) | AI3: share of each cap used; 0 when the cap is zero |
+| `as_ai_fact_review_items` | gauge | — | articles waiting in Needs Fact Review |
+| `as_ai_fact_review_oldest_seconds` | gauge | — | AI4: how long the oldest has waited |
+| `as_ai_failed_items` | gauge | — | AI topics in the failed state |
+| `as_ai_missed_slots_unreviewed` | gauge | — | AI5: missed daily slots not yet reviewed |
+| `as_ai_oldest_open_operation_seconds` | gauge | — | AI6: age of the oldest due or running AI operation |
+
+The AI queue (`adelaide-sphere-ai`) appears in `as_queue_jobs`, `as_queue_oldest_waiting_seconds` and `as_queue_workers` under its own `queue` label.
+
 ### Enquiries, email, media
 
 `as_enquiry_events_total`, `as_email_deliveries_total`,
